@@ -236,15 +236,24 @@ enum DMVVCBDecoder {
 }
 
 enum Base58BTC {
-    private static let alphabet = Array("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
+    private static let alphabet = Array("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".utf8)
+    private static let decodeMap: [UInt8: Int] = Dictionary(
+        uniqueKeysWithValues: alphabet.enumerated().map { index, byte in (byte, index) }
+    )
 
     static func encode(_ data: Data) -> String {
         guard !data.isEmpty else {
             return ""
         }
 
+        let leadingZeroCount = data.prefix { $0 == 0 }.count
+        let payload = data.dropFirst(leadingZeroCount)
+        guard !payload.isEmpty else {
+            return String(repeating: "1", count: leadingZeroCount)
+        }
+
         var digits = [Int](repeating: 0, count: 1)
-        for byte in data {
+        for byte in payload {
             var carry = Int(byte)
             for index in digits.indices {
                 let value = digits[index] * 256 + carry
@@ -257,16 +266,22 @@ enum Base58BTC {
             }
         }
 
-        var encoded = String(repeating: "1", count: data.prefix { $0 == 0 }.count)
-        encoded += digits.reversed().map { String(alphabet[$0]) }.joined()
+        var encoded = String(repeating: "1", count: leadingZeroCount)
+        encoded += String(decoding: digits.reversed().map { alphabet[$0] }, as: UTF8.self)
         return encoded
     }
 
     static func decode(_ value: String) -> Data? {
+        let leadingZeroCount = value.utf8.prefix(while: { $0 == UInt8(ascii: "1") }).count
+        let payload = value.utf8.dropFirst(leadingZeroCount)
+        guard !payload.isEmpty else {
+            return Data(repeating: 0, count: leadingZeroCount)
+        }
+
         var bytes = [UInt8](repeating: 0, count: 1)
 
-        for character in value {
-            guard let digit = alphabet.firstIndex(of: character) else {
+        for byte in payload {
+            guard let digit = decodeMap[byte] else {
                 return nil
             }
 
@@ -283,8 +298,7 @@ enum Base58BTC {
             }
         }
 
-        for character in value.prefix(while: { $0 == "1" }) {
-            _ = character
+        for _ in 0..<leadingZeroCount {
             bytes.append(0)
         }
 

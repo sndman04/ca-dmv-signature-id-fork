@@ -11,16 +11,25 @@ indirect enum CBORValue: Hashable, Sendable {
 }
 
 enum CBORReader {
+    private static let maxDepth = 32
+
     static func decode(_ data: Data) throws -> CBORValue {
         var cursor = data.startIndex
-        let value = try readValue(from: data, cursor: &cursor)
+        let value = try readValue(from: data, cursor: &cursor, depth: 0)
         guard cursor == data.endIndex else {
             throw CADMVInternalError.malformedCBOR
         }
         return value
     }
 
-    private static func readValue(from data: Data, cursor: inout Data.Index) throws -> CBORValue {
+    private static func readValue(
+        from data: Data,
+        cursor: inout Data.Index,
+        depth: Int
+    ) throws -> CBORValue {
+        guard depth <= maxDepth else {
+            throw CADMVInternalError.malformedCBOR
+        }
         guard cursor < data.endIndex else {
             throw CADMVInternalError.malformedCBOR
         }
@@ -54,7 +63,7 @@ enum CBORReader {
             var values: [CBORValue] = []
             values.reserveCapacity(count)
             for _ in 0..<count {
-                values.append(try readValue(from: data, cursor: &cursor))
+                values.append(try readValue(from: data, cursor: &cursor, depth: depth + 1))
             }
             return .array(values)
         case 5:
@@ -62,14 +71,14 @@ enum CBORReader {
             var values: [CBORValue: CBORValue] = [:]
             values.reserveCapacity(count)
             for _ in 0..<count {
-                let key = try readValue(from: data, cursor: &cursor)
-                let value = try readValue(from: data, cursor: &cursor)
+                let key = try readValue(from: data, cursor: &cursor, depth: depth + 1)
+                let value = try readValue(from: data, cursor: &cursor, depth: depth + 1)
                 values[key] = value
             }
             return .map(values)
         case 6:
             let tag = try readArgument(additionalInfo, from: data, cursor: &cursor)
-            return .tagged(tag, try readValue(from: data, cursor: &cursor))
+            return .tagged(tag, try readValue(from: data, cursor: &cursor, depth: depth + 1))
         default:
             throw CADMVInternalError.unsupportedCBOR
         }

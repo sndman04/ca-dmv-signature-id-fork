@@ -12,13 +12,12 @@ enum EcdsaRdfc2019Verifier {
         }
 
         let verifyData = try createVerifyData(credential)
-        let signature = try signature(from: credential.proof.proofValue)
-        let publicKey = try P256.Signing.PublicKey(
-            compressedRepresentation: verificationKey.compressedP256Key
+        return try ECDSAProofVerifier.verifyP256Signature(
+            proofValue: credential.proof.proofValue,
+            verifyData: verifyData,
+            verificationKey: verificationKey,
+            error: .statusListDecodeFailed
         )
-        let ecdsaSignature = try P256.Signing.ECDSASignature(rawRepresentation: signature)
-
-        return publicKey.isValidSignature(ecdsaSignature, for: verifyData)
     }
 
     static func createVerifyData(_ credential: DMVStatusListCredential) throws -> Data {
@@ -61,14 +60,5 @@ enum EcdsaRdfc2019Verifier {
         }
 
         return lines.joined(separator: "\n") + "\n"
-    }
-
-    private static func signature(from proofValue: String) throws -> Data {
-        guard proofValue.first == "z",
-              let signature = Base58BTC.decode(String(proofValue.dropFirst())),
-              signature.count == 64 else {
-            throw CADMVInternalError.statusListDecodeFailed
-        }
-        return signature
     }
 }

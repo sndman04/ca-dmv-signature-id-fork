@@ -657,7 +657,7 @@ Rationale: No-cache behavior is the safest current default for PII-adjacent veri
 - Confirmed Swift verifier returns `verified` for the official valid DMV UAT sample with status checking disabled.
 - Confirmed Swift verifier returns `failed` for the official invalid DMV UAT sample.
 - Checked UAT status-list URL derived from the valid fixture; it redirects to `status.uat-credentials.dmv.ca.gov` and currently returns 404 after following the redirect.
-- Kept `checkStatus=true` mapped to `unavailable` after successful signature verification until status-list verification can be safely completed.
+- Kept `checkStatus=true` mapped to `unavailable` after successful signature verification while live DMV UAT status infrastructure remained unusable.
 - Added iOS VisionKit PDF417 scanner wrapper in the optional `CADMVScanner` target.
 - Confirmed `swift build` and `swift run CADMVVerifierSelfTest` pass after scanner wrapper work.
 - Added status-list URL calculation for `TerseBitstringStatusListEntry`.
@@ -688,3 +688,8 @@ Rationale: No-cache behavior is the safest current default for PII-adjacent veri
 - Added self-test coverage for unsafe status-list canonicalization input rejection.
 - Recorded no-cache policy for DID documents, status-list credentials, raw barcodes, parsed AAMVA fields, and decoded credentials.
 - Added Apple `swift-crypto` for CryptoKit-compatible APIs on non-Apple Swift platforms and recorded resolved dependency versions/licenses.
+- Refactored P-256 proof verification into a shared helper used by both `ecdsa-xi-2023` and `ecdsa-rdfc-2019`.
+- Reused a single ephemeral no-redirect `URLSession` instead of constructing a session per network request.
+- Added a CBOR nesting-depth limit and self-test coverage for deeply nested malformed CBOR.
+- Replaced regex-based status-list and AAMVA field validation with direct ASCII checks.
+- Optimized Base58 decoding with a byte lookup table and fixed leading-zero encode/decode round trips.

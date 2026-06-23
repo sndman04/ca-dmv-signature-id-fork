@@ -15,13 +15,12 @@ enum EcdsaXi2023Verifier {
             credential: credential,
             opticalDataHash: opticalDataHash
         )
-        let signature = try signature(from: credential.proof.proofValue)
-        let publicKey = try P256.Signing.PublicKey(
-            compressedRepresentation: verificationKey.compressedP256Key
+        return try ECDSAProofVerifier.verifyP256Signature(
+            proofValue: credential.proof.proofValue,
+            verifyData: verifyData,
+            verificationKey: verificationKey,
+            error: .unsupportedVCB
         )
-        let ecdsaSignature = try P256.Signing.ECDSASignature(rawRepresentation: signature)
-
-        return publicKey.isValidSignature(ecdsaSignature, for: verifyData)
     }
 
     static func createVerifyData(
@@ -75,14 +74,5 @@ enum EcdsaXi2023Verifier {
         }
 
         return lines.joined(separator: "\n") + "\n"
-    }
-
-    private static func signature(from proofValue: String) throws -> Data {
-        guard proofValue.first == "z",
-              let signature = Base58BTC.decode(String(proofValue.dropFirst())),
-              signature.count == 64 else {
-            throw CADMVInternalError.unsupportedVCB
-        }
-        return signature
     }
 }

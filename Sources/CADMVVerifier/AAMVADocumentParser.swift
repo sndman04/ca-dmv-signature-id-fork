@@ -99,12 +99,23 @@ enum AAMVAFieldParser {
 
         for line in lines where line.count >= 3 {
             let field = String(line.prefix(3))
-            guard field.range(of: #"^[A-Z0-9]{3}$"#, options: .regularExpression) != nil else {
+            guard isAAMVAFieldCode(field) else {
                 continue
             }
             fields[field] = String(line.dropFirst(3))
         }
 
         return fields
+    }
+
+    private static func isAAMVAFieldCode(_ value: String) -> Bool {
+        let bytes = value.utf8
+        guard bytes.count == 3 else {
+            return false
+        }
+        return bytes.allSatisfy { byte in
+            (UInt8(ascii: "A")...UInt8(ascii: "Z")).contains(byte) ||
+                (UInt8(ascii: "0")...UInt8(ascii: "9")).contains(byte)
+        }
     }
 }

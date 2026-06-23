@@ -4,17 +4,19 @@ import FoundationNetworking
 #endif
 
 enum CADMVNetworkSession {
-    static func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+    private static let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
         configuration.urlCache = nil
-
-        let session = URLSession(
+        return URLSession(
             configuration: configuration,
             delegate: NoRedirectDelegate(),
             delegateQueue: nil
         )
-        return try await session.data(for: request)
+    }()
+
+    static func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        try await session.data(for: request)
     }
 }
 

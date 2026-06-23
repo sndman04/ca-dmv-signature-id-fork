@@ -123,6 +123,14 @@ extension CADMVVerifier {
         try BitstringStatusListDecoder.status(in: encodedList, at: index)
     }
 
+    public static func base58EncodeForSelfTest(_ data: Data) -> String {
+        Base58BTC.encode(data)
+    }
+
+    public static func base58DecodeForSelfTest(_ value: String) -> Data? {
+        Base58BTC.decode(value)
+    }
+
     public static func statusListVerifyDataForSelfTest(jsonData: Data) throws -> String {
         try EcdsaRdfc2019Verifier.createVerifyData(
             DMVStatusListCredentialParser.parse(jsonData)

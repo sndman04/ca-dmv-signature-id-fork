@@ -26,15 +26,22 @@ struct DMVStatusListCredential: Equatable, Sendable {
 }
 
 enum DMVStatusListCredentialParser {
+    private static let rootKeys: Set<String> = [
+        "@context", "id", "type", "issuer", "validFrom", "credentialSubject", "proof"
+    ]
+    private static let subjectKeys: Set<String> = [
+        "id", "type", "encodedList", "statusPurpose"
+    ]
+    private static let proofKeys: Set<String> = [
+        "type", "created", "verificationMethod", "cryptosuite", "proofPurpose", "proofValue"
+    ]
+
     static func parse(_ data: Data) throws -> DMVStatusListCredential {
         let json = try JSONSerialization.jsonObject(with: data)
         guard let root = json as? [String: Any] else {
             throw CADMVInternalError.statusListDecodeFailed
         }
-        try rejectUnknownKeys(
-            root,
-            allowed: ["@context", "id", "type", "issuer", "validFrom", "credentialSubject", "proof"]
-        )
+        try rejectUnknownKeys(root, allowed: rootKeys)
 
         guard let context = root["@context"] as? [String],
               context == ["https://www.w3.org/ns/credentials/v2"],
@@ -46,14 +53,8 @@ enum DMVStatusListCredentialParser {
             throw CADMVInternalError.statusListDecodeFailed
         }
 
-        try rejectUnknownKeys(
-            subjectObject,
-            allowed: ["id", "type", "encodedList", "statusPurpose"]
-        )
-        try rejectUnknownKeys(
-            proofObject,
-            allowed: ["type", "created", "verificationMethod", "cryptosuite", "proofPurpose", "proofValue"]
-        )
+        try rejectUnknownKeys(subjectObject, allowed: subjectKeys)
+        try rejectUnknownKeys(proofObject, allowed: proofKeys)
 
         guard type.contains("VerifiableCredential"),
               type.contains("BitstringStatusListCredential"),
@@ -110,30 +111,151 @@ enum DMVStatusListCredentialParser {
         _ object: [String: Any],
         allowed: Set<String>
     ) throws {
-        guard Set(object.keys).isSubset(of: allowed) else {
-            throw CADMVInternalError.statusListDecodeFailed
+        for key in object.keys {
+            guard allowed.contains(key) else {
+                throw CADMVInternalError.statusListDecodeFailed
+            }
         }
     }
 
     private static func isSafeIRI(_ value: String) -> Bool {
-        !value.isEmpty && value.range(of: #"^[A-Za-z][A-Za-z0-9+.-]*:[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+$"#, options: .regularExpression) != nil
+        guard let first = value.utf8.first, isASCIIAlpha(first),
+              let separator = value.utf8.firstIndex(of: CharacterSetByte.colon),
+              separator != value.utf8.startIndex else {
+            return false
+        }
+
+        for byte in value.utf8[..<separator] {
+            guard isASCIIAlphaNumeric(byte) || byte == CharacterSetByte.plus ||
+                    byte == CharacterSetByte.period || byte == CharacterSetByte.hyphen else {
+                return false
+            }
+        }
+
+        let suffixStart = value.utf8.index(after: separator)
+        guard suffixStart < value.utf8.endIndex else {
+            return false
+        }
+        return value.utf8[suffixStart...].allSatisfy(isSafeIRIByte(_:))
     }
 
     private static func isSafeToken(_ value: String) -> Bool {
-        !value.isEmpty && value.range(of: #"^[A-Za-z0-9._:-]+$"#, options: .regularExpression) != nil
+        !value.isEmpty && value.utf8.allSatisfy {
+            isASCIIAlphaNumeric($0) || $0 == CharacterSetByte.period ||
+                $0 == CharacterSetByte.underscore || $0 == CharacterSetByte.colon ||
+                $0 == CharacterSetByte.hyphen
+        }
     }
 
     private static func isSafeMultibase(_ value: String) -> Bool {
-        !value.isEmpty && value.range(of: #"^[A-Za-z0-9_-]+$"#, options: .regularExpression) != nil
+        !value.isEmpty && value.utf8.allSatisfy {
+            isASCIIAlphaNumeric($0) || $0 == CharacterSetByte.underscore ||
+                $0 == CharacterSetByte.hyphen
+        }
     }
 
     private static func isSafeOptionalDate(_ value: String?) -> Bool {
         guard let value else {
             return true
         }
-        return value.range(
-            of: #"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"#,
-            options: .regularExpression
-        ) != nil
+        let bytes = Array(value.utf8)
+        guard bytes.count == 20 else {
+            return false
+        }
+        for index in bytes.indices {
+            if isDateDigitPosition(index) {
+                guard isASCIIDigit(bytes[index]) else {
+                    return false
+                }
+            }
+        }
+        return bytes[4] == CharacterSetByte.hyphen &&
+            bytes[7] == CharacterSetByte.hyphen &&
+            bytes[10] == CharacterSetByte.upperT &&
+            bytes[13] == CharacterSetByte.colon &&
+            bytes[16] == CharacterSetByte.colon &&
+            bytes[19] == CharacterSetByte.upperZ
+    }
+
+    private static func isDateDigitPosition(_ index: Int) -> Bool {
+        switch index {
+        case 0, 1, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18:
+            return true
+        default:
+            return false
+        }
+    }
+
+    private static func isSafeIRIByte(_ byte: UInt8) -> Bool {
+        isASCIIAlphaNumeric(byte) ||
+            byte == CharacterSetByte.period ||
+            byte == CharacterSetByte.underscore ||
+            byte == CharacterSetByte.tilde ||
+            byte == CharacterSetByte.colon ||
+            byte == CharacterSetByte.slash ||
+            byte == CharacterSetByte.question ||
+            byte == CharacterSetByte.hash ||
+            byte == CharacterSetByte.openBracket ||
+            byte == CharacterSetByte.closeBracket ||
+            byte == CharacterSetByte.at ||
+            byte == CharacterSetByte.exclamation ||
+            byte == CharacterSetByte.dollar ||
+            byte == CharacterSetByte.ampersand ||
+            byte == CharacterSetByte.singleQuote ||
+            byte == CharacterSetByte.openParen ||
+            byte == CharacterSetByte.closeParen ||
+            byte == CharacterSetByte.star ||
+            byte == CharacterSetByte.plus ||
+            byte == CharacterSetByte.comma ||
+            byte == CharacterSetByte.semicolon ||
+            byte == CharacterSetByte.equal ||
+            byte == CharacterSetByte.percent ||
+            byte == CharacterSetByte.hyphen
+    }
+
+    private static func isASCIIAlphaNumeric(_ byte: UInt8) -> Bool {
+        isASCIIAlpha(byte) || isASCIIDigit(byte)
+    }
+
+    private static func isASCIIAlpha(_ byte: UInt8) -> Bool {
+        (CharacterSetByte.upperA...CharacterSetByte.upperZ).contains(byte) ||
+            (CharacterSetByte.lowerA...CharacterSetByte.lowerZ).contains(byte)
+    }
+
+    private static func isASCIIDigit(_ byte: UInt8) -> Bool {
+        (CharacterSetByte.zero...CharacterSetByte.nine).contains(byte)
+    }
+
+    private enum CharacterSetByte {
+        static let upperA = UInt8(ascii: "A")
+        static let upperT = UInt8(ascii: "T")
+        static let upperZ = UInt8(ascii: "Z")
+        static let lowerA = UInt8(ascii: "a")
+        static let lowerZ = UInt8(ascii: "z")
+        static let zero = UInt8(ascii: "0")
+        static let nine = UInt8(ascii: "9")
+        static let ampersand = UInt8(ascii: "&")
+        static let at = UInt8(ascii: "@")
+        static let closeBracket = UInt8(ascii: "]")
+        static let closeParen = UInt8(ascii: ")")
+        static let colon = UInt8(ascii: ":")
+        static let comma = UInt8(ascii: ",")
+        static let dollar = UInt8(ascii: "$")
+        static let equal = UInt8(ascii: "=")
+        static let exclamation = UInt8(ascii: "!")
+        static let hash = UInt8(ascii: "#")
+        static let hyphen = UInt8(ascii: "-")
+        static let openBracket = UInt8(ascii: "[")
+        static let openParen = UInt8(ascii: "(")
+        static let percent = UInt8(ascii: "%")
+        static let period = UInt8(ascii: ".")
+        static let plus = UInt8(ascii: "+")
+        static let question = UInt8(ascii: "?")
+        static let semicolon = UInt8(ascii: ";")
+        static let singleQuote = UInt8(ascii: "'")
+        static let slash = UInt8(ascii: "/")
+        static let star = UInt8(ascii: "*")
+        static let tilde = UInt8(ascii: "~")
+        static let underscore = UInt8(ascii: "_")
     }
 }

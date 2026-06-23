@@ -6,22 +6,27 @@ enum AAMVACanonicalizer {
         "DCA", "DCB", "DCD", "DBA", "DCS", "DAC", "DAD", "DBD", "DBB", "DBC", "DAY",
         "DAU", "DAG", "DAI", "DAJ", "DAK", "DAQ", "DCF", "DCG", "DDE", "DDF", "DDG"
     ].sorted()
+    private static let mandatoryFieldBits = Dictionary(
+        uniqueKeysWithValues: mandatoryFields.enumerated().map { index, field in
+            (field, 1 << (23 - index))
+        }
+    )
 
     static func protectedDocument(
         from document: AAMVADocument,
         componentIndex: String
     ) throws -> [String: String] {
         let fieldIndex = try decodeComponentIndex(componentIndex)
-        let selectedFields = mandatoryFields.enumerated().compactMap { index, field -> String? in
-            (fieldIndex & encodeMandatoryIndex(index)) == 0 ? nil : field
-        }
-        let selectedFieldSet = Set(selectedFields)
-
         guard let identitySubfile = document.primaryIdentitySubfile else {
             throw CADMVInternalError.malformedBarcode
         }
 
-        return identitySubfile.fields.filter { selectedFieldSet.contains($0.key) }
+        return identitySubfile.fields.filter { field, _ in
+            guard let bit = mandatoryFieldBits[field] else {
+                return false
+            }
+            return (fieldIndex & bit) != 0
+        }
     }
 
     static func canonicalize(_ document: [String: String]) -> Data {
@@ -44,10 +49,6 @@ enum AAMVACanonicalizer {
             throw CADMVInternalError.unsupportedVCB
         }
         return bytes.reduce(0) { ($0 << 8) | Int($1) }
-    }
-
-    private static func encodeMandatoryIndex(_ index: Int) -> Int {
-        1 << (23 - index)
     }
 }
 

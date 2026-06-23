@@ -11,6 +11,7 @@ enum CADMVVerifierSelfTest {
         await testMalformedBase64VCBFails()
         await testMalformedCBORLDFails()
         await testMalformedBarcodeCorpus()
+        testBase58LeadingZeroRoundTrip()
         try! testStatusBitIndexing()
         try! testSyntheticStatusListCredentialVerification()
         try! await testOfficialDMVFixtureParsing()
@@ -85,6 +86,16 @@ enum CADMVVerifierSelfTest {
         )
         let result = await CADMVVerifier.verify(rawPDF417: barcode)
         expect(result.status == .failed, "malformed CBOR-LD VCB should fail")
+
+        let deeplyNestedCBOR = Data(repeating: 0x81, count: 40) + Data([0x00])
+        let nestedBarcode = AAMVATestBarcode.make(
+            issuer: "636014",
+            issueDate: "08052025",
+            jurisdiction: "CA",
+            encodedVCB: base64URL(deeplyNestedCBOR)
+        )
+        let nestedResult = await CADMVVerifier.verify(rawPDF417: nestedBarcode)
+        expect(nestedResult.status == .failed, "deeply nested CBOR VCB should fail closed")
     }
 
     private static func testMalformedBarcodeCorpus() async {
@@ -106,6 +117,25 @@ enum CADMVVerifierSelfTest {
             let result = await CADMVVerifier.verify(rawPDF417: input)
             expect(result.status != .verified, "malformed barcode corpus must never verify")
         }
+    }
+
+    private static func testBase58LeadingZeroRoundTrip() {
+        let singleZero = Data([0])
+        expect(
+            CADMVVerifier.base58EncodeForSelfTest(singleZero) == "1",
+            "single leading zero byte should encode as one base58 zero"
+        )
+        expect(
+            CADMVVerifier.base58DecodeForSelfTest("1") == singleZero,
+            "single base58 zero should decode as one zero byte"
+        )
+
+        let leadingZeros = Data([0, 0, 1, 2, 3, 255])
+        let encoded = CADMVVerifier.base58EncodeForSelfTest(leadingZeros)
+        expect(
+            CADMVVerifier.base58DecodeForSelfTest(encoded) == leadingZeros,
+            "base58 leading-zero payload should round trip"
+        )
     }
 
     private static func testStatusBitIndexing() throws {
@@ -334,7 +364,7 @@ enum CADMVVerifierSelfTest {
             rawPDF417: fixtures.validUAT,
             options: CADMVVerificationOptions(checkStatus: true, mode: .uat)
         )
-        expect(statusRequiredResult.status == .unavailable, "status-required verification should be unavailable until status checks are implemented")
+        expect(statusRequiredResult.status == .unavailable, "status-required verification should be unavailable while DMV UAT status is unusable")
     }
 
     private static func testDIDWebResolution() async throws {
@@ -372,6 +402,13 @@ enum CADMVVerifierSelfTest {
         guard condition() else {
             fatalError(message)
         }
+    }
+
+    private static func base64URL(_ data: Data) -> String {
+        data.base64EncodedString()
+            .replacingOccurrences(of: "+", with: "-")
+            .replacingOccurrences(of: "/", with: "_")
+            .replacingOccurrences(of: "=", with: "")
     }
 }
 
