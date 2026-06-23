@@ -4,6 +4,8 @@ import FoundationNetworking
 #endif
 
 enum CADMVNetworkSession {
+    typealias DataHandler = @Sendable (URLRequest) async throws -> (Data, URLResponse)
+
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
@@ -14,9 +16,25 @@ enum CADMVNetworkSession {
             delegateQueue: nil
         )
     }()
+    private static let testTransport = CADMVTestNetworkTransport()
 
     static func data(for request: URLRequest) async throws -> (Data, URLResponse) {
-        try await session.data(for: request)
+        if let handler = await testTransport.handler {
+            return try await handler(request)
+        }
+        return try await session.data(for: request)
+    }
+
+    static func setTestHandler(_ handler: DataHandler?) async {
+        await testTransport.setHandler(handler)
+    }
+}
+
+private actor CADMVTestNetworkTransport {
+    var handler: CADMVNetworkSession.DataHandler?
+
+    func setHandler(_ handler: CADMVNetworkSession.DataHandler?) {
+        self.handler = handler
     }
 }
 

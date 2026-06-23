@@ -1,4 +1,5 @@
 @_spi(Testing) import CADMVVerifier
+import CADMVScanner
 import Foundation
 
 @main
@@ -8,14 +9,22 @@ enum CADMVVerifierSelfTest {
         await testRequiredMissingVCB()
         await testRequireVCBOption()
         await testNonCaliforniaBarcode()
+        await testIssueDateBoundaryMatrix()
+        await testImpossibleIssueDateRequiresVCB()
         await testMalformedBase64VCBFails()
         await testMalformedCBORLDFails()
         await testMalformedBarcodeCorpus()
+        await testMalformedBarcodeDescriptorCorpus()
+        testBase64URLRejectsMalformedLengths()
+        testBase58RejectsMalformedInput()
+        try! testGzipOutputLimit()
         testBase58LeadingZeroRoundTrip()
         try! testStatusBitIndexing()
+        try! testMalformedStatusListCorpus()
         try! testSyntheticStatusListCredentialVerification()
         try! await testOfficialDMVFixtureParsing()
         try! await testDIDWebResolution()
+        await testScannerWrapper()
         print("CADMVVerifierSelfTest passed")
     }
 
@@ -66,6 +75,57 @@ enum CADMVVerifierSelfTest {
         expect(result.status == .notPresent, "non-California barcode should be notPresent")
     }
 
+    private static func testIssueDateBoundaryMatrix() async {
+        let optionalBoundaryCases = [
+            "09282025",
+            "02292024",
+            "12312024"
+        ]
+        for issueDate in optionalBoundaryCases {
+            let barcode = AAMVATestBarcode.make(
+                issuer: "636014",
+                issueDate: issueDate,
+                jurisdiction: "CA",
+                encodedVCB: nil
+            )
+            let result = await CADMVVerifier.verify(rawPDF417: barcode)
+            expect(result.status == .notPresent, "\(issueDate) should not require a missing VCB")
+        }
+
+        for issueDate in ["09292025", "09302025", "12319999"] {
+            let barcode = AAMVATestBarcode.make(
+                issuer: "636014",
+                issueDate: issueDate,
+                jurisdiction: "CA",
+                encodedVCB: nil
+            )
+            let result = await CADMVVerifier.verify(rawPDF417: barcode)
+            expect(result.status == .failed, "\(issueDate) should require a missing VCB")
+        }
+
+        for issueDate in ["00002025", "00012025", "02302025", "02292025", "04312025"] {
+            let barcode = AAMVATestBarcode.make(
+                issuer: "636014",
+                issueDate: issueDate,
+                jurisdiction: "CA",
+                encodedVCB: nil
+            )
+            let result = await CADMVVerifier.verify(rawPDF417: barcode)
+            expect(result.status == .failed, "\(issueDate) should fail closed as an invalid date")
+        }
+    }
+
+    private static func testImpossibleIssueDateRequiresVCB() async {
+        let barcode = AAMVATestBarcode.make(
+            issuer: "636014",
+            issueDate: "02312025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+        let result = await CADMVVerifier.verify(rawPDF417: barcode)
+        expect(result.status == .failed, "impossible issue date should fail closed when VCB is missing")
+    }
+
     private static func testMalformedBase64VCBFails() async {
         let barcode = AAMVATestBarcode.make(
             issuer: "636014",
@@ -105,6 +165,7 @@ enum CADMVVerifierSelfTest {
             "@\n\u{1e}\rANSI 636014",
             "@\n\u{1e}\rANSI 6360141001XX",
             "@\n\u{1e}\rANSI 636014100102DL99999999",
+            "@\n\u{1e}\rANSI 636014100101DL0037-001",
             AAMVATestBarcode.make(
                 issuer: "636014",
                 issueDate: "notadate",
@@ -116,6 +177,69 @@ enum CADMVVerifierSelfTest {
         for input in malformedInputs {
             let result = await CADMVVerifier.verify(rawPDF417: input)
             expect(result.status != .verified, "malformed barcode corpus must never verify")
+        }
+    }
+
+    private static func testMalformedBarcodeDescriptorCorpus() async {
+        let malformedInputs = [
+            AAMVATestBarcode.makeWithRawEntry(designator: "DL", offset: "-001", length: "0010", body: "DLDAQX\r"),
+            AAMVATestBarcode.makeWithRawEntry(designator: "DL", offset: "9999", length: "0001", body: "DLDAQX\r"),
+            AAMVATestBarcode.makeWithRawEntry(designator: "DL", offset: "0037", length: "9999", body: "DLDAQX\r"),
+            AAMVATestBarcode.makeWithRawEntry(designator: "D!", offset: "0037", length: "0007", body: "D!DAQX\r"),
+            "@\n\u{1e}\rANSI 636014100199DL00370007DLDAQX\r"
+        ]
+
+        for input in malformedInputs {
+            let result = await CADMVVerifier.verify(rawPDF417: input)
+            expect(result.status != .verified, "malformed descriptor corpus must never verify")
+        }
+    }
+
+    private static func testBase64URLRejectsMalformedLengths() {
+        expect(
+            CADMVVerifier.base64URLDecodeForSelfTest("AQID") == Data([1, 2, 3]),
+            "valid base64url should decode"
+        )
+        expect(
+            CADMVVerifier.base64URLDecodeForSelfTest("A") == nil,
+            "base64url length 1 mod 4 should be rejected"
+        )
+        expect(
+            CADMVVerifier.base64URLDecodeForSelfTest("AA=A") == nil,
+            "base64url padding in the middle should be rejected"
+        )
+        expect(
+            CADMVVerifier.base64URLDecodeForSelfTest("AA+A") == Data([0, 15, 128]),
+            "standard base64 alphabet should remain accepted for DMV VCB compatibility"
+        )
+        for malformed in ["A", "AAAA=", "A===", "AA=A", "AA A", "AA\nAA"] {
+            expect(
+                CADMVVerifier.base64URLDecodeForSelfTest(malformed) == nil,
+                "\(malformed) should be rejected by base64 decoder"
+            )
+        }
+    }
+
+    private static func testBase58RejectsMalformedInput() {
+        for malformed in ["0", "O", "I", "l", "z0", "abc+"] {
+            expect(
+                CADMVVerifier.base58DecodeForSelfTest(malformed) == nil,
+                "\(malformed) should be rejected by base58 decoder"
+            )
+        }
+    }
+
+    private static func testGzipOutputLimit() throws {
+        let encodedList = "uH4sIAAAAAAAAA2tgBAAiul0NAgAAAA"
+        guard let compressed = CADMVVerifier.base64URLDecodeForSelfTest(String(encodedList.dropFirst())) else {
+            fatalError("test gzip payload should decode")
+        }
+
+        do {
+            _ = try CADMVVerifier.gzipDecompressForSelfTest(compressed, maxOutputBytes: 1)
+            fatalError("gzip output above the configured limit should fail")
+        } catch {
+            // Expected: status-list decompression must be bounded.
         }
     }
 
@@ -173,6 +297,30 @@ enum CADMVVerifierSelfTest {
         expect(
             encodedBit15 == true,
             "encoded status bit 15 should decode from gzip/base64url list"
+        )
+    }
+
+    private static func testMalformedStatusListCorpus() throws {
+        let malformedEncodedLists = [
+            "",
+            "zH4sIAAAAAAAAA2tgBAAiul0NAgAAAA",
+            "uA",
+            "uAAAA",
+            "uH4sIAAAAAAAA"
+        ]
+
+        for encodedList in malformedEncodedLists {
+            do {
+                _ = try CADMVVerifier.statusBitForSelfTest(encodedList: encodedList, index: 0)
+                fatalError("\(encodedList) should fail status-list decoding")
+            } catch {
+                // Expected: malformed status-list values fail closed.
+            }
+        }
+
+        expect(
+            CADMVVerifier.statusBitForSelfTest(uncompressedBytes: Data([0]), index: UInt64.max) == nil,
+            "huge status bit index should be out of range"
         )
     }
 
@@ -335,56 +483,72 @@ enum CADMVVerifierSelfTest {
             "invalid UAT optical data hash should match JS reference; got \(invalidInspection.opticalDataHashHex ?? "nil")"
         )
 
-        let validResult = await CADMVVerifier.verify(
-            rawPDF417: fixtures.validUAT,
-            options: CADMVVerificationOptions(mode: .uat)
-        )
-        expect(validResult.status == .verified, "valid UAT fixture should cryptographically verify")
+        try await withFixtureNetwork { @Sendable request in
+            try FixtureNetwork.response(for: request)
+        } operation: {
+            let validResult = await CADMVVerifier.verify(
+                rawPDF417: fixtures.validUAT,
+                options: CADMVVerificationOptions(mode: .uat)
+            )
+            expect(validResult.status == .verified, "valid UAT fixture should cryptographically verify")
 
-        let invalidResult = await CADMVVerifier.verify(
-            rawPDF417: fixtures.invalidUAT,
-            options: CADMVVerificationOptions(mode: .uat)
-        )
-        expect(invalidResult.status == .failed, "invalid UAT fixture should fail signature verification")
+            let invalidResult = await CADMVVerifier.verify(
+                rawPDF417: fixtures.invalidUAT,
+                options: CADMVVerificationOptions(mode: .uat)
+            )
+            expect(invalidResult.status == .failed, "invalid UAT fixture should fail signature verification")
+        }
 
         let tamperedProtectedField = fixtures.validUAT.replacingOccurrences(
             of: "DAQI8887059",
             with: "DAQI8887060"
         )
-        let tamperedResult = await CADMVVerifier.verify(
-            rawPDF417: tamperedProtectedField,
-            options: CADMVVerificationOptions(mode: .uat)
-        )
-        expect(tamperedResult.status == .failed, "tampered protected AAMVA field should fail")
+        try await withFixtureNetwork { @Sendable request in
+            try FixtureNetwork.response(for: request)
+        } operation: {
+            let tamperedResult = await CADMVVerifier.verify(
+                rawPDF417: tamperedProtectedField,
+                options: CADMVVerificationOptions(mode: .uat)
+            )
+            expect(tamperedResult.status == .failed, "tampered protected AAMVA field should fail")
+        }
 
         let productionModeResult = await CADMVVerifier.verify(rawPDF417: fixtures.validUAT)
         expect(productionModeResult.status == .failed, "UAT fixture should fail in production mode")
 
-        let statusRequiredResult = await CADMVVerifier.verify(
-            rawPDF417: fixtures.validUAT,
-            options: CADMVVerificationOptions(checkStatus: true, mode: .uat)
-        )
-        expect(statusRequiredResult.status == .unavailable, "status-required verification should be unavailable while DMV UAT status is unusable")
+        try await withFixtureNetwork { @Sendable request in
+            try FixtureNetwork.response(for: request, statusURLsReturnUnavailable: true)
+        } operation: {
+            let statusRequiredResult = await CADMVVerifier.verify(
+                rawPDF417: fixtures.validUAT,
+                options: CADMVVerificationOptions(checkStatus: true, mode: .uat)
+            )
+            expect(statusRequiredResult.status == .unavailable, "status-required verification should be unavailable when status endpoint returns HTTP failure")
+        }
     }
 
     private static func testDIDWebResolution() async throws {
-        let uatKey = try await CADMVVerifier.resolveVerificationMethodForSelfTest(
-            "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
-            mode: .uat
-        )
-        expect(
-            uatKey == "02369ab0d3212491cf3526b34e146ba105ae43e6d44b45240e3c2ccf59d06720bb",
-            "UAT DID key should match DMV DID document"
-        )
+        try await withFixtureNetwork { @Sendable request in
+            try FixtureNetwork.response(for: request)
+        } operation: {
+            let uatKey = try await CADMVVerifier.resolveVerificationMethodForSelfTest(
+                "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+                mode: .uat
+            )
+            expect(
+                uatKey == "02369ab0d3212491cf3526b34e146ba105ae43e6d44b45240e3c2ccf59d06720bb",
+                "UAT DID key should match DMV DID document fixture"
+            )
 
-        let productionKey = try await CADMVVerifier.resolveVerificationMethodForSelfTest(
-            "did:web:credentials.dmv.ca.gov#vm-vcb-1",
-            mode: .production
-        )
-        expect(
-            productionKey == "0395fd0f91f717274281270bf18d59690120db740c6dccbab6d6cc990fc33034a1",
-            "production DID key should match DMV DID document"
-        )
+            let productionKey = try await CADMVVerifier.resolveVerificationMethodForSelfTest(
+                "did:web:credentials.dmv.ca.gov#vm-vcb-1",
+                mode: .production
+            )
+            expect(
+                productionKey == "0395fd0f91f717274281270bf18d59690120db740c6dccbab6d6cc990fc33034a1",
+                "production DID key should match DMV DID document fixture"
+            )
+        }
 
         do {
             _ = try await CADMVVerifier.resolveVerificationMethodForSelfTest(
@@ -395,6 +559,54 @@ enum CADMVVerifierSelfTest {
             fatalError("production verification method must not resolve in UAT mode")
         } catch {
             // Expected: mode/DID mismatch must fail before any arbitrary fetch.
+        }
+
+        try await withFixtureNetwork { @Sendable request in
+            try FixtureNetwork.response(for: request, didStatusCode: 302)
+        } operation: {
+            do {
+                _ = try await CADMVVerifier.resolveVerificationMethodForSelfTest(
+                    "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+                    mode: .uat
+                )
+                fatalError("DID redirect/non-2xx response must fail")
+            } catch {
+                // Expected: DID resolution only accepts direct 2xx responses.
+            }
+        }
+
+        try await withFixtureNetwork { @Sendable request in
+            try FixtureNetwork.response(for: request, omitAssertionMethod: true)
+        } operation: {
+            do {
+                _ = try await CADMVVerifier.resolveVerificationMethodForSelfTest(
+                    "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+                    mode: .uat
+                )
+                fatalError("DID method not authorized for assertion must fail")
+            } catch {
+                // Expected: assertionMethod authorization is required.
+            }
+        }
+    }
+
+    private static func testScannerWrapper() async {
+        let barcode = AAMVATestBarcode.make(
+            issuer: "636014",
+            issueDate: "09282025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+        let scanned = CADMVScannedBarcode(rawPDF417: barcode)
+        expect(scanned.rawPDF417 == barcode, "scanner wrapper should retain raw PDF417 payload")
+        let result = await scanned.verify()
+        expect(result.status == .notPresent, "scanner wrapper should pass payload to verifier")
+
+        switch CADMVScanner.availability {
+        case .available:
+            break
+        case .unavailable(let reason):
+            expect(!reason.isEmpty, "scanner unavailability should include a reason")
         }
     }
 
@@ -409,6 +621,94 @@ enum CADMVVerifierSelfTest {
             .replacingOccurrences(of: "+", with: "-")
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: "=", with: "")
+    }
+
+    private static func withFixtureNetwork(
+        _ handler: @escaping @Sendable (URLRequest) async throws -> (Data, URLResponse),
+        operation: () async throws -> Void
+    ) async throws {
+        await CADMVVerifier.setNetworkHandlerForSelfTest(handler)
+        do {
+            try await operation()
+            await CADMVVerifier.setNetworkHandlerForSelfTest(nil)
+        } catch {
+            await CADMVVerifier.setNetworkHandlerForSelfTest(nil)
+            throw error
+        }
+    }
+}
+
+enum FixtureNetwork {
+    static func response(
+        for request: URLRequest,
+        didStatusCode: Int = 200,
+        omitAssertionMethod: Bool = false,
+        statusURLsReturnUnavailable: Bool = false
+    ) throws -> (Data, URLResponse) {
+        guard let url = request.url else {
+            throw FixtureError.missingURL
+        }
+
+        let body: Data
+        let statusCode: Int
+        if url.absoluteString == "https://uat-credentials.dmv.ca.gov/.well-known/did.json" {
+            body = didDocument(
+                did: "did:web:uat-credentials.dmv.ca.gov",
+                key: "zDnaeU77sUhXKYqRy8263bsCq9Np7vy2z8epZ9WJ6YSWD1TVU",
+                omitAssertionMethod: omitAssertionMethod
+            )
+            statusCode = didStatusCode
+        } else if url.absoluteString == "https://credentials.dmv.ca.gov/.well-known/did.json" {
+            body = didDocument(
+                did: "did:web:credentials.dmv.ca.gov",
+                key: "zDnaeskmyLDwiAmeewyrsaG5SaM3Nz3oSRsw1D17i7USTks9J",
+                omitAssertionMethod: omitAssertionMethod
+            )
+            statusCode = didStatusCode
+        } else if statusURLsReturnUnavailable && url.host == "api.uat-credentials.dmv.ca.gov" {
+            body = Data()
+            statusCode = 503
+        } else {
+            throw FixtureError.unexpectedURL(url.absoluteString)
+        }
+
+        guard let response = HTTPURLResponse(
+            url: url,
+            statusCode: statusCode,
+            httpVersion: "HTTP/1.1",
+            headerFields: nil
+        ) else {
+            throw FixtureError.invalidResponse
+        }
+        return (body, response)
+    }
+
+    private static func didDocument(
+        did: String,
+        key: String,
+        omitAssertionMethod: Bool
+    ) -> Data {
+        let assertionMethod = omitAssertionMethod ? "[]" : #"["\#(did)#vm-vcb-1"]"#
+        return Data("""
+        {
+          "id": "\(did)",
+          "verificationMethod": [
+            {
+              "id": "\(did)#vm-vcb-1",
+              "type": "Multikey",
+              "controller": "\(did)",
+              "publicKeyMultibase": "\(key)"
+            }
+          ],
+          "assertionMethod": \(assertionMethod)
+        }
+        """.utf8)
+    }
+
+    enum FixtureError: Error {
+        case missingURL
+        case unexpectedURL(String)
+        case invalidResponse
     }
 }
 
@@ -533,5 +833,14 @@ enum AAMVATestBarcode {
 
     private static func pad(_ value: Int) -> String {
         String(format: "%04d", value)
+    }
+
+    static func makeWithRawEntry(
+        designator: String,
+        offset: String,
+        length: String,
+        body: String
+    ) -> String {
+        "@\n\u{1e}\rANSI 636014100101\(designator)\(offset)\(length)\(body)"
     }
 }

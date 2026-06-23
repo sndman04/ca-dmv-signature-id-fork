@@ -2,7 +2,10 @@ import Foundation
 import zlib
 
 enum Gzip {
-    static func decompress(_ data: Data) throws -> Data {
+    static func decompress(_ data: Data, maxOutputBytes: Int = 8_388_608) throws -> Data {
+        guard maxOutputBytes >= 0 else {
+            throw CADMVInternalError.statusListDecodeFailed
+        }
         guard !data.isEmpty else {
             return Data()
         }
@@ -44,6 +47,9 @@ enum Gzip {
                 }
                 let produced = chunkSize - Int(stream.avail_out)
                 if produced > 0 {
+                    guard produced <= maxOutputBytes - output.count else {
+                        return Z_MEM_ERROR
+                    }
                     output.append(chunk, count: produced)
                 }
             }

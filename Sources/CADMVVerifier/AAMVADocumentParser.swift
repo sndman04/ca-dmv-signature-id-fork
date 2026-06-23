@@ -39,7 +39,10 @@ struct AAMVADocumentParser {
             let designator = String(entriesText[cursor..<designatorEnd])
             let offsetText = String(entriesText[designatorEnd..<offsetEnd])
             let lengthText = String(entriesText[offsetEnd..<lengthEnd])
-            guard let offset = Int(offsetText), let length = Int(lengthText) else {
+            guard let offset = Int(offsetText),
+                  let length = Int(lengthText),
+                  offset >= 0,
+                  length >= 0 else {
                 throw CADMVInternalError.malformedBarcode
             }
             descriptors.append(AAMVASubfileDescriptor(
@@ -58,13 +61,15 @@ struct AAMVADocumentParser {
                 return nil
             }
             let startDistance = descriptor.offset
-            let endDistance = descriptor.offset + descriptor.length
-            guard startDistance <= rawPDF417.count, endDistance <= rawPDF417.count else {
+            let end = descriptor.offset.addingReportingOverflow(descriptor.length)
+            guard !end.overflow,
+                  startDistance <= rawPDF417.count,
+                  end.partialValue <= rawPDF417.count else {
                 return nil
             }
             let start = rawPDF417.index(rawPDF417.startIndex, offsetBy: startDistance)
-            let end = rawPDF417.index(rawPDF417.startIndex, offsetBy: endDistance)
-            let rawSubfile = String(rawPDF417[start..<end])
+            let endIndex = rawPDF417.index(rawPDF417.startIndex, offsetBy: end.partialValue)
+            let rawSubfile = String(rawPDF417[start..<endIndex])
             let fieldData = rawSubfile.hasPrefix(descriptor.designator)
                 ? String(rawSubfile.dropFirst(2))
                 : rawSubfile

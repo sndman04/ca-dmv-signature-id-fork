@@ -55,10 +55,24 @@ struct AAMVADate: Equatable, Comparable, Sendable {
               let month = Int(value.prefix(2)),
               let day = Int(value.dropFirst(2).prefix(2)),
               let year = Int(value.suffix(4)),
+              (1...9999).contains(year),
               (1...12).contains(month),
-              (1...31).contains(day) else {
+              (1...31).contains(day),
+              isValidDate(month: month, day: day, year: year) else {
             return nil
         }
         return AAMVADate(month: month, day: day, year: year)
+    }
+
+    private static func isValidDate(month: Int, day: Int, year: Int) -> Bool {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        var components = DateComponents()
+        components.calendar = calendar
+        components.timeZone = calendar.timeZone
+        components.year = year
+        components.month = month
+        components.day = day
+        return components.isValidDate(in: calendar)
     }
 }

@@ -16,7 +16,7 @@ PATH="/Users/dougalvey/.cache/codex-runtimes/codex-primary-runtime/dependencies/
 
 The current local SwiftPM toolchain does not expose Swift `Testing` or `XCTest`, so the repository uses `CADMVVerifierSelfTest` as a repeatable verification runner.
 
-The self-test currently performs live DID Web requests to DMV UAT and production DID document URLs. If CI must run offline, add fixture-backed DID document injection before disabling network access.
+The self-test uses fixture-backed DID Web and status endpoint responses, so the core verification runner is suitable for offline CI.
 
 ## Expected Self-Test Coverage
 
@@ -24,15 +24,23 @@ The self-test currently performs live DID Web requests to DMV UAT and production
 - Missing optional VCB.
 - Required missing VCB.
 - Non-California barcode.
+- Scanner wrapper payload forwarding and availability reporting.
+- Issue date leap-year, boundary-date, invalid-date, and future-date behavior.
+- Impossible issue date fails closed when a required VCB cannot be established from a real calendar date.
 - Malformed base64 VCB.
 - Malformed CBOR-LD VCB.
+- Malformed AAMVA header/subfile descriptor offsets and lengths fail closed.
+- Base64/Base64URL malformed length, alphabet, and padding rejection.
+- Base58 malformed alphabet rejection.
+- Status-list gzip output limit enforcement.
+- Malformed status-list multibase/gzip corpus rejection.
 - Official valid DMV UAT fixture verification.
 - Official invalid DMV UAT fixture rejection.
 - Tampered protected AAMVA field rejection.
 - UAT fixture rejection in production mode.
-- Status-required official UAT verification returns `.unavailable` while the live DMV UAT status endpoint is unusable.
+- Status-required official UAT verification returns `.unavailable` on fixture-backed HTTP status failure.
 - Synthetic JS-reference Bitstring Status List `ecdsa-rdfc-2019` verification.
 - Verified revoked status-list bit maps to `.revoked`.
 - Verified clear status-list bit maps to `.verified`.
 - Tampered status-list `encodedList` fails proof verification.
-- DMV DID Web key resolution and mode mismatch rejection.
+- Fixture-backed DMV DID Web key resolution, mode mismatch rejection, non-2xx rejection, and assertion-method authorization rejection.

@@ -131,6 +131,20 @@ extension CADMVVerifier {
         Base58BTC.decode(value)
     }
 
+    public static func base64URLDecodeForSelfTest(_ value: String) -> Data? {
+        Base64URL.decode(value)
+    }
+
+    public static func gzipDecompressForSelfTest(_ data: Data, maxOutputBytes: Int) throws -> Data {
+        try Gzip.decompress(data, maxOutputBytes: maxOutputBytes)
+    }
+
+    public static func setNetworkHandlerForSelfTest(
+        _ handler: (@Sendable (URLRequest) async throws -> (Data, URLResponse))?
+    ) async {
+        await CADMVNetworkSession.setTestHandler(handler)
+    }
+
     public static func statusListVerifyDataForSelfTest(jsonData: Data) throws -> String {
         try EcdsaRdfc2019Verifier.createVerifyData(
             DMVStatusListCredentialParser.parse(jsonData)

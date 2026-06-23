@@ -41,7 +41,7 @@ let package = Package(
         ),
         .executableTarget(
             name: "CADMVVerifierSelfTest",
-            dependencies: ["CADMVVerifier"],
+            dependencies: ["CADMVVerifier", "CADMVScanner"],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
             ]
