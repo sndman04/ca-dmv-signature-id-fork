@@ -2,43 +2,42 @@ import Foundation
 
 struct AAMVADocumentParser {
     func parse(rawPDF417: String) throws -> AAMVADocument {
-        guard let ansiRange = rawPDF417.range(of: "ANSI ") else {
+        let payload = Data(rawPDF417.utf8)
+        guard let ansiRange = payload.range(of: Data("ANSI ".utf8)) else {
             throw CADMVInternalError.malformedBarcode
         }
 
         let headerStart = ansiRange.upperBound
-        let headerAndBody = rawPDF417[headerStart...]
-        guard headerAndBody.count >= 12 else {
+        guard payload.count - headerStart >= 12 else {
             throw CADMVInternalError.malformedBarcode
         }
 
-        let issuer = String(headerAndBody.prefix(6))
-        let remainder = headerAndBody.dropFirst(6)
-        guard remainder.count >= 6 else {
+        let issuerBytes = payload[headerStart..<headerStart + 6]
+        guard let issuer = String(data: Data(issuerBytes), encoding: .utf8) else {
             throw CADMVInternalError.malformedBarcode
         }
-
-        let subfileCountText = String(remainder.dropFirst(4).prefix(2))
+        let remainderStart = headerStart + 6
+        let subfileCountRange = (remainderStart + 4)..<(remainderStart + 6)
+        let subfileCountText = String(decoding: payload[subfileCountRange], as: UTF8.self)
         guard let subfileCount = Int(subfileCountText), subfileCount >= 0 else {
             throw CADMVInternalError.malformedBarcode
         }
 
-        let entriesStart = remainder.index(remainder.startIndex, offsetBy: 6)
-        let entriesText = remainder[entriesStart...]
+        let entriesStart = remainderStart + 6
         let minimumEntryLength = subfileCount * 10
-        guard entriesText.count >= minimumEntryLength else {
+        guard payload.count - entriesStart >= minimumEntryLength else {
             throw CADMVInternalError.malformedBarcode
         }
 
         var descriptors: [AAMVASubfileDescriptor] = []
-        var cursor = entriesText.startIndex
+        var cursor = entriesStart
         for _ in 0..<subfileCount {
-            let designatorEnd = entriesText.index(cursor, offsetBy: 2)
-            let offsetEnd = entriesText.index(designatorEnd, offsetBy: 4)
-            let lengthEnd = entriesText.index(offsetEnd, offsetBy: 4)
-            let designator = String(entriesText[cursor..<designatorEnd])
-            let offsetText = String(entriesText[designatorEnd..<offsetEnd])
-            let lengthText = String(entriesText[offsetEnd..<lengthEnd])
+            let designatorEnd = cursor + 2
+            let offsetEnd = designatorEnd + 4
+            let lengthEnd = offsetEnd + 4
+            let designator = String(decoding: payload[cursor..<designatorEnd], as: UTF8.self)
+            let offsetText = String(decoding: payload[designatorEnd..<offsetEnd], as: UTF8.self)
+            let lengthText = String(decoding: payload[offsetEnd..<lengthEnd], as: UTF8.self)
             guard let offset = Int(offsetText),
                   let length = Int(lengthText),
                   offset >= 0,
@@ -53,8 +52,7 @@ struct AAMVADocumentParser {
             cursor = lengthEnd
         }
 
-        let bodyStart = rawPDF417.index(headerStart, offsetBy: 6 + 6 + minimumEntryLength)
-        let payloadPrefixLength = rawPDF417.distance(from: rawPDF417.startIndex, to: bodyStart)
+        let payloadPrefixLength = headerStart + 6 + 6 + minimumEntryLength
 
         let subfiles = descriptors.compactMap { descriptor -> AAMVASubfile? in
             guard descriptor.offset >= payloadPrefixLength else {
@@ -63,13 +61,16 @@ struct AAMVADocumentParser {
             let startDistance = descriptor.offset
             let end = descriptor.offset.addingReportingOverflow(descriptor.length)
             guard !end.overflow,
-                  startDistance <= rawPDF417.count,
-                  end.partialValue <= rawPDF417.count else {
+                  startDistance <= payload.count,
+                  end.partialValue <= payload.count else {
                 return nil
             }
-            let start = rawPDF417.index(rawPDF417.startIndex, offsetBy: startDistance)
-            let endIndex = rawPDF417.index(rawPDF417.startIndex, offsetBy: end.partialValue)
-            let rawSubfile = String(rawPDF417[start..<endIndex])
+            guard let rawSubfile = String(
+                data: payload[startDistance..<end.partialValue],
+                encoding: .utf8
+            ) else {
+                return nil
+            }
             let fieldData = rawSubfile.hasPrefix(descriptor.designator)
                 ? String(rawSubfile.dropFirst(2))
                 : rawSubfile

@@ -1,15 +1,15 @@
-// swift-tools-version: 6.3
+// swift-tools-version: 6.0
 
 import PackageDescription
 
 let package = Package(
     name: "CADMVVerifier",
     platforms: [
-        .iOS(.v26),
-        .macOS(.v26),
-        .tvOS(.v26),
-        .watchOS(.v26),
-        .visionOS(.v26)
+        .iOS(.v16),
+        .macOS(.v13),
+        .tvOS(.v16),
+        .watchOS(.v9),
+        .visionOS(.v1)
     ],
     products: [
         .library(name: "CADMVVerifier", targets: ["CADMVVerifier"]),
@@ -42,6 +42,14 @@ let package = Package(
         .executableTarget(
             name: "CADMVVerifierSelfTest",
             dependencies: ["CADMVVerifier", "CADMVScanner"],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ]
+        ),
+        .testTarget(
+            name: "CADMVVerifierTests",
+            dependencies: ["CADMVVerifier"],
+            exclude: ["Fixtures/README.md"],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
             ]

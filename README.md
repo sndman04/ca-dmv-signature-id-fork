@@ -49,13 +49,18 @@ Raw PDF417 data can contain personally identifiable information.
 
 ## Verification
 
-Run the current package self-test:
+Run the SwiftPM tests and the broader fixture-backed self-test:
 
 ```sh
+swift test
 swift run CADMVVerifierSelfTest
 ```
 
-The local toolchain currently does not expose Swift `Testing` or `XCTest` to SwiftPM, so the package uses an executable self-test runner for repeatable verification in this workspace.
+If `swift test` cannot import Swift `Testing` when using Command Line Tools, point SwiftPM at the full Xcode toolchain:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
+```
 
 ## Reference SDK
 

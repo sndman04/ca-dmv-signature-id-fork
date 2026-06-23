@@ -186,10 +186,11 @@ enum DMVVCBDecoder {
     }
 
     private static func protectedComponentIndex(from data: Data) throws -> String {
-        if data == Data([0x75, 0xff, 0x70, 0x60]) {
-            return "u_3Bg"
+        guard data.count == 4,
+              data.first == UInt8(ascii: "u") else {
+            throw CADMVInternalError.unsupportedVCB
         }
-        throw CADMVInternalError.unsupportedVCB
+        return "u" + Base64URL.encode(data.dropFirst())
     }
 
     private static func multibaseBase58BTCString(from data: Data) throws -> String {

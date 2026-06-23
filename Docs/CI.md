@@ -5,6 +5,7 @@ Recommended commands:
 ```sh
 swift build
 swift build -c release
+swift test
 swift run CADMVVerifierSelfTest
 ```
 
@@ -14,9 +15,14 @@ Reference SDK parity command:
 PATH="/Users/dougalvey/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node Tools/reference-runner.mjs
 ```
 
-The current local SwiftPM toolchain does not expose Swift `Testing` or `XCTest`, so the repository uses `CADMVVerifierSelfTest` as a repeatable verification runner.
+If a Command Line Tools-only environment cannot import Swift `Testing`, run SwiftPM with the full Xcode toolchain:
 
-The self-test uses fixture-backed DID Web and status endpoint responses, so the core verification runner is suitable for offline CI.
+```sh
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
+DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift run CADMVVerifierSelfTest
+```
+
+The SwiftPM tests cover focused regression cases, and the self-test uses fixture-backed DID Web and status endpoint responses, so both are suitable for offline CI.
 
 ## Expected Self-Test Coverage
 
