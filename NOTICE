@@ -1,0 +1,21 @@
+This project is an unofficial Swift implementation intended to match behavior from the California DMV DL/ID verifier SDK and technical guide.
+
+It is not endorsed by California DMV, Digital Bazaar, Inc., or any other contributor to the official JavaScript SDK unless separately stated.
+
+Reference implementation:
+
+- Repository: https://github.com/stateofca/cadmv-dlid-verifier-sdk
+- Captured commit: 03c5485513ff6f2de6b46950a159b8f2cd427859
+- License: BSD-3-Clause
+
+The reference SDK includes the following copyright notices:
+
+Copyright 2024 - 2026 California Department of Motor Vehicles
+Copyright 2018 - 2026 Digital Bazaar, Inc.
+
+Redistributions derived from reference SDK behavior or source material must retain the required BSD-3-Clause notices and must not imply endorsement by the copyright holders or contributors.
+
+Swift package dependencies:
+
+- swift-crypto, Copyright Apple Inc. and the Swift Crypto project authors, Apache-2.0.
+- swift-asn1, Copyright Apple Inc. and the Swift ASN.1 project authors, Apache-2.0.

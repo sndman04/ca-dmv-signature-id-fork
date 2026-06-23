@@ -1,0 +1,11 @@
+.build/
+.swiftpm/
+DerivedData/
+.DS_Store
+
+# Reference SDK dependencies are reproducible from the reference package files.
+References/cadmv-dlid-verifier-sdk/node_modules/
+
+# Local-only fixtures must never be committed if they contain private data.
+PrivateFixtures/
+*.local

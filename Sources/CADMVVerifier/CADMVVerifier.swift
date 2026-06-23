@@ -1,0 +1,79 @@
+import Foundation
+
+/// Privacy-minimized verification outcome for a California DMV DL/ID barcode.
+public enum CADMVVerificationStatus: Equatable, Sendable {
+    /// The DMV digital-signature verification passed.
+    case verified
+    /// Verification failed, or required signed data was malformed or unsupported.
+    case failed
+    /// A California DMV digital signature was not present or not applicable.
+    case notPresent
+    /// The credential status list indicates revocation.
+    case revoked
+    /// The credential is expired.
+    case expired
+    /// Required online verification infrastructure was temporarily unavailable.
+    case unavailable
+}
+
+/// Privacy-minimized result safe for normal app control flow and UI messaging.
+public struct CADMVVerificationResult: Equatable, Sendable {
+    public let status: CADMVVerificationStatus
+    public let message: String?
+
+    public init(status: CADMVVerificationStatus, message: String? = nil) {
+        self.status = status
+        self.message = message
+    }
+}
+
+/// Verification controls that do not expose or retain parsed identity data.
+public struct CADMVVerificationOptions: Sendable {
+    /// Require VCB data even for documents issued before the DMV requirement date.
+    public var requireVCB: Bool
+    /// Check revocation/status infrastructure when cryptographic verification is available.
+    public var checkStatus: Bool
+    /// DMV environment to enforce for issuers, DID documents, and status hosts.
+    public var mode: CADMVVerificationMode
+    /// Network timeout for online DID/status checks.
+    public var networkTimeoutSeconds: Double
+
+    public init(
+        requireVCB: Bool = false,
+        checkStatus: Bool = false,
+        mode: CADMVVerificationMode = .production,
+        networkTimeoutSeconds: Double = 10
+    ) {
+        self.requireVCB = requireVCB
+        self.checkStatus = checkStatus
+        self.mode = mode
+        self.networkTimeoutSeconds = networkTimeoutSeconds
+    }
+
+    public static let `default` = CADMVVerificationOptions()
+}
+
+/// DMV environment selection.
+public enum CADMVVerificationMode: Sendable {
+    case production
+    case uat
+}
+
+public enum CADMVVerifier {
+    /// Verifies already scanned raw PDF417 barcode data.
+    ///
+    /// The raw barcode may contain PII. This API does not log, persist, or
+    /// expose parsed identity fields. When status checking is required but
+    /// DMV status infrastructure is unavailable, the result is `.unavailable`.
+    public static func verify(
+        rawPDF417: String,
+        options: CADMVVerificationOptions = .default
+    ) async -> CADMVVerificationResult {
+        do {
+            return try await VerificationPipeline(options: options)
+                .verify(rawPDF417: rawPDF417)
+        } catch {
+            return VerificationMessages.result(for: .failed)
+        }
+    }
+}
