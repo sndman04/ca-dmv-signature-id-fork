@@ -2,6 +2,8 @@
 
 The public API is intentionally small and privacy-minimized.
 
+This package verifies the supported California DMV DL/ID VCB profile. It is not a general JSON-LD/Data Integrity verifier. The current profile support expects DMV VCB `protectedComponentIndex` values encoded as `u` plus a 24-bit bitmap; credentials outside that profile fail closed as unsupported.
+
 ## `CADMVVerifier`
 
 ```swift
@@ -33,7 +35,7 @@ Defaults:
 - `mode = .production`
 - `networkTimeoutSeconds = 10`
 
-`checkStatus = true` performs online revocation checking. If the DMV status endpoint is unavailable, redirects outside the allowed fetch policy, returns an unsupported credential shape, or the status-list credential proof cannot be verified, the result is `.unavailable`.
+`checkStatus = true` performs online revocation checking. If the DMV status endpoint is unavailable, redirects outside the allowed fetch policy, returns an unsupported credential shape, or the status-list credential proof cannot be verified, the result is `.unavailable`. Application integrations should treat only `.verified` as verified.
 
 ## `CADMVVerificationStatus`
 

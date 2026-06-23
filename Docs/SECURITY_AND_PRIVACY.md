@@ -17,6 +17,8 @@ This package handles raw PDF417 barcode data from government identity documents.
 
 The package currently parses AAMVA data, decodes the DMV VCB credential shape covered by the official UAT samples, resolves DMV DID Web documents, verifies `ecdsa-xi-2023` signatures for that profile, and verifies `ecdsa-rdfc-2019` Bitstring Status List credentials for the supported DMV VC v2 status-list profile.
 
+It is not a general JSON-LD, RDF canonicalization, or Data Integrity verifier. The native canonicalization paths are limited to the supported DMV credential and status-list shapes, and the current VCB profile expects `protectedComponentIndex` to be `u` plus a 24-bit bitmap. Unsupported shapes must fail closed.
+
 When status checking is required but DMV status infrastructure is unavailable or returns unsupported data, the verifier returns `.unavailable` rather than `.verified`.
 
 ## Debugging Policy

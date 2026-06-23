@@ -4,7 +4,7 @@
 
 This repository is under active implementation. It currently includes:
 
-- A Swift Package scaffold targeting Swift 6.3.
+- A Swift Package targeting Swift 6.0.
 - A privacy-minimized public verifier API.
 - AAMVA PDF417 parsing for issuer, subfile, issue-date, state, and VCB extraction.
 - California DMV VCB requirement-date handling.
@@ -12,7 +12,9 @@ This repository is under active implementation. It currently includes:
 - A self-test executable that uses synthetic non-PII data and DMV-published UAT samples from the reference SDK.
 - A local reference copy of the official JavaScript SDK for parity work.
 
-Cryptographic verification is implemented for the DMV VCB profile covered by the official UAT samples. Status-list credential verification is implemented for the supported DMV VC v2 profile and returns `.revoked` only after the status-list credential proof verifies. The official UAT sample still returns `.unavailable` with `checkStatus` enabled because the live DMV UAT status endpoint currently does not provide a usable status-list credential.
+This package is a narrow California DMV DL/ID VCB profile verifier, not a general Data Integrity, JSON-LD, or RDF canonicalization library. The native canonicalization code is intentionally limited to the DMV credential and status-list shapes covered by the official UAT fixtures and synthetic JS-reference status-list fixture.
+
+Cryptographic verification is implemented for the DMV VCB profile covered by the official UAT samples. The supported VCB profile currently expects a `protectedComponentIndex` encoded as `u` plus a 24-bit bitmap. Status-list credential verification is implemented for the supported DMV VC v2 profile and returns `.revoked` only after the status-list credential proof verifies. The official UAT sample still returns `.unavailable` with `checkStatus` enabled because the live DMV UAT status endpoint currently does not provide a usable status-list credential.
 
 ## Products
 
@@ -55,6 +57,8 @@ Run the SwiftPM tests and the broader fixture-backed self-test:
 swift test
 swift run CADMVVerifierSelfTest
 ```
+
+CI runs both commands on push and pull request. The self-test contains the official valid/invalid UAT fixture parity checks, so do not treat `swift test` alone as the full verification gate.
 
 If `swift test` cannot import Swift `Testing` when using Command Line Tools, point SwiftPM at the full Xcode toolchain:
 

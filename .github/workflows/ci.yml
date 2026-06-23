@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  swift:
+    name: Swift package
+    runs-on: macos-15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build debug
+        run: swift build
+
+      - name: Build release
+        run: swift build -c release
+
+      - name: Run SwiftPM tests
+        run: swift test
+
+      - name: Run official-fixture self-test
+        run: swift run CADMVVerifierSelfTest

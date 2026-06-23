@@ -9,6 +9,8 @@ swift test
 swift run CADMVVerifierSelfTest
 ```
 
+GitHub Actions runs these commands on push and pull request in `.github/workflows/ci.yml`.
+
 Reference SDK parity command:
 
 ```sh
@@ -22,7 +24,7 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift run CADMVVerifierSelfTest
 ```
 
-The SwiftPM tests cover focused regression cases, and the self-test uses fixture-backed DID Web and status endpoint responses, so both are suitable for offline CI.
+The SwiftPM tests cover focused regression cases. The self-test contains the official valid/invalid UAT fixture parity checks and uses fixture-backed DID Web and status endpoint responses. CI must run both `swift test` and `swift run CADMVVerifierSelfTest`.
 
 ## Expected Self-Test Coverage
 
