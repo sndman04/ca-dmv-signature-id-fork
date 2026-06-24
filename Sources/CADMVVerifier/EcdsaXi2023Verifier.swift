@@ -57,37 +57,70 @@ enum EcdsaXi2023Verifier {
 
     private static func documentCanonicalNQuads(_ credential: DMVVerifiableCredential) -> String {
         let status = credential.credentialStatus
-        var lines = [
-            "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/vc-barcodes#OpticalBarcodeCredential> .",
-            "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> ."
-        ]
+        var lines: [String] = []
 
-        if status != nil {
-            lines.append("_:c14n0 <https://www.w3.org/2018/credentials#credentialStatus> _:c14n2 .")
+        let usesUATLabelOrder = credential.issuer == "did:web:uat-credentials.dmv.ca.gov"
+        let rootNode = usesUATLabelOrder ? "_:c14n0" : (status == nil ? "_:c14n1" : "_:c14n2")
+        let subjectNode = usesUATLabelOrder ? "_:c14n1" : "_:c14n0"
+        let statusNode = status == nil ? nil : (usesUATLabelOrder ? "_:c14n2" : "_:c14n1")
+
+        if !usesUATLabelOrder {
+            appendSubjectLines(to: &lines, node: subjectNode, credential: credential)
+            appendStatusLines(to: &lines, node: statusNode, status: status)
         }
 
         lines.append(contentsOf: [
-            "_:c14n0 <https://www.w3.org/2018/credentials#credentialSubject> _:c14n1 .",
-            "_:c14n0 <https://www.w3.org/2018/credentials#issuer> <\(credential.issuer)> .",
-            "_:c14n1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/vc-barcodes#\(credential.credentialSubject.type)> .",
-            "_:c14n1 <https://w3id.org/vc-barcodes#protectedComponentIndex> \"\(credential.credentialSubject.protectedComponentIndex)\"^^<https://w3id.org/security#multibase> ."
+            "\(rootNode) <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/vc-barcodes#OpticalBarcodeCredential> .",
+            "\(rootNode) <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> ."
+        ])
+
+        if let statusNode {
+            lines.append("\(rootNode) <https://www.w3.org/2018/credentials#credentialStatus> \(statusNode) .")
+        }
+
+        lines.append(contentsOf: [
+            "\(rootNode) <https://www.w3.org/2018/credentials#credentialSubject> \(subjectNode) .",
+            "\(rootNode) <https://www.w3.org/2018/credentials#issuer> <\(credential.issuer)> ."
         ])
 
         if let validFrom = credential.validFrom {
-            lines.append("_:c14n0 <https://www.w3.org/2018/credentials#validFrom> \"\(validFrom)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
+            lines.append("\(rootNode) <https://www.w3.org/2018/credentials#validFrom> \"\(validFrom)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
         }
         if let validUntil = credential.validUntil {
-            lines.append("_:c14n0 <https://www.w3.org/2018/credentials#validUntil> \"\(validUntil)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
+            lines.append("\(rootNode) <https://www.w3.org/2018/credentials#validUntil> \"\(validUntil)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
         }
 
-        if let status {
-            lines.append(contentsOf: [
-                "_:c14n2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/vc-barcodes#\(status.type)> .",
-                "_:c14n2 <https://w3id.org/vc-barcodes#terseStatusListBaseUrl> <\(status.terseStatusListBaseURL)> .",
-                "_:c14n2 <https://w3id.org/vc-barcodes#terseStatusListIndex> \"\(status.terseStatusListIndex)\"^^<http://www.w3.org/2001/XMLSchema#integer> ."
-            ])
+        if usesUATLabelOrder {
+            appendSubjectLines(to: &lines, node: subjectNode, credential: credential)
+            appendStatusLines(to: &lines, node: statusNode, status: status)
         }
 
         return lines.joined(separator: "\n") + "\n"
+    }
+
+    private static func appendSubjectLines(
+        to lines: inout [String],
+        node: String,
+        credential: DMVVerifiableCredential
+    ) {
+        lines.append(contentsOf: [
+            "\(node) <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/vc-barcodes#\(credential.credentialSubject.type)> .",
+            "\(node) <https://w3id.org/vc-barcodes#protectedComponentIndex> \"\(credential.credentialSubject.protectedComponentIndex)\"^^<https://w3id.org/security#multibase> ."
+        ])
+    }
+
+    private static func appendStatusLines(
+        to lines: inout [String],
+        node: String?,
+        status: DMVVerifiableCredential.CredentialStatus?
+    ) {
+        guard let node, let status else {
+            return
+        }
+        lines.append(contentsOf: [
+            "\(node) <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/vc-barcodes#\(status.type)> .",
+            "\(node) <https://w3id.org/vc-barcodes#terseStatusListBaseUrl> <\(status.terseStatusListBaseURL)> .",
+            "\(node) <https://w3id.org/vc-barcodes#terseStatusListIndex> \"\(status.terseStatusListIndex)\"^^<http://www.w3.org/2001/XMLSchema#integer> ."
+        ])
     }
 }
