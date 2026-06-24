@@ -2,8 +2,10 @@ import Foundation
 
 enum DMVVCBDecoder {
     private static let cborldTag: UInt64 = 51997
-    private static let legacyRangeUncompressedTag: UInt64 = 1536
+    private static let legacyRangeTagStart: UInt64 = 1536
+    private static let legacyRangeTagEnd: UInt64 = 1791
     private static let legacySingletonUncompressedTag: UInt64 = 1280
+    private static let legacySingletonCompressedTag: UInt64 = 1281
     private static let supportedCBORLDVersion: UInt64 = 31_000_000
 
     static func decode(_ data: Data) throws -> DMVVerifiableCredential {
@@ -15,11 +17,18 @@ enum DMVVCBDecoder {
         switch tag {
         case cborldTag:
             return try decodeCurrentCBORLD(taggedValue)
-        case legacyRangeUncompressedTag, legacySingletonUncompressedTag:
+        case legacyRangeTagStart...legacyRangeTagEnd:
+            return try decodeLegacyRangeCBORLD(tag: tag, value: taggedValue)
+        case legacySingletonUncompressedTag:
             guard case let .map(map) = taggedValue else {
                 throw CADMVInternalError.unsupportedVCB
             }
             return try expandedCredential(from: map)
+        case legacySingletonCompressedTag:
+            guard case let .map(map) = taggedValue else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return try compressedCredential(from: map)
         default:
             throw CADMVInternalError.unsupportedVCB
         }
@@ -48,6 +57,69 @@ enum DMVVCBDecoder {
             credentialStatus: try optionalMap(map, key: 174).map(credentialStatus(from:)),
             proof: try proof(from: requiredMap(map, key: 182))
         )
+    }
+
+    private static func decodeLegacyRangeCBORLD(tag: UInt64, value: CBORValue) throws -> DMVVerifiableCredential {
+        let registryEntryIDStart = tag - legacyRangeTagStart
+        if registryEntryIDStart < 128 {
+            guard case let .map(map) = value else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            if registryEntryIDStart == 0 {
+                return try expandedCredential(from: map)
+            }
+            guard registryEntryIDStart == supportedCBORLDVersion else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return try compressedCredential(from: map)
+        }
+
+        guard case let .array(topLevel) = value,
+              topLevel.count == 2,
+              case let .byteString(remainingVarintBytes) = topLevel[0],
+              case let .map(map) = topLevel[1] else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        var varintBytes = Data([UInt8(registryEntryIDStart)])
+        varintBytes.append(remainingVarintBytes)
+        guard try registryEntryID(fromVarintBytes: varintBytes) == supportedCBORLDVersion else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return try compressedCredential(from: map)
+    }
+
+    private static func compressedCredential(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential {
+        DMVVerifiableCredential(
+            context: try context(from: requiredArray(map, key: 1)),
+            type: try credentialTypes(from: requiredArray(map, key: 157)),
+            issuer: try url(from: requiredValue(map, key: 180)),
+            credentialSubject: try credentialSubject(from: requiredMap(map, key: 176)),
+            credentialStatus: try optionalMap(map, key: 174).map(credentialStatus(from:)),
+            proof: try proof(from: requiredMap(map, key: 182))
+        )
+    }
+
+    private static func registryEntryID(fromVarintBytes bytes: Data) throws -> UInt64 {
+        guard !bytes.isEmpty, bytes.count < 24 else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+
+        var result: UInt64 = 0
+        var shift: UInt64 = 0
+        for (index, byte) in bytes.enumerated() {
+            guard shift < 64 else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            result |= UInt64(byte & 0x7f) << shift
+            if (byte & 0x80) == 0 {
+                guard index == bytes.count - 1 else {
+                    throw CADMVInternalError.unsupportedVCB
+                }
+                return result
+            }
+            shift += 7
+        }
+        throw CADMVInternalError.unsupportedVCB
     }
 
     private static func expandedCredential(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential {

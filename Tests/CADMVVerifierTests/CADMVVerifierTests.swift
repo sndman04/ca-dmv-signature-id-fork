@@ -233,6 +233,20 @@ struct CADMVVerifierTests {
             #expect(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
         }
     }
+
+    @Test
+    func decoderAcceptsLegacyCompressedCBORLDProfile() throws {
+        for data in [
+            CBORFixture.legacySingletonCompressedCredential(),
+            CBORFixture.legacyRangeCompressedCredential()
+        ] {
+            let credential = try DMVVCBDecoder.decode(data)
+
+            #expect(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
+            #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
+            #expect(credential.credentialStatus?.terseStatusListIndex == 1)
+        }
+    }
 }
 
 private enum AAMVATestBarcode {
@@ -305,6 +319,18 @@ private enum CBORFixture {
         )
     }
 
+    static func legacySingletonCompressedCredential() -> Data {
+        tagged(1_281, compressedCredentialMap())
+    }
+
+    static func legacyRangeCompressedCredential() -> Data {
+        let idBytes = varint(31_000_000)
+        return tagged(1_536 + UInt64(idBytes[0]), array([
+            byteString(Data(idBytes.dropFirst())),
+            compressedCredentialMap()
+        ]))
+    }
+
     static func uncompressedCredential(tag: UInt64 = 51_997) -> Data {
         let credential = map([
             (text("@context"), array([
@@ -350,6 +376,23 @@ private enum CBORFixture {
         includeStatus: Bool,
         textEncoded: Bool
     ) -> Data {
+        let payload = compressedCredentialMap(
+            protectedComponentIndexValue: protectedComponentIndexValue,
+            includeStatus: includeStatus,
+            textEncoded: textEncoded
+        )
+
+        return tagged(51_997, array([
+            unsigned(31_000_000),
+            payload
+        ]))
+    }
+
+    private static func compressedCredentialMap(
+        protectedComponentIndexValue: Data = byteString(Data([0x75, 0x01, 0x02, 0x03])),
+        includeStatus: Bool = true,
+        textEncoded: Bool = false
+    ) -> Data {
         var pairs: [(Data, Data)] = [
             (unsigned(1), array(textEncoded
                 ? [text("https://www.w3.org/ns/credentials/v2"), text("https://w3id.org/vc-barcodes/v1")]
@@ -380,10 +423,7 @@ private enum CBORFixture {
             ])))
         }
 
-        return tagged(51_997, array([
-            unsigned(31_000_000),
-            map(pairs)
-        ]))
+        return map(pairs)
     }
 
     private static func unsigned(_ value: UInt64) -> Data {
@@ -405,6 +445,20 @@ private enum CBORFixture {
 
     private static func null() -> Data {
         Data([0xf6])
+    }
+
+    private static func varint(_ value: UInt64) -> [UInt8] {
+        var value = value
+        var bytes: [UInt8] = []
+        repeat {
+            var byte = UInt8(value & 0x7f)
+            value >>= 7
+            if value != 0 {
+                byte |= 0x80
+            }
+            bytes.append(byte)
+        } while value != 0
+        return bytes
     }
 
     private static func array(_ values: [Data]) -> Data {

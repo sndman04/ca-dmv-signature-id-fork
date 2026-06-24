@@ -37,6 +37,7 @@ The SwiftPM tests cover focused regression cases. The self-test contains the off
 - Impossible issue date fails closed when a required VCB cannot be established from a real calendar date.
 - Malformed base64 VCB.
 - Malformed CBOR-LD VCB.
+- Current, uncompressed, legacy uncompressed, and legacy compressed CBOR-LD DMV-profile decode forms.
 - Malformed AAMVA header/subfile descriptor offsets and lengths fail closed.
 - Base64/Base64URL malformed length, alphabet, and padding rejection.
 - Base58 malformed alphabet rejection.
