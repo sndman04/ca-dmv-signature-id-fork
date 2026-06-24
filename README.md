@@ -2,6 +2,11 @@
 
 `CADMVVerifier` is a Swift-native package for verifying California DMV DL/ID digital signatures embedded in PDF417 barcode data.
 
+This is an unofficial implementation. It is not endorsed by California DMV,
+Digital Bazaar, Inc., or contributors to the official JavaScript SDK. It should
+be treated as parity-oriented verifier implementation work, not as legal,
+regulatory, or identity-assurance advice.
+
 This repository is under active implementation. It currently includes:
 
 - A Swift Package targeting Swift 6.0.
