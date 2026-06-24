@@ -17,6 +17,12 @@ public enum CADMVVerifier {
 
 `rawPDF417` may contain personally identifiable information. The verifier does not log, persist, or expose parsed identity fields.
 
+`rawPDF417` is expected to be the full scanner-provided PDF417 payload. App
+integrations should pass values like `AVMetadataMachineReadableCodeObject.stringValue`
+directly, without parsing and reconstructing the barcode, normalizing AAMVA
+separator characters, or extracting only selected fields. Leading/trailing
+whitespace and newline trimming is tolerated.
+
 ## `CADMVVerificationOptions`
 
 ```swift

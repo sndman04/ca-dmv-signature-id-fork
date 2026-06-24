@@ -40,6 +40,12 @@ case .failed, .revoked, .expired, .unavailable:
 }
 ```
 
+`rawPDF417` should be the scanner-provided PDF417 payload, such as
+`AVMetadataMachineReadableCodeObject.stringValue`, passed through unchanged.
+Do not rebuild it from parsed AAMVA fields, normalize line separators, or pass
+only selected fields. Trimming leading/trailing whitespace and newlines is
+acceptable, but avoid any other transformation before calling the verifier.
+
 ## Safety Rules
 
 Raw PDF417 data can contain personally identifiable information.
@@ -61,7 +67,7 @@ swift run CADMVVerifierSelfTest
 
 CI runs both commands on push and pull request. The self-test contains the official valid/invalid UAT fixture parity checks, so do not treat `swift test` alone as the full verification gate.
 
-If `swift test` cannot import Swift `Testing` when using Command Line Tools, point SwiftPM at the full Xcode toolchain:
+If `swift test` cannot import XCTest when using Command Line Tools, point SwiftPM at the full Xcode toolchain:
 
 ```sh
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test

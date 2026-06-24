@@ -55,7 +55,7 @@ struct AAMVADocumentParser {
 
         var subfiles: [AAMVASubfile] = []
         var subfileCursor = entriesStart + minimumEntryLength
-        for descriptor in descriptors {
+        for (descriptorIndex, descriptor) in descriptors.enumerated() {
             guard payload.count - subfileCursor >= 2 else {
                 throw CADMVInternalError.malformedBarcode
             }
@@ -70,13 +70,19 @@ struct AAMVADocumentParser {
                 subfileStart: designatorEnd,
                 declared: declaredSeparators
             )
-            guard let terminator = payload[subfileCursor...].firstIndex(of: separators.segmentTerminator) else {
+            let terminator = payload[subfileCursor...].firstIndex(of: separators.segmentTerminator)
+            guard let subfileEnd = terminator ?? unterminatedFinalSubfileEnd(
+                descriptorIndex: descriptorIndex,
+                descriptorCount: descriptors.count,
+                payload: payload,
+                subfileCursor: subfileCursor
+            ) else {
                 throw CADMVInternalError.malformedBarcode
             }
-            guard let rawSubfile = String(data: payload[subfileCursor..<terminator], encoding: .utf8) else {
+            guard let rawSubfile = String(data: payload[subfileCursor..<subfileEnd], encoding: .utf8) else {
                 throw CADMVInternalError.malformedBarcode
             }
-            subfileCursor = terminator + 1
+            subfileCursor = terminator.map { $0 + 1 } ?? subfileEnd
 
             let fieldData = rawSubfile.hasPrefix(designator)
                 ? String(rawSubfile.dropFirst(2))
@@ -101,6 +107,19 @@ struct AAMVADocumentParser {
         )
     }
 
+    private func unterminatedFinalSubfileEnd(
+        descriptorIndex: Int,
+        descriptorCount: Int,
+        payload: Data,
+        subfileCursor: Data.Index
+    ) -> Data.Index? {
+        guard descriptorIndex == descriptorCount - 1,
+              subfileCursor < payload.endIndex else {
+            return nil
+        }
+        return payload.endIndex
+    }
+
     private func declaredSeparators(payload: Data, ansiRange: Range<Data.Index>) throws -> AAMVASeparators {
         if ansiRange.lowerBound >= 4 {
             return AAMVASeparators(
@@ -110,7 +129,7 @@ struct AAMVADocumentParser {
             )
         }
 
-        guard ansiRange.lowerBound == 0 else {
+        guard ansiRange.lowerBound < 4 else {
             throw CADMVInternalError.malformedBarcode
         }
 

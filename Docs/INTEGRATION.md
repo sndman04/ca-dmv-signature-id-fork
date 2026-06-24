@@ -8,6 +8,13 @@ Apps that already have raw PDF417 data can call the verifier directly:
 let result = await CADMVVerifier.verify(rawPDF417: rawPDF417)
 ```
 
+Pass the scanner-provided PDF417 string directly. On iOS, that is typically
+`AVMetadataMachineReadableCodeObject.stringValue`. The verifier expects the
+full AAMVA payload, not a parsed-and-reconstructed string and not a subset of
+fields. Do not normalize `\r`, `\u{001d}`, `\u{001e}`, or other AAMVA
+separators before verification. Trimming only leading/trailing whitespace and
+newlines is supported.
+
 The verifier does not expose parsed identity fields. Apps that need identity data for business workflows should parse and handle that data separately under their own retention and privacy policy.
 
 For non-verified results, `result.failureReason` provides a privacy-safe diagnostic such as `malformedBarcode`, `environmentMismatch`, `vcbBase64Invalid`, `didResolutionFailed`, or `signatureMismatch`. Use it for app routing and coarse telemetry only; do not attach raw barcode data, decoded AAMVA fields, proof values, DID documents, or status-list contents.
