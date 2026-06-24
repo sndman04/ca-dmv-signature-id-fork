@@ -39,12 +39,17 @@ enum EcdsaXi2023Verifier {
     }
 
     private static func proofCanonicalNQuads(_ credential: DMVVerifiableCredential) -> String {
-        [
+        var lines: [String] = []
+        if let created = credential.proof.created {
+            lines.append("_:c14n0 <http://purl.org/dc/terms/created> \"\(created)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
+        }
+        lines.append(contentsOf: [
             "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/security#\(credential.proof.type)> .",
             "_:c14n0 <https://w3id.org/security#cryptosuite> \"\(credential.proof.cryptosuite)\"^^<https://w3id.org/security#cryptosuiteString> .",
             "_:c14n0 <https://w3id.org/security#proofPurpose> <https://w3id.org/security#\(credential.proof.proofPurpose)> .",
             "_:c14n0 <https://w3id.org/security#verificationMethod> <\(credential.proof.verificationMethod)> ."
-        ].joined(separator: "\n") + "\n"
+        ])
+        return lines.joined(separator: "\n") + "\n"
     }
 
     private static func documentCanonicalNQuads(_ credential: DMVVerifiableCredential) -> String {

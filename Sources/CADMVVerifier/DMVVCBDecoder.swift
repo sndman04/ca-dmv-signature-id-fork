@@ -155,6 +155,7 @@ enum DMVVCBDecoder {
     private static func expandedProof(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential.Proof {
         DMVVerifiableCredential.Proof(
             type: try requiredText(map, key: "type"),
+            created: try optionalDateTimeText(map, key: "created"),
             cryptosuite: try requiredText(map, key: "cryptosuite"),
             proofPurpose: try proofPurpose(from: requiredValue(map, key: "proofPurpose")),
             proofValue: try multibaseBase58BTCString(from: requiredValue(map, key: "proofValue")),
@@ -221,6 +222,7 @@ enum DMVVCBDecoder {
 
         return DMVVerifiableCredential.Proof(
             type: type,
+            created: try optionalDateTimeText(map, key: 202),
             cryptosuite: try cryptosuite(from: requiredValue(map, key: 204)),
             proofPurpose: try proofPurpose(from: requiredValue(map, key: 214)),
             proofValue: try multibaseBase58BTCString(from: requiredValue(map, key: 216)),
@@ -488,6 +490,28 @@ enum DMVVCBDecoder {
         return value
     }
 
+    private static func optionalDateTimeText(_ map: [CBORValue: CBORValue], key: UInt64) throws -> String? {
+        guard let value = map[.unsigned(key)] else {
+            return nil
+        }
+        return try dateTimeText(from: value)
+    }
+
+    private static func optionalDateTimeText(_ map: [CBORValue: CBORValue], key: String) throws -> String? {
+        guard let value = map[.textString(key)] else {
+            return nil
+        }
+        return try dateTimeText(from: value)
+    }
+
+    private static func dateTimeText(from value: CBORValue) throws -> String {
+        guard case let .textString(text) = value,
+              isSafeDateTimeText(text) else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return text
+    }
+
     private static func requiredUnsigned(_ map: [CBORValue: CBORValue], key: UInt64) throws -> UInt64 {
         guard let value = map[.unsigned(key)] else {
             throw CADMVInternalError.unsupportedVCB
@@ -552,6 +576,26 @@ enum DMVVCBDecoder {
             text.hasPrefix("did:web:uat-credentials.dmv.ca.gov") ||
             text.hasPrefix("https://api.credentials.dmv.ca.gov/status/dlid/") ||
             text.hasPrefix("https://api.uat-credentials.dmv.ca.gov/status/dlid/")
+    }
+
+    private static func isSafeDateTimeText(_ text: String) -> Bool {
+        guard !text.isEmpty, text.count <= 64 else {
+            return false
+        }
+        return text.utf8.allSatisfy { byte in
+            switch byte {
+            case UInt8(ascii: "0")...UInt8(ascii: "9"),
+                 UInt8(ascii: "T"),
+                 UInt8(ascii: "Z"),
+                 UInt8(ascii: "-"),
+                 UInt8(ascii: "+"),
+                 UInt8(ascii: ":"),
+                 UInt8(ascii: "."):
+                return true
+            default:
+                return false
+            }
+        }
     }
 }
 

@@ -274,9 +274,30 @@ final class CADMVVerifierTests: XCTestCase {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential(textEncoded: true))
 
         XCTAssert(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
+        XCTAssertNil(credential.proof.created)
         XCTAssert(credential.credentialSubject.protectedComponentIndex == "uAQID")
         XCTAssert(credential.proof.proofValue == "zLdp")
         XCTAssert(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
+    }
+
+    func testDecoderPreservesCompressedProofCreated() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(proofCreated: "2026-01-01T00:00:00Z"))
+
+        XCTAssertEqual(credential.proof.created, "2026-01-01T00:00:00Z")
+    }
+
+    func testDecoderPreservesExpandedProofCreated() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.uncompressedCredential(proofCreated: "2026-01-01T00:00:00Z"))
+
+        XCTAssertEqual(credential.proof.created, "2026-01-01T00:00:00Z")
+    }
+
+    func testDecoderRejectsUnsafeProofCreated() throws {
+        XCTAssertThrowsError(try DMVVCBDecoder.decode(
+            CBORFixture.credential(proofCreated: "2026-01-01T00:00:00Z\" .\n_:x")
+        )) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
     }
 
     func testDecoderAcceptsCompressedHTTPURLArrayValuesFromReferenceCBORLD() throws {
@@ -386,7 +407,8 @@ private enum CBORFixture {
         protectedComponentIndexBytes: Data = Data([0x75, 0x01, 0x02, 0x03]),
         includeStatus: Bool = true,
         textEncoded: Bool = false,
-        statusBaseURLArrayEncoded: Bool = false
+        statusBaseURLArrayEncoded: Bool = false,
+        proofCreated: String? = nil
     ) -> Data {
         credential(
             protectedComponentIndexValue: textEncoded
@@ -394,7 +416,8 @@ private enum CBORFixture {
                 : byteString(protectedComponentIndexBytes),
             includeStatus: includeStatus,
             textEncoded: textEncoded,
-            statusBaseURLArrayEncoded: statusBaseURLArrayEncoded
+            statusBaseURLArrayEncoded: statusBaseURLArrayEncoded,
+            proofCreated: proofCreated
         )
     }
 
@@ -418,7 +441,18 @@ private enum CBORFixture {
         ]))
     }
 
-    static func uncompressedCredential(tag: UInt64 = 51_997) -> Data {
+    static func uncompressedCredential(tag: UInt64 = 51_997, proofCreated: String? = nil) -> Data {
+        var proofPairs = [
+            (text("type"), text("DataIntegrityProof")),
+            (text("cryptosuite"), text("ecdsa-xi-2023")),
+            (text("proofPurpose"), text("assertionMethod")),
+            (text("proofValue"), text("zLdp")),
+            (text("verificationMethod"), text("did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"))
+        ]
+        if let proofCreated {
+            proofPairs.append((text("created"), text(proofCreated)))
+        }
+
         let credential = map([
             (text("@context"), array([
                 text("https://www.w3.org/ns/credentials/v2"),
@@ -438,13 +472,7 @@ private enum CBORFixture {
                 (text("terseStatusListBaseUrl"), text("https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists")),
                 (text("terseStatusListIndex"), unsigned(1))
             ])),
-            (text("proof"), map([
-                (text("type"), text("DataIntegrityProof")),
-                (text("cryptosuite"), text("ecdsa-xi-2023")),
-                (text("proofPurpose"), text("assertionMethod")),
-                (text("proofValue"), text("zLdp")),
-                (text("verificationMethod"), text("did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"))
-            ])),
+            (text("proof"), map(proofPairs)),
             (text("ignored"), null())
         ])
 
@@ -462,13 +490,15 @@ private enum CBORFixture {
         protectedComponentIndexValue: Data,
         includeStatus: Bool,
         textEncoded: Bool,
-        statusBaseURLArrayEncoded: Bool = false
+        statusBaseURLArrayEncoded: Bool = false,
+        proofCreated: String? = nil
     ) -> Data {
         let payload = compressedCredentialMap(
             protectedComponentIndexValue: protectedComponentIndexValue,
             includeStatus: includeStatus,
             textEncoded: textEncoded,
-            statusBaseURLArrayEncoded: statusBaseURLArrayEncoded
+            statusBaseURLArrayEncoded: statusBaseURLArrayEncoded,
+            proofCreated: proofCreated
         )
 
         return tagged(51_997, array([
@@ -481,8 +511,20 @@ private enum CBORFixture {
         protectedComponentIndexValue: Data = byteString(Data([0x75, 0x01, 0x02, 0x03])),
         includeStatus: Bool = true,
         textEncoded: Bool = false,
-        statusBaseURLArrayEncoded: Bool = false
+        statusBaseURLArrayEncoded: Bool = false,
+        proofCreated: String? = nil
     ) -> Data {
+        var proofPairs = [
+            (unsigned(156), textEncoded ? text("DataIntegrityProof") : unsigned(108)),
+            (unsigned(204), textEncoded ? text("ecdsa-xi-2023") : unsigned(1)),
+            (unsigned(214), textEncoded ? text("assertionMethod") : unsigned(220)),
+            (unsigned(216), textEncoded ? text("zLdp") : byteString(Data([0x7a, 0x01, 0x02, 0x03]))),
+            (unsigned(218), textEncoded ? text("did:web:uat-credentials.dmv.ca.gov#vm-vcb-1") : bytes([22]))
+        ]
+        if let proofCreated {
+            proofPairs.append((textEncoded ? text("created") : unsigned(202), text(proofCreated)))
+        }
+
         var pairs: [(Data, Data)] = [
             (unsigned(1), array(textEncoded
                 ? [text("https://www.w3.org/ns/credentials/v2"), text("https://w3id.org/vc-barcodes/v1")]
@@ -495,13 +537,7 @@ private enum CBORFixture {
                 (unsigned(156), textEncoded ? text("AamvaDriversLicenseScannableInformation") : unsigned(160)),
                 (unsigned(168), protectedComponentIndexValue)
             ])),
-            (unsigned(182), map([
-                (unsigned(156), textEncoded ? text("DataIntegrityProof") : unsigned(108)),
-                (unsigned(204), textEncoded ? text("ecdsa-xi-2023") : unsigned(1)),
-                (unsigned(214), textEncoded ? text("assertionMethod") : unsigned(220)),
-                (unsigned(216), textEncoded ? text("zLdp") : byteString(Data([0x7a, 0x01, 0x02, 0x03]))),
-                (unsigned(218), textEncoded ? text("did:web:uat-credentials.dmv.ca.gov#vm-vcb-1") : bytes([22]))
-            ]))
+            (unsigned(182), map(proofPairs))
         ]
         if includeStatus {
             pairs.append((unsigned(174), map([
