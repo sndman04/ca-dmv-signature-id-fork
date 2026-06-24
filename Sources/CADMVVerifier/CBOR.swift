@@ -75,6 +75,9 @@ enum CBORReader {
             for _ in 0..<count {
                 let key = try readValue(from: data, cursor: &cursor, depth: depth + 1)
                 let value = try readValue(from: data, cursor: &cursor, depth: depth + 1)
+                guard values[key] == nil else {
+                    throw CADMVInternalError.malformedCBOR
+                }
                 values[key] = value
             }
             return .map(values)

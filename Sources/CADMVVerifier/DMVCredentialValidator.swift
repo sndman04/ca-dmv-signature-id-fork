@@ -10,8 +10,10 @@ enum DMVCredentialValidator {
             throw CADMVInternalError.unsupportedVCB
         }
 
-        guard credential.type.contains("VerifiableCredential"),
-              credential.type.contains("OpticalBarcodeCredential") else {
+        guard isExactTypeSet(
+            credential.type,
+            ["VerifiableCredential", "OpticalBarcodeCredential"]
+        ) else {
             throw CADMVInternalError.unsupportedVCB
         }
 
@@ -36,24 +38,36 @@ enum DMVCredentialValidator {
         if credential.credentialStatus != nil {
             guard let status = credential.credentialStatus,
                   status.type == "TerseBitstringStatusListEntry",
-                  status.terseStatusListBaseURL.hasPrefix(policy.statusListPrefix) else {
+                  policy.statusListBaseURLs.contains(status.terseStatusListBaseURL) else {
                 throw CADMVInternalError.unsupportedVCB
             }
         }
     }
 
+    private static func isExactTypeSet(_ values: [String], _ expected: Set<String>) -> Bool {
+        Set(values) == expected && values.count == expected.count
+    }
+
     private struct ModePolicy {
         let issuerDID: String
-        let statusListPrefix: String
+        let statusListBaseURLs: Set<String>
 
         init(mode: CADMVVerificationMode) {
             switch mode {
             case .production:
                 issuerDID = "did:web:credentials.dmv.ca.gov"
-                statusListPrefix = "https://api.credentials.dmv.ca.gov/status/dlid"
+                statusListBaseURLs = [
+                    "https://api.credentials.dmv.ca.gov/status/dlid/1/status-lists",
+                    "https://api.credentials.dmv.ca.gov/status/dlid/2/status-lists",
+                    "https://api.credentials.dmv.ca.gov/status/dlid/3/status-lists"
+                ]
             case .uat:
                 issuerDID = "did:web:uat-credentials.dmv.ca.gov"
-                statusListPrefix = "https://api.uat-credentials.dmv.ca.gov/status/dlid"
+                statusListBaseURLs = [
+                    "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists",
+                    "https://api.uat-credentials.dmv.ca.gov/status/dlid/2/status-lists",
+                    "https://api.uat-credentials.dmv.ca.gov/status/dlid/3/status-lists"
+                ]
             }
         }
     }

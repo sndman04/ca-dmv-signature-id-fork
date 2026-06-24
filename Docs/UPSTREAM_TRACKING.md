@@ -36,6 +36,14 @@ References/cadmv-dlid-verifier-sdk/
 7. Update this repo's Swift behavior only when parity differences are understood.
 8. Update `NOTICE` if attribution or license text changes.
 
+## Future Cleanup
+
+Replace the native hand-built N-Quads emitters with a maintained Swift JSON-LD
+expansion plus RDFC-1.0 canonicalization implementation when one is available
+and can pass the official DMV JS parity fixtures. Until then, keep this package
+documented and tested as a narrow California DMV DL/ID VCB profile verifier,
+not a general Data Integrity, JSON-LD, or RDF canonicalization library.
+
 ## Known Upstream Harness Notes
 
 - The captured SDK commit imports `@digitalbazaar/did-io` without declaring it.

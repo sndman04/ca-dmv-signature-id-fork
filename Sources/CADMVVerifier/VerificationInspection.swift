@@ -135,6 +135,10 @@ extension CADMVVerifier {
         Base64URL.decode(value)
     }
 
+    public static func decodeVCBForSelfTest(_ data: Data) throws {
+        _ = try DMVVCBDecoder.decode(data)
+    }
+
     public static func gzipDecompressForSelfTest(_ data: Data, maxOutputBytes: Int) throws -> Data {
         try Gzip.decompress(data, maxOutputBytes: maxOutputBytes)
     }

@@ -56,8 +56,8 @@ enum DMVStatusListCredentialParser {
         try rejectUnknownKeys(subjectObject, allowed: subjectKeys)
         try rejectUnknownKeys(proofObject, allowed: proofKeys)
 
-        guard type.contains("VerifiableCredential"),
-              type.contains("BitstringStatusListCredential"),
+        guard Set(type) == ["VerifiableCredential", "BitstringStatusListCredential"],
+              type.count == 2,
               type.allSatisfy(isSafeToken(_:)),
               isSafeIRI(id),
               isSafeIRI(issuer),

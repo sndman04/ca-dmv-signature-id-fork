@@ -21,6 +21,7 @@ enum CADMVVerifierSelfTest {
         testBase58LeadingZeroRoundTrip()
         try! testStatusBitIndexing()
         try! testMalformedStatusListCorpus()
+        try! testProfileDriftRejections()
         try! testSyntheticStatusListCredentialVerification()
         try! await testOfficialDMVFixtureParsing()
         try! await testDIDWebResolution()
@@ -330,6 +331,57 @@ enum CADMVVerifierSelfTest {
             CADMVVerifier.statusBitForSelfTest(uncompressedBytes: Data([0]), index: UInt64.max) == nil,
             "huge status bit index should be out of range"
         )
+    }
+
+    private static func testProfileDriftRejections() throws {
+        let duplicateKeyCBOR = Data([
+            0xd9, 0x05, 0x00,
+            0xa2,
+            0x61, 0x78, 0x01,
+            0x61, 0x78, 0x02
+        ])
+        do {
+            try CADMVVerifier.decodeVCBForSelfTest(duplicateKeyCBOR)
+            fatalError("CBOR maps with duplicate keys must fail closed")
+        } catch {
+            // Expected: duplicate CBOR keys must not be silently collapsed.
+        }
+
+        let statusListWithExtraType = Data("""
+        {
+          "@context": [
+            "https://www.w3.org/ns/credentials/v2"
+          ],
+          "id": "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0",
+          "type": [
+            "VerifiableCredential",
+            "BitstringStatusListCredential",
+            "IgnoredByNativeCanonicalizer"
+          ],
+          "credentialSubject": {
+            "id": "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0#list",
+            "type": "BitstringStatusList",
+            "encodedList": "uH4sIAAAAAAAAA2NgYGBgAAAABAAB",
+            "statusPurpose": "revocation"
+          },
+          "issuer": "did:web:uat-credentials.dmv.ca.gov",
+          "validFrom": "2026-01-01T00:00:00Z",
+          "proof": {
+            "type": "DataIntegrityProof",
+            "created": "2026-01-01T00:00:00Z",
+            "verificationMethod": "did:web:uat-credentials.dmv.ca.gov#vm-vsl-1",
+            "cryptosuite": "ecdsa-rdfc-2019",
+            "proofPurpose": "assertionMethod",
+            "proofValue": "z3KqtjbQJZNSkeufgNj2oVRg9k9fZVoP5SroahjSNghZbU9osz8sL2J4beC9gWoNTkjDn6W9FBJRirMnNt4HuXvcw"
+          }
+        }
+        """.utf8)
+        do {
+            _ = try CADMVVerifier.statusListVerifyDataForSelfTest(jsonData: statusListWithExtraType)
+            fatalError("status-list credentials with extra types must fail closed")
+        } catch {
+            // Expected: native N-Quads generation only covers the locked profile.
+        }
     }
 
     private static func testSyntheticStatusListCredentialVerification() throws {

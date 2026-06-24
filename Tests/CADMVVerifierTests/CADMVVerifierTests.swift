@@ -370,6 +370,46 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssertNoThrow(try DMVCredentialValidator.validate(credential, mode: .uat))
     }
 
+    func testDecoderRejectsExtraCredentialTypeIgnoredByNativeCanonicalizer() throws {
+        XCTAssertThrowsError(try DMVVCBDecoder.decode(
+            CBORFixture.credential(extraCredentialTypes: ["IgnoredByNativeCanonicalizer"])
+        )) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
+    func testValidatorRejectsDuplicateCredentialTypeIgnoredByNativeCanonicalizer() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(extraCredentialTypes: ["VerifiableCredential"]))
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(credential, mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
+    func testValidatorRejectsStatusListPrefixOnlyMatch() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(
+            textEncoded: true,
+            statusBaseURLOverride: "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists-extra"
+        ))
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(credential, mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
+    func testCBORRejectsDuplicateMapKeys() throws {
+        let duplicateKeyCBOR = Data([
+            0xd9, 0x05, 0x00,
+            0xa2,
+            0x61, 0x78, 0x01,
+            0x61, 0x78, 0x02
+        ])
+
+        XCTAssertThrowsError(try DMVVCBDecoder.decode(duplicateKeyCBOR)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .malformedCBOR)
+        }
+    }
+
     func testDecoderAcceptsUncompressedCBORLDProfile() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.uncompressedCredential())
 
@@ -459,6 +499,8 @@ private enum CBORFixture {
         includeStatus: Bool = true,
         textEncoded: Bool = false,
         statusBaseURLArrayEncoded: Bool = false,
+        statusBaseURLOverride: String? = nil,
+        extraCredentialTypes: [String] = [],
         validFrom: String? = nil,
         validUntil: String? = nil,
         proofCreated: String? = nil,
@@ -473,6 +515,8 @@ private enum CBORFixture {
             includeStatus: includeStatus,
             textEncoded: textEncoded,
             statusBaseURLArrayEncoded: statusBaseURLArrayEncoded,
+            statusBaseURLOverride: statusBaseURLOverride,
+            extraCredentialTypes: extraCredentialTypes,
             validFrom: validFrom,
             validUntil: validUntil,
             proofCreated: proofCreated,
@@ -568,6 +612,8 @@ private enum CBORFixture {
         includeStatus: Bool,
         textEncoded: Bool,
         statusBaseURLArrayEncoded: Bool = false,
+        statusBaseURLOverride: String? = nil,
+        extraCredentialTypes: [String] = [],
         validFrom: String? = nil,
         validUntil: String? = nil,
         proofCreated: String? = nil,
@@ -580,6 +626,8 @@ private enum CBORFixture {
             includeStatus: includeStatus,
             textEncoded: textEncoded,
             statusBaseURLArrayEncoded: statusBaseURLArrayEncoded,
+            statusBaseURLOverride: statusBaseURLOverride,
+            extraCredentialTypes: extraCredentialTypes,
             validFrom: validFrom,
             validUntil: validUntil,
             proofCreated: proofCreated,
@@ -599,6 +647,8 @@ private enum CBORFixture {
         includeStatus: Bool = true,
         textEncoded: Bool = false,
         statusBaseURLArrayEncoded: Bool = false,
+        statusBaseURLOverride: String? = nil,
+        extraCredentialTypes: [String] = [],
         validFrom: String? = nil,
         validUntil: String? = nil,
         proofCreated: String? = nil,
@@ -623,13 +673,16 @@ private enum CBORFixture {
             proofPairs.append((textEncoded ? text("unknownProofOption") : unsigned(999), text("unsupported")))
         }
 
+        var credentialTypeValues = textEncoded
+            ? [text("VerifiableCredential"), text("OpticalBarcodeCredential")]
+            : [unsigned(118), unsigned(164)]
+        credentialTypeValues.append(contentsOf: extraCredentialTypes.map(text(_:)))
+
         var pairs: [(Data, Data)] = [
             (unsigned(1), array(textEncoded
                 ? [text("https://www.w3.org/ns/credentials/v2"), text("https://w3id.org/vc-barcodes/v1")]
                 : [unsigned(1), unsigned(2)])),
-            (unsigned(157), array(textEncoded
-                ? [text("VerifiableCredential"), text("OpticalBarcodeCredential")]
-                : [unsigned(118), unsigned(164)])),
+            (unsigned(157), array(credentialTypeValues)),
             (unsigned(180), textEncoded ? text("did:web:uat-credentials.dmv.ca.gov") : bytes([20])),
             (unsigned(176), map([
                 (unsigned(156), textEncoded ? text("AamvaDriversLicenseScannableInformation") : unsigned(160)),
@@ -640,7 +693,7 @@ private enum CBORFixture {
         if includeStatus {
             pairs.append((unsigned(174), map([
                 (unsigned(156), textEncoded ? text("TerseBitstringStatusListEntry") : unsigned(166)),
-                (unsigned(196), statusBaseURLValue(
+                (unsigned(196), statusBaseURLOverride.map(text(_:)) ?? statusBaseURLValue(
                     textEncoded: textEncoded,
                     arrayEncoded: statusBaseURLArrayEncoded
                 )),
