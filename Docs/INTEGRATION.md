@@ -65,7 +65,7 @@ Apps using camera scanning must provide their own `NSCameraUsageDescription` in 
 Scanner implementations must not:
 
 - Store camera frames.
-- Store raw barcode payloads.
+- Persist raw barcode payloads beyond the immediate verification handoff.
 - Log barcode payloads.
 - Parse identity fields inside the reusable scanner component.
 - Log sensitive document data while handling verifier failure reasons.

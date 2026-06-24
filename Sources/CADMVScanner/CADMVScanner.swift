@@ -5,6 +5,9 @@ import VisionKit
 
 /// Raw PDF417 payload produced by a scanner.
 ///
+/// This wrapper is an in-memory handoff boundary. It preserves the scanner
+/// payload exactly so the verifier can parse AAMVA separators and VCB data.
+///
 /// The payload may contain PII. Do not log or persist this value unless the
 /// integrating app has a separate legal basis and retention policy.
 public struct CADMVScannedBarcode: Equatable, Sendable {

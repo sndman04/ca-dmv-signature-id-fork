@@ -88,6 +88,11 @@ public enum CADMVVerificationMode: Equatable, Sendable {
 public enum CADMVVerifier {
     /// Verifies already scanned raw PDF417 barcode data.
     ///
+    /// Pass the full scanner-provided payload, such as
+    /// `AVMetadataMachineReadableCodeObject.stringValue`, without parsing and
+    /// reconstructing it or normalizing AAMVA separator characters. Trimming
+    /// leading/trailing whitespace and newlines is tolerated.
+    ///
     /// The raw barcode may contain PII. This API does not log, persist, or
     /// expose parsed identity fields. When status checking is required but
     /// DMV status infrastructure is unavailable, the result is `.unavailable`.
