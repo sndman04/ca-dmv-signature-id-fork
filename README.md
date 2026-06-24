@@ -46,6 +46,13 @@ Do not rebuild it from parsed AAMVA fields, normalize line separators, or pass
 only selected fields. Trimming leading/trailing whitespace and newlines is
 acceptable, but avoid any other transformation before calling the verifier.
 
+Common integration settings:
+
+- Use `CADMVVerificationOptions(mode: .uat)` for DMV UAT/test credentials; the default is `.production`.
+- Leave `checkStatus` at its default `false` unless the app can handle `.unavailable` when DMV status infrastructure cannot be reached or verified.
+- Set `requireVCB: true` only if the app requires signed DMV data even for older California DL/ID documents.
+- Treat only `.verified` as verified; keep `.notPresent`, `.failed`, `.revoked`, `.expired`, and `.unavailable` distinct.
+
 ## Safety Rules
 
 Raw PDF417 data can contain personally identifiable information.

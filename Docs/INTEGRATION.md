@@ -15,9 +15,44 @@ fields. Do not normalize `\r`, `\u{001d}`, `\u{001e}`, or other AAMVA
 separators before verification. Trimming only leading/trailing whitespace and
 newlines is supported.
 
-The verifier does not expose parsed identity fields. Apps that need identity data for business workflows should parse and handle that data separately under their own retention and privacy policy.
+The verifier does not expose parsed identity fields. Apps that need identity data for business workflows may parse a separate copy of the scan under their own retention and privacy policy, but they should keep the original scanner string for `CADMVVerifier.verify`.
 
 For non-verified results, `result.failureReason` provides a privacy-safe diagnostic such as `malformedBarcode`, `environmentMismatch`, `vcbBase64Invalid`, `didResolutionFailed`, or `signatureMismatch`. Use it for app routing and coarse telemetry only; do not attach raw barcode data, decoded AAMVA fields, proof values, DID documents, or status-list contents.
+
+## App Handoff Checklist
+
+Recommended app flow:
+
+1. Capture the PDF417 string from the scanner.
+2. Store that exact string in memory for verification.
+3. Optionally parse a separate copy for display or form fill.
+4. Pass the original string, or only `trimmingCharacters(in: .whitespacesAndNewlines)` applied to it, to `CADMVVerifier.verify`.
+5. Discard the raw string as soon as the app no longer needs it.
+
+Do not pass OCR text, a normalized field map, a reconstructed AAMVA string, the VCB field alone, or a string where AAMVA separator characters have been replaced for UI parsing.
+
+## Modes and Test Credentials
+
+`CADMVVerificationOptions` defaults to `.production`. Production mode accepts only production DMV issuer, DID, key, and status hosts.
+
+Use `.uat` only for DMV UAT/test credentials:
+
+```swift
+let options = CADMVVerificationOptions(mode: .uat)
+let result = await CADMVVerifier.verify(rawPDF417: rawPDF417, options: options)
+```
+
+A UAT credential checked in production mode returns `.failed` with `failureReason == .environmentMismatch(expected: .production)`. A production credential checked in UAT mode returns `.failed` with `failureReason == .environmentMismatch(expected: .uat)`.
+
+## VCB Requirement Policy
+
+`requireVCB` defaults to `false`. With the default, a California DL/ID issued before the DMV requirement date can return `.notPresent` if no VCB field exists. The verifier still requires VCB data for California documents issued on or after the requirement date.
+
+Set `requireVCB: true` only when your app policy requires signed DMV data for every scanned California DL/ID, including older documents:
+
+```swift
+let options = CADMVVerificationOptions(requireVCB: true)
+```
 
 ## Scanner Flow
 
@@ -32,7 +67,7 @@ Scanner implementations must not:
 - Store camera frames.
 - Store raw barcode payloads.
 - Log barcode payloads.
-- Parse identity fields for display or telemetry.
+- Parse identity fields inside the reusable scanner component.
 - Log sensitive document data while handling verifier failure reasons.
 
 ## Status Checking
@@ -47,6 +82,8 @@ let result = await CADMVVerifier.verify(rawPDF417: rawPDF417, options: options)
 ```
 
 When status checking is enabled and DMV status infrastructure is unavailable, the verifier must return `.unavailable`, not `.verified`.
+
+Applications should treat only `result.status == .verified` as a successful DMV digital-signature verification. Keep `.unavailable`, `.failed`, `.revoked`, `.expired`, and `.notPresent` distinct in app state and telemetry.
 
 ## Current Limitation
 

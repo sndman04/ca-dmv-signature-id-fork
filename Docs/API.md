@@ -41,6 +41,17 @@ Defaults:
 - `mode = .production`
 - `networkTimeoutSeconds = 10`
 
+`mode` selects which DMV environment is accepted. `.production` accepts only
+production DMV issuer, DID, key, and status hosts. `.uat` accepts only DMV
+UAT/test credentials. A credential from the other environment fails with
+`environmentMismatch(expected:)`.
+
+`requireVCB = false` still requires signed VCB data for California documents
+issued on or after the DMV requirement date. It allows older California
+documents to return `.notPresent` when no VCB field exists. Set
+`requireVCB = true` only when app policy requires signed DMV data on every
+California DL/ID scan, including older documents.
+
 `checkStatus = true` performs online revocation checking. If the DMV status endpoint is unavailable, redirects outside the allowed fetch policy, returns an unsupported credential shape, or the status-list credential proof cannot be verified, the result is `.unavailable`. Application integrations should treat only `.verified` as verified.
 
 ## `CADMVVerificationResult`
