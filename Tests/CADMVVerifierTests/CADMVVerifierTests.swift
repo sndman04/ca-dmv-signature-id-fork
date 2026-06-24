@@ -143,6 +143,23 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssert(document.primaryIdentitySubfile?.fields["DAJ"] == "CA")
     }
 
+    func testAamvaParserInfersUnitSeparatorWhenPreambleIsStripped() throws {
+        let barcode = AAMVATestBarcode.make(
+            prefix: "ANSI ",
+            elementSeparator: "\u{1f}",
+            issuer: "636014",
+            issueDate: "09282025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+
+        let document = try AAMVADocumentParser().parse(rawPDF417: barcode)
+
+        XCTAssert(document.issuerIdentificationNumber == "636014")
+        XCTAssert(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
+        XCTAssert(document.primaryIdentitySubfile?.fields["DAJ"] == "CA")
+    }
+
     func testAamvaParserToleratesTrimmedPartialHeaderPreamble() throws {
         let scannerPayload = AAMVATestBarcode.make(
             prefix: "\n\u{1e}\rANSI ",

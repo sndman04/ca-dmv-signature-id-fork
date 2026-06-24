@@ -91,7 +91,9 @@ public enum CADMVVerifier {
     /// Pass the full scanner-provided payload, such as
     /// `AVMetadataMachineReadableCodeObject.stringValue`, without parsing and
     /// reconstructing it or normalizing AAMVA separator characters. Trimming
-    /// leading/trailing whitespace and newlines is tolerated.
+    /// leading/trailing whitespace and newlines is tolerated, but separator
+    /// bytes such as `\r`, `\u{001d}`, `\u{001e}`, and `\u{001f}` should
+    /// otherwise be preserved.
     ///
     /// The raw barcode may contain PII. This API does not log, persist, or
     /// expose parsed identity fields. When status checking is required but

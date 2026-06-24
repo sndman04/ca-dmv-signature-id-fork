@@ -11,9 +11,9 @@ let result = await CADMVVerifier.verify(rawPDF417: rawPDF417)
 Pass the scanner-provided PDF417 string directly. On iOS, that is typically
 `AVMetadataMachineReadableCodeObject.stringValue`. The verifier expects the
 full AAMVA payload, not a parsed-and-reconstructed string and not a subset of
-fields. Do not normalize `\r`, `\u{001d}`, `\u{001e}`, or other AAMVA
-separators before verification. Trimming only leading/trailing whitespace and
-newlines is supported.
+fields. Do not normalize `\r`, `\u{001d}`, `\u{001e}`, `\u{001f}`, or other
+AAMVA separators before verification. Trimming only leading/trailing whitespace
+and newlines is supported.
 
 The verifier does not expose parsed identity fields. Apps that need identity data for business workflows may parse a separate copy of the scan under their own retention and privacy policy, but they should keep the original scanner string for `CADMVVerifier.verify`.
 

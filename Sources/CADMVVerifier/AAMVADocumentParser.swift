@@ -175,7 +175,8 @@ struct AAMVADocumentParser {
             byte == UInt8(ascii: "\r") ||
             byte == UInt8(ascii: "\t") ||
             byte == 0x1d ||
-            byte == 0x1e
+            byte == 0x1e ||
+            byte == 0x1f
     }
 }
 

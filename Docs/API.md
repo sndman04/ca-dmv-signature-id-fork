@@ -21,7 +21,8 @@ public enum CADMVVerifier {
 integrations should pass values like `AVMetadataMachineReadableCodeObject.stringValue`
 directly, without parsing and reconstructing the barcode, normalizing AAMVA
 separator characters, or extracting only selected fields. Leading/trailing
-whitespace and newline trimming is tolerated.
+whitespace and newline trimming is tolerated. Separator bytes such as `\r`,
+`\u{001d}`, `\u{001e}`, and `\u{001f}` should otherwise be preserved.
 
 ## `CADMVVerificationOptions`
 

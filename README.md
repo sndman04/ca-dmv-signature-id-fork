@@ -44,7 +44,8 @@ case .failed, .revoked, .expired, .unavailable:
 `AVMetadataMachineReadableCodeObject.stringValue`, passed through unchanged.
 Do not rebuild it from parsed AAMVA fields, normalize line separators, or pass
 only selected fields. Trimming leading/trailing whitespace and newlines is
-acceptable, but avoid any other transformation before calling the verifier.
+acceptable, but preserve AAMVA separator bytes such as `\r`, `\u{001d}`,
+`\u{001e}`, and `\u{001f}` before calling the verifier.
 
 Common integration settings:
 
