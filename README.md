@@ -14,7 +14,7 @@ This repository is under active implementation. It currently includes:
 
 This package is a narrow California DMV DL/ID VCB profile verifier, not a general Data Integrity, JSON-LD, or RDF canonicalization library. The native canonicalization code is intentionally limited to the DMV credential and status-list shapes covered by the official UAT fixtures and synthetic JS-reference status-list fixture.
 
-Cryptographic verification is implemented for the DMV VCB profile covered by the official UAT samples. The supported VCB profile currently expects a `protectedComponentIndex` encoded as `u` plus a 24-bit bitmap. Status-list credential verification is implemented for the supported DMV VC v2 profile and returns `.revoked` only after the status-list credential proof verifies. The official UAT sample still returns `.unavailable` with `checkStatus` enabled because the live DMV UAT status endpoint currently does not provide a usable status-list credential.
+Cryptographic verification is implemented for the DMV VCB profile covered by the official UAT samples. The supported VCB profile accepts a `protectedComponentIndex` encoded as `u` plus a 24-bit bitmap, and the reference canonicalizer's equivalent numeric 24-bit form. Status-list credential verification is implemented for the supported DMV VC v2 profile and returns `.revoked` only after the status-list credential proof verifies. The official UAT sample still returns `.unavailable` with `checkStatus` enabled because the live DMV UAT status endpoint currently does not provide a usable status-list credential.
 
 ## Products
 

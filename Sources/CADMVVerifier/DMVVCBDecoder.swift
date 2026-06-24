@@ -2,13 +2,31 @@ import Foundation
 
 enum DMVVCBDecoder {
     private static let cborldTag: UInt64 = 51997
+    private static let legacyRangeUncompressedTag: UInt64 = 1536
+    private static let legacySingletonUncompressedTag: UInt64 = 1280
     private static let supportedCBORLDVersion: UInt64 = 31_000_000
 
     static func decode(_ data: Data) throws -> DMVVerifiableCredential {
         let value = try CBORReader.decode(data)
-        guard case let .tagged(tag, taggedValue) = value,
-              tag == cborldTag,
-              case let .array(topLevel) = taggedValue,
+        guard case let .tagged(tag, taggedValue) = value else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+
+        switch tag {
+        case cborldTag:
+            return try decodeCurrentCBORLD(taggedValue)
+        case legacyRangeUncompressedTag, legacySingletonUncompressedTag:
+            guard case let .map(map) = taggedValue else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return try expandedCredential(from: map)
+        default:
+            throw CADMVInternalError.unsupportedVCB
+        }
+    }
+
+    private static func decodeCurrentCBORLD(_ value: CBORValue) throws -> DMVVerifiableCredential {
+        guard case let .array(topLevel) = value,
               topLevel.count == 2,
               case let .unsigned(registryEntryID) = topLevel[0],
               case let .map(map) = topLevel[1] else {

@@ -2,7 +2,7 @@
 
 The public API is intentionally small and privacy-minimized.
 
-This package verifies the supported California DMV DL/ID VCB profile. It is not a general JSON-LD/Data Integrity verifier. The current profile support expects DMV VCB `protectedComponentIndex` values encoded as `u` plus a 24-bit bitmap; credentials outside that profile fail closed as unsupported.
+This package verifies the supported California DMV DL/ID VCB profile. It is not a general JSON-LD/Data Integrity verifier. The current profile support accepts DMV VCB `protectedComponentIndex` values encoded as `u` plus a 24-bit bitmap, and the reference canonicalizer's equivalent numeric 24-bit form; credentials outside that profile fail closed as unsupported.
 
 ## `CADMVVerifier`
 

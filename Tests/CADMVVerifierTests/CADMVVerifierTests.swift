@@ -222,6 +222,17 @@ struct CADMVVerifierTests {
         #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
         #expect(credential.credentialStatus?.terseStatusListIndex == 1)
     }
+
+    @Test
+    func decoderAcceptsLegacyUncompressedCBORLDProfile() throws {
+        for tag in [UInt64(1_280), UInt64(1_536)] {
+            let credential = try DMVVCBDecoder.decode(CBORFixture.uncompressedCredential(tag: tag))
+
+            #expect(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
+            #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
+            #expect(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
+        }
+    }
 }
 
 private enum AAMVATestBarcode {
@@ -294,37 +305,43 @@ private enum CBORFixture {
         )
     }
 
-    static func uncompressedCredential() -> Data {
-        tagged(51_997, array([
+    static func uncompressedCredential(tag: UInt64 = 51_997) -> Data {
+        let credential = map([
+            (text("@context"), array([
+                text("https://www.w3.org/ns/credentials/v2"),
+                text("https://w3id.org/vc-barcodes/v1")
+            ])),
+            (text("type"), array([
+                text("VerifiableCredential"),
+                text("OpticalBarcodeCredential")
+            ])),
+            (text("issuer"), text("did:web:uat-credentials.dmv.ca.gov")),
+            (text("credentialSubject"), map([
+                (text("type"), text("AamvaDriversLicenseScannableInformation")),
+                (text("protectedComponentIndex"), text("uAQID"))
+            ])),
+            (text("credentialStatus"), map([
+                (text("type"), text("TerseBitstringStatusListEntry")),
+                (text("terseStatusListBaseUrl"), text("https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists")),
+                (text("terseStatusListIndex"), unsigned(1))
+            ])),
+            (text("proof"), map([
+                (text("type"), text("DataIntegrityProof")),
+                (text("cryptosuite"), text("ecdsa-xi-2023")),
+                (text("proofPurpose"), text("assertionMethod")),
+                (text("proofValue"), text("zLdp")),
+                (text("verificationMethod"), text("did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"))
+            ])),
+            (text("ignored"), null())
+        ])
+
+        guard tag == 51_997 else {
+            return tagged(tag, credential)
+        }
+
+        return tagged(tag, array([
             unsigned(0),
-            map([
-                (text("@context"), array([
-                    text("https://www.w3.org/ns/credentials/v2"),
-                    text("https://w3id.org/vc-barcodes/v1")
-                ])),
-                (text("type"), array([
-                    text("VerifiableCredential"),
-                    text("OpticalBarcodeCredential")
-                ])),
-                (text("issuer"), text("did:web:uat-credentials.dmv.ca.gov")),
-                (text("credentialSubject"), map([
-                    (text("type"), text("AamvaDriversLicenseScannableInformation")),
-                    (text("protectedComponentIndex"), text("uAQID"))
-                ])),
-                (text("credentialStatus"), map([
-                    (text("type"), text("TerseBitstringStatusListEntry")),
-                    (text("terseStatusListBaseUrl"), text("https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists")),
-                    (text("terseStatusListIndex"), unsigned(1))
-                ])),
-                (text("proof"), map([
-                    (text("type"), text("DataIntegrityProof")),
-                    (text("cryptosuite"), text("ecdsa-xi-2023")),
-                    (text("proofPurpose"), text("assertionMethod")),
-                    (text("proofValue"), text("zLdp")),
-                    (text("verificationMethod"), text("did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"))
-                ])),
-                (text("ignored"), null())
-            ])
+            credential
         ]))
     }
 
