@@ -5,6 +5,14 @@ import Testing
 @Suite
 struct CADMVVerifierTests {
     @Test
+    func malformedBarcodeReportsReason() async {
+        let result = await CADMVVerifier.verify(rawPDF417: "ANSI")
+
+        #expect(result.status == .failed)
+        #expect(result.failureReason == .malformedBarcode)
+    }
+
+    @Test
     func missingOptionalVCBIsNotPresent() async {
         let barcode = AAMVATestBarcode.make(
             issuer: "636014",

@@ -54,22 +54,22 @@ struct AAMVADocumentParser {
 
         let payloadPrefixLength = headerStart + 6 + 6 + minimumEntryLength
 
-        let subfiles = descriptors.compactMap { descriptor -> AAMVASubfile? in
+        let subfiles = try descriptors.map { descriptor -> AAMVASubfile in
             guard descriptor.offset >= payloadPrefixLength else {
-                return nil
+                throw CADMVInternalError.malformedBarcode
             }
             let startDistance = descriptor.offset
             let end = descriptor.offset.addingReportingOverflow(descriptor.length)
             guard !end.overflow,
                   startDistance <= payload.count,
                   end.partialValue <= payload.count else {
-                return nil
+                throw CADMVInternalError.malformedBarcode
             }
             guard let rawSubfile = String(
                 data: payload[startDistance..<end.partialValue],
                 encoding: .utf8
             ) else {
-                return nil
+                throw CADMVInternalError.malformedBarcode
             }
             let fieldData = rawSubfile.hasPrefix(descriptor.designator)
                 ? String(rawSubfile.dropFirst(2))

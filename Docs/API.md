@@ -75,6 +75,7 @@ Current behavior:
 
 ```swift
 public enum CADMVVerificationFailureReason: Equatable, Sendable {
+    case malformedBarcode
     case notCaliforniaDMV
     case vcbMissing(required: Bool)
     case vcbBase64Invalid

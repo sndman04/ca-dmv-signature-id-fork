@@ -21,6 +21,7 @@ public enum CADMVVerificationStatus: Equatable, Sendable {
 /// These reasons intentionally avoid raw barcode data, parsed identity fields,
 /// proof values, DID documents, and status-list contents.
 public enum CADMVVerificationFailureReason: Equatable, Sendable {
+    case malformedBarcode
     case notCaliforniaDMV
     case vcbMissing(required: Bool)
     case vcbBase64Invalid
@@ -97,6 +98,11 @@ public enum CADMVVerifier {
         do {
             return try await VerificationPipeline(options: options)
                 .verify(rawPDF417: rawPDF417)
+        } catch CADMVInternalError.malformedBarcode {
+            return VerificationMessages.result(
+                for: .failed,
+                failureReason: .malformedBarcode
+            )
         } catch {
             return VerificationMessages.result(
                 for: .failed,
