@@ -90,7 +90,7 @@ struct CADMVVerifierTests {
     @Test
     func aamvaOffsetsAreByteOffsets() throws {
         let barcode = AAMVATestBarcode.make(
-            prefix: "@\n\u{1e}\réANSI ",
+            prefix: "é@\n\u{1e}\rANSI ",
             issuer: "636014",
             issueDate: "09282025",
             jurisdiction: "CA",
@@ -101,6 +101,43 @@ struct CADMVVerifierTests {
 
         #expect(document.issuerIdentificationNumber == "636014")
         #expect(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
+    }
+
+    @Test
+    func parserUsesDeclaredElementSeparator() throws {
+        let barcode = AAMVATestBarcode.make(
+            elementSeparator: "\u{1d}",
+            issuer: "636014",
+            issueDate: "09282025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+
+        let document = try AAMVADocumentParser().parse(rawPDF417: barcode)
+
+        #expect(document.issuerIdentificationNumber == "636014")
+        #expect(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
+        #expect(document.primaryIdentitySubfile?.fields["DAJ"] == "CA")
+    }
+
+    @Test
+    func parserNormalizesEscapedControlCharacters() async {
+        let barcode = AAMVATestBarcode.make(
+            issuer: "636014",
+            issueDate: "09282025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+        let escaped = barcode
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\n", with: "\\n")
+            .replacingOccurrences(of: "\r", with: "\\r")
+            .replacingOccurrences(of: "\u{1e}", with: "\\u001e")
+
+        let result = await CADMVVerifier.verify(rawPDF417: escaped)
+
+        #expect(result.status == .notPresent)
+        #expect(result.failureReason == .vcbMissing(required: false))
     }
 
     @Test
@@ -125,27 +162,33 @@ struct CADMVVerifierTests {
 private enum AAMVATestBarcode {
     static func make(
         prefix: String = "@\n\u{1e}\rANSI ",
+        elementSeparator: Character = "\n",
+        recordSeparator: Character = "\u{1e}",
+        segmentTerminator: Character = "\r",
         issuer: String,
         issueDate: String,
         jurisdiction: String,
         encodedVCB: String?
     ) -> String {
+        let prefix = prefix == "@\n\u{1e}\rANSI "
+            ? "@\(elementSeparator)\(recordSeparator)\(segmentTerminator)ANSI "
+            : prefix
         let dlSubfile = [
             "DLDAQSYNTHETIC",
             "DBD\(issueDate)",
             "DAJ\(jurisdiction)"
-        ].joined(separator: "\n") + "\r"
+        ].joined(separator: String(elementSeparator)) + String(segmentTerminator)
 
         let zcSubfile: String
         if let encodedVCB {
             zcSubfile = [
                 "ZCZCA",
                 "ZCE\(encodedVCB)"
-            ].joined(separator: "\n") + "\r"
+            ].joined(separator: String(elementSeparator)) + String(segmentTerminator)
         } else {
             zcSubfile = [
                 "ZCZCA"
-            ].joined(separator: "\n") + "\r"
+            ].joined(separator: String(elementSeparator)) + String(segmentTerminator)
         }
 
         let headerWithoutEntries = "\(prefix)\(issuer)100102"

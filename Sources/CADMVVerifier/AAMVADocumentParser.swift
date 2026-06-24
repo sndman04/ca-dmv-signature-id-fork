@@ -2,11 +2,16 @@ import Foundation
 
 struct AAMVADocumentParser {
     func parse(rawPDF417: String) throws -> AAMVADocument {
-        let payload = Data(rawPDF417.utf8)
+        let payload = Data(AAMVAPayloadNormalizer.normalize(rawPDF417).utf8)
         guard let ansiRange = payload.range(of: Data("ANSI ".utf8)) else {
             throw CADMVInternalError.malformedBarcode
         }
+        guard ansiRange.lowerBound >= 4 else {
+            throw CADMVInternalError.malformedBarcode
+        }
 
+        let elementSeparator = payload[ansiRange.lowerBound - 3]
+        let segmentTerminator = payload[ansiRange.lowerBound - 1]
         let headerStart = ansiRange.upperBound
         guard payload.count - headerStart >= 12 else {
             throw CADMVInternalError.malformedBarcode
@@ -76,7 +81,11 @@ struct AAMVADocumentParser {
                 : rawSubfile
             return AAMVASubfile(
                 designator: descriptor.designator,
-                fields: AAMVAFieldParser.parse(rawSubfile: fieldData)
+                fields: AAMVAFieldParser.parse(
+                    rawSubfile: fieldData,
+                    elementSeparator: elementSeparator,
+                    segmentTerminator: segmentTerminator
+                )
             )
         }
 
@@ -91,6 +100,103 @@ struct AAMVADocumentParser {
     }
 }
 
+enum AAMVAPayloadNormalizer {
+    static func normalize(_ value: String) -> String {
+        guard shouldNormalize(value) else {
+            return value
+        }
+
+        var output = ""
+        output.reserveCapacity(value.count)
+        var cursor = value.startIndex
+
+        while cursor < value.endIndex {
+            guard value[cursor] == "\\" else {
+                output.append(value[cursor])
+                cursor = value.index(after: cursor)
+                continue
+            }
+
+            let escapeStart = cursor
+            cursor = value.index(after: cursor)
+            guard cursor < value.endIndex else {
+                output.append("\\")
+                break
+            }
+
+            switch value[cursor] {
+            case "n":
+                output.append("\n")
+                cursor = value.index(after: cursor)
+            case "r":
+                output.append("\r")
+                cursor = value.index(after: cursor)
+            case "t":
+                output.append("\t")
+                cursor = value.index(after: cursor)
+            case "u":
+                let uIndex = cursor
+                cursor = value.index(after: cursor)
+                if cursor < value.endIndex, value[cursor] == "{" {
+                    let hexStart = value.index(after: cursor)
+                    guard let close = value[hexStart...].firstIndex(of: "}") else {
+                        output.append(contentsOf: value[escapeStart...uIndex])
+                        continue
+                    }
+                    let hex = String(value[hexStart..<close])
+                    if let scalar = unicodeScalar(hex: hex) {
+                        output.unicodeScalars.append(scalar)
+                    } else {
+                        output.append(contentsOf: value[escapeStart...close])
+                    }
+                    cursor = value.index(after: close)
+                } else {
+                    guard let hexEnd = value.index(cursor, offsetBy: 4, limitedBy: value.endIndex) else {
+                        output.append(contentsOf: value[escapeStart..<cursor])
+                        continue
+                    }
+                    let hex = String(value[cursor..<hexEnd])
+                    if let scalar = unicodeScalar(hex: hex) {
+                        output.unicodeScalars.append(scalar)
+                    } else {
+                        output.append(contentsOf: value[escapeStart..<hexEnd])
+                    }
+                    cursor = hexEnd
+                }
+            default:
+                output.append("\\")
+                output.append(value[cursor])
+                cursor = value.index(after: cursor)
+            }
+        }
+
+        return output
+    }
+
+    private static func shouldNormalize(_ value: String) -> Bool {
+        value.contains("\\n") ||
+            value.contains("\\r") ||
+            value.contains("\\u001e") ||
+            value.contains("\\u001E") ||
+            value.contains("\\u{1e}") ||
+            value.contains("\\u{1E}")
+    }
+
+    private static func unicodeScalar(hex: String) -> Unicode.Scalar? {
+        guard !hex.isEmpty,
+              hex.count <= 6,
+              hex.utf8.allSatisfy({
+                  (UInt8(ascii: "0")...UInt8(ascii: "9")).contains($0) ||
+                      (UInt8(ascii: "A")...UInt8(ascii: "F")).contains($0) ||
+                      (UInt8(ascii: "a")...UInt8(ascii: "f")).contains($0)
+              }),
+              let value = UInt32(hex, radix: 16) else {
+            return nil
+        }
+        return Unicode.Scalar(value)
+    }
+}
+
 private struct AAMVASubfileDescriptor {
     let designator: String
     let offset: Int
@@ -98,10 +204,23 @@ private struct AAMVASubfileDescriptor {
 }
 
 enum AAMVAFieldParser {
-    static func parse(rawSubfile: String) -> [String: String] {
+    static func parse(
+        rawSubfile: String,
+        elementSeparator: UInt8,
+        segmentTerminator: UInt8
+    ) -> [String: String] {
         var fields: [String: String] = [:]
-        let normalized = rawSubfile.replacingOccurrences(of: "\r", with: "\n")
-        let lines = normalized.split(separator: "\n", omittingEmptySubsequences: false)
+        var normalized = rawSubfile
+        if let segmentTerminator = Unicode.Scalar(Int(segmentTerminator)),
+           let elementSeparator = Unicode.Scalar(Int(elementSeparator)) {
+            normalized = normalized.replacingOccurrences(
+                of: String(segmentTerminator),
+                with: String(elementSeparator)
+            )
+        }
+        let separatorScalar = Unicode.Scalar(Int(elementSeparator)) ?? Unicode.Scalar(10)!
+        let separator = Character(separatorScalar)
+        let lines = normalized.split(separator: separator, omittingEmptySubsequences: false)
 
         for line in lines where line.count >= 3 {
             let field = String(line.prefix(3))
