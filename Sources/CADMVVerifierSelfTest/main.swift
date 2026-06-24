@@ -212,7 +212,15 @@ enum CADMVVerifierSelfTest {
             CADMVVerifier.base64URLDecodeForSelfTest("AA+A") == Data([0, 15, 128]),
             "standard base64 alphabet should remain accepted for DMV VCB compatibility"
         )
-        for malformed in ["A", "AAAA=", "A===", "AA=A", "AA A", "AA\nAA"] {
+        expect(
+            CADMVVerifier.base64URLDecodeForSelfTest("AA A") == Data([0, 0]),
+            "ASCII whitespace inside base64 should be ignored like the JS decoder path"
+        )
+        expect(
+            CADMVVerifier.base64URLDecodeForSelfTest("AA\nAA") == Data([0, 0, 0]),
+            "line-wrapped base64 should decode"
+        )
+        for malformed in ["A", "AAAA=", "A===", "AA=A"] {
             expect(
                 CADMVVerifier.base64URLDecodeForSelfTest(malformed) == nil,
                 "\(malformed) should be rejected by base64 decoder"

@@ -9,28 +9,36 @@ enum Base64URL {
     }
 
     static func decode(_ value: String) -> Data? {
-        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty,
-              isBase64URL(trimmed) else {
+        let compactedScalars = value.unicodeScalars.filter { scalar in
+            switch scalar.value {
+            case 0x09, 0x0a, 0x0c, 0x0d, 0x20:
+                return false
+            default:
+                return true
+            }
+        }
+        let compacted = String(String.UnicodeScalarView(compactedScalars))
+        guard !compacted.isEmpty,
+              isBase64URL(compacted) else {
             return nil
         }
 
-        let paddingStart = trimmed.firstIndex(of: "=") ?? trimmed.endIndex
-        let unpaddedLength = trimmed.distance(from: trimmed.startIndex, to: paddingStart)
-        let explicitPaddingLength = trimmed.distance(from: paddingStart, to: trimmed.endIndex)
+        let paddingStart = compacted.firstIndex(of: "=") ?? compacted.endIndex
+        let unpaddedLength = compacted.distance(from: compacted.startIndex, to: paddingStart)
+        let explicitPaddingLength = compacted.distance(from: paddingStart, to: compacted.endIndex)
         guard unpaddedLength % 4 != 1 else {
             return nil
         }
         if explicitPaddingLength > 0 {
             let unpaddedRemainder = unpaddedLength % 4
-            guard trimmed.count % 4 == 0,
+            guard compacted.count % 4 == 0,
                   unpaddedRemainder != 0,
                   explicitPaddingLength == 4 - unpaddedRemainder else {
                 return nil
             }
         }
 
-        var base64 = trimmed
+        var base64 = compacted
             .replacingOccurrences(of: "-", with: "+")
             .replacingOccurrences(of: "_", with: "/")
 

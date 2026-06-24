@@ -18,19 +18,19 @@ enum DMVVCBDecoder {
         return DMVVerifiableCredential(
             context: try context(from: requiredArray(map, key: 1)),
             type: try credentialTypes(from: requiredArray(map, key: 157)),
-            issuer: try url(from: requiredByteString(map, key: 180)),
+            issuer: try url(from: requiredValue(map, key: 180)),
             credentialSubject: try credentialSubject(from: requiredMap(map, key: 176)),
-            credentialStatus: try credentialStatus(from: requiredMap(map, key: 174)),
+            credentialStatus: try optionalMap(map, key: 174).map(credentialStatus(from:)),
             proof: try proof(from: requiredMap(map, key: 182))
         )
     }
 
     private static func context(from values: [CBORValue]) throws -> [String] {
         try values.map { value in
-            switch try unsigned(value) {
-            case 1:
+            switch value {
+            case .unsigned(1), .textString("https://www.w3.org/ns/credentials/v2"):
                 "https://www.w3.org/ns/credentials/v2"
-            case 2:
+            case .unsigned(2), .textString("https://w3id.org/vc-barcodes/v1"):
                 "https://w3id.org/vc-barcodes/v1"
             default:
                 throw CADMVInternalError.unsupportedVCB
@@ -40,10 +40,10 @@ enum DMVVCBDecoder {
 
     private static func credentialTypes(from values: [CBORValue]) throws -> [String] {
         try values.map { value in
-            switch try unsigned(value) {
-            case 118:
+            switch value {
+            case .unsigned(118), .textString("VerifiableCredential"):
                 "VerifiableCredential"
-            case 164:
+            case .unsigned(164), .textString("OpticalBarcodeCredential"):
                 "OpticalBarcodeCredential"
             default:
                 throw CADMVInternalError.unsupportedVCB
@@ -52,73 +52,91 @@ enum DMVVCBDecoder {
     }
 
     private static func credentialSubject(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential.CredentialSubject {
-        let type = try typeValue(from: requiredUnsigned(map, key: 156))
+        let type = try typeValue(from: requiredValue(map, key: 156))
         guard type == "AamvaDriversLicenseScannableInformation" else {
             throw CADMVInternalError.unsupportedVCB
         }
 
         return DMVVerifiableCredential.CredentialSubject(
             type: type,
-            protectedComponentIndex: try protectedComponentIndex(from: requiredByteString(map, key: 168))
+            protectedComponentIndex: try protectedComponentIndex(from: requiredValue(map, key: 168))
         )
     }
 
     private static func credentialStatus(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential.CredentialStatus {
-        let type = try typeValue(from: requiredUnsigned(map, key: 156))
+        let type = try typeValue(from: requiredValue(map, key: 156))
         guard type == "TerseBitstringStatusListEntry" else {
             throw CADMVInternalError.unsupportedVCB
         }
 
         return DMVVerifiableCredential.CredentialStatus(
             type: type,
-            terseStatusListBaseURL: try url(from: requiredByteString(map, key: 196)),
+            terseStatusListBaseURL: try url(from: requiredValue(map, key: 196)),
             terseStatusListIndex: try requiredUnsigned(map, key: 198)
         )
     }
 
     private static func proof(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential.Proof {
-        let type = try typeValue(from: requiredUnsigned(map, key: 156))
+        let type = try typeValue(from: requiredValue(map, key: 156))
         guard type == "DataIntegrityProof" else {
             throw CADMVInternalError.unsupportedVCB
         }
 
         return DMVVerifiableCredential.Proof(
             type: type,
-            cryptosuite: try cryptosuite(from: requiredUnsigned(map, key: 204)),
-            proofPurpose: try proofPurpose(from: requiredUnsigned(map, key: 214)),
-            proofValue: try multibaseBase58BTCString(from: requiredByteString(map, key: 216)),
-            verificationMethod: try url(from: requiredByteString(map, key: 218))
+            cryptosuite: try cryptosuite(from: requiredValue(map, key: 204)),
+            proofPurpose: try proofPurpose(from: requiredValue(map, key: 214)),
+            proofValue: try multibaseBase58BTCString(from: requiredValue(map, key: 216)),
+            verificationMethod: try url(from: requiredValue(map, key: 218))
         )
     }
 
-    private static func typeValue(from id: UInt64) throws -> String {
-        switch id {
-        case 108:
+    private static func typeValue(from value: CBORValue) throws -> String {
+        switch value {
+        case .unsigned(108), .textString("DataIntegrityProof"):
             "DataIntegrityProof"
-        case 160:
+        case .unsigned(160), .textString("AamvaDriversLicenseScannableInformation"):
             "AamvaDriversLicenseScannableInformation"
-        case 166:
+        case .unsigned(166), .textString("TerseBitstringStatusListEntry"):
             "TerseBitstringStatusListEntry"
         default:
             throw CADMVInternalError.unsupportedVCB
         }
     }
 
-    private static func cryptosuite(from id: UInt64) throws -> String {
-        guard id == 1 else {
+    private static func cryptosuite(from value: CBORValue) throws -> String {
+        guard value == .unsigned(1) || value == .textString("ecdsa-xi-2023") else {
             throw CADMVInternalError.unsupportedVCB
         }
         return "ecdsa-xi-2023"
     }
 
-    private static func proofPurpose(from id: UInt64) throws -> String {
-        guard id == 220 else {
+    private static func proofPurpose(from value: CBORValue) throws -> String {
+        switch value {
+        case .unsigned(220), .textString("assertionMethod"):
+            return "assertionMethod"
+        case .textString("https://w3id.org/security#assertionMethod"):
+            return "assertionMethod"
+        default:
             throw CADMVInternalError.unsupportedVCB
         }
-        return "assertionMethod"
     }
 
-    private static func url(from data: Data) throws -> String {
+    private static func url(from value: CBORValue) throws -> String {
+        switch value {
+        case let .byteString(data):
+            return try compactURL(from: data)
+        case let .textString(text):
+            guard isSafeURLText(text) else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return text
+        default:
+            throw CADMVInternalError.unsupportedVCB
+        }
+    }
+
+    private static func compactURL(from data: Data) throws -> String {
         guard data.count == 1, let id = data.first else {
             throw CADMVInternalError.unsupportedVCB
         }
@@ -185,19 +203,40 @@ enum DMVVCBDecoder {
         }
     }
 
-    private static func protectedComponentIndex(from data: Data) throws -> String {
-        guard data.count == 4,
-              data.first == UInt8(ascii: "u") else {
+    private static func protectedComponentIndex(from value: CBORValue) throws -> String {
+        switch value {
+        case let .byteString(data):
+            guard data.count == 4,
+                  data.first == UInt8(ascii: "u") else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return "u" + Base64URL.encode(data.dropFirst())
+        case let .textString(text):
+            guard isValidProtectedComponentIndex(text) else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return text
+        default:
             throw CADMVInternalError.unsupportedVCB
         }
-        return "u" + Base64URL.encode(data.dropFirst())
     }
 
-    private static func multibaseBase58BTCString(from data: Data) throws -> String {
-        guard data.first == 0x7a else {
+    private static func multibaseBase58BTCString(from value: CBORValue) throws -> String {
+        switch value {
+        case let .byteString(data):
+            guard data.first == 0x7a else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return "z" + Base58BTC.encode(data.dropFirst())
+        case let .textString(text):
+            guard text.first == "z",
+                  Base58BTC.decode(String(text.dropFirst())) != nil else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return text
+        default:
             throw CADMVInternalError.unsupportedVCB
         }
-        return "z" + Base58BTC.encode(data.dropFirst())
     }
 
     private static func requiredArray(_ map: [CBORValue: CBORValue], key: UInt64) throws -> [CBORValue] {
@@ -214,6 +253,23 @@ enum DMVVCBDecoder {
         return values
     }
 
+    private static func optionalMap(_ map: [CBORValue: CBORValue], key: UInt64) throws -> [CBORValue: CBORValue]? {
+        guard let value = map[.unsigned(key)] else {
+            return nil
+        }
+        guard case let .map(values) = value else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return values
+    }
+
+    private static func requiredValue(_ map: [CBORValue: CBORValue], key: UInt64) throws -> CBORValue {
+        guard let value = map[.unsigned(key)] else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return value
+    }
+
     private static func requiredUnsigned(_ map: [CBORValue: CBORValue], key: UInt64) throws -> UInt64 {
         guard let value = map[.unsigned(key)] else {
             throw CADMVInternalError.unsupportedVCB
@@ -221,18 +277,63 @@ enum DMVVCBDecoder {
         return try unsigned(value)
     }
 
-    private static func requiredByteString(_ map: [CBORValue: CBORValue], key: UInt64) throws -> Data {
-        guard case let .byteString(data) = map[.unsigned(key)] else {
-            throw CADMVInternalError.unsupportedVCB
-        }
-        return data
-    }
-
     private static func unsigned(_ value: CBORValue) throws -> UInt64 {
         guard case let .unsigned(number) = value else {
             throw CADMVInternalError.unsupportedVCB
         }
         return number
+    }
+
+    private static func isValidProtectedComponentIndex(_ text: String) -> Bool {
+        guard text.count == 5,
+              text.first == "u",
+              let bytes = Base64URL.decode(String(text.dropFirst())),
+              bytes.count == 3 else {
+            return false
+        }
+        return true
+    }
+
+    private static func isSafeURLText(_ text: String) -> Bool {
+        guard !text.isEmpty,
+              text.utf8.allSatisfy({ byte in
+                  switch byte {
+                  case UInt8(ascii: "A")...UInt8(ascii: "Z"),
+                       UInt8(ascii: "a")...UInt8(ascii: "z"),
+                       UInt8(ascii: "0")...UInt8(ascii: "9"),
+                       UInt8(ascii: "-"),
+                       UInt8(ascii: "."),
+                       UInt8(ascii: "_"),
+                       UInt8(ascii: "~"),
+                       UInt8(ascii: ":"),
+                       UInt8(ascii: "/"),
+                       UInt8(ascii: "?"),
+                       UInt8(ascii: "#"),
+                       UInt8(ascii: "["),
+                       UInt8(ascii: "]"),
+                       UInt8(ascii: "@"),
+                       UInt8(ascii: "!"),
+                       UInt8(ascii: "$"),
+                       UInt8(ascii: "&"),
+                       UInt8(ascii: "'"),
+                       UInt8(ascii: "("),
+                       UInt8(ascii: ")"),
+                       UInt8(ascii: "*"),
+                       UInt8(ascii: "+"),
+                       UInt8(ascii: ","),
+                       UInt8(ascii: ";"),
+                       UInt8(ascii: "="):
+                      return true
+                  default:
+                      return false
+                  }
+              }) else {
+            return false
+        }
+        return text.hasPrefix("did:web:credentials.dmv.ca.gov") ||
+            text.hasPrefix("did:web:uat-credentials.dmv.ca.gov") ||
+            text.hasPrefix("https://api.credentials.dmv.ca.gov/status/dlid/") ||
+            text.hasPrefix("https://api.uat-credentials.dmv.ca.gov/status/dlid/")
     }
 }
 

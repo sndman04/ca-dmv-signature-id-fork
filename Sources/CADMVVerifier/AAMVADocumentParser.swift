@@ -57,36 +57,36 @@ struct AAMVADocumentParser {
             cursor = lengthEnd
         }
 
-        let payloadPrefixLength = headerStart + 6 + 6 + minimumEntryLength
+        var subfiles: [AAMVASubfile] = []
+        var subfileCursor = entriesStart + minimumEntryLength
+        for _ in descriptors {
+            guard payload.count - subfileCursor >= 2 else {
+                throw CADMVInternalError.malformedBarcode
+            }
 
-        let subfiles = try descriptors.map { descriptor -> AAMVASubfile in
-            guard descriptor.offset >= payloadPrefixLength else {
+            let designatorEnd = subfileCursor + 2
+            let designator = String(decoding: payload[subfileCursor..<designatorEnd], as: UTF8.self)
+            subfileCursor = designatorEnd
+
+            guard let terminator = payload[subfileCursor...].firstIndex(of: segmentTerminator) else {
                 throw CADMVInternalError.malformedBarcode
             }
-            let startDistance = descriptor.offset
-            let end = descriptor.offset.addingReportingOverflow(descriptor.length)
-            guard !end.overflow,
-                  startDistance <= payload.count,
-                  end.partialValue <= payload.count else {
+            guard let rawSubfile = String(data: payload[subfileCursor..<terminator], encoding: .utf8) else {
                 throw CADMVInternalError.malformedBarcode
             }
-            guard let rawSubfile = String(
-                data: payload[startDistance..<end.partialValue],
-                encoding: .utf8
-            ) else {
-                throw CADMVInternalError.malformedBarcode
-            }
-            let fieldData = rawSubfile.hasPrefix(descriptor.designator)
+            subfileCursor = terminator + 1
+
+            let fieldData = rawSubfile.hasPrefix(designator)
                 ? String(rawSubfile.dropFirst(2))
                 : rawSubfile
-            return AAMVASubfile(
-                designator: descriptor.designator,
+            subfiles.append(AAMVASubfile(
+                designator: designator,
                 fields: AAMVAFieldParser.parse(
                     rawSubfile: fieldData,
                     elementSeparator: elementSeparator,
                     segmentTerminator: segmentTerminator
                 )
-            )
+            ))
         }
 
         guard !subfiles.isEmpty else {

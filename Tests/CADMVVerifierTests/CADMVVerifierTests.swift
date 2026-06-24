@@ -63,7 +63,7 @@ struct CADMVVerifierTests {
             issuer: "636014",
             issueDate: "08052025",
             jurisdiction: "CA",
-            encodedVCB: "not valid base64"
+            encodedVCB: "not.valid.base64"
         )
 
         let result = await CADMVVerifier.verify(rawPDF417: barcode)
@@ -88,7 +88,23 @@ struct CADMVVerifierTests {
     }
 
     @Test
-    func aamvaOffsetsAreByteOffsets() throws {
+    func aamvaParserReadsSubfilesSequentiallyLikeReferenceDecoder() throws {
+        let barcode = AAMVATestBarcode.make(
+            descriptorOffsetDelta: 7,
+            issuer: "636014",
+            issueDate: "09282025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+
+        let document = try AAMVADocumentParser().parse(rawPDF417: barcode)
+
+        #expect(document.issuerIdentificationNumber == "636014")
+        #expect(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
+    }
+
+    @Test
+    func aamvaParserToleratesMultibyteScannerPreamble() throws {
         let barcode = AAMVATestBarcode.make(
             prefix: "é@\n\u{1e}\rANSI ",
             issuer: "636014",
@@ -157,6 +173,24 @@ struct CADMVVerifierTests {
             )
         }
     }
+
+    @Test
+    func decoderAcceptsExpandedTextValuesFromCBORLD() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(textEncoded: true))
+
+        #expect(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
+        #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
+        #expect(credential.proof.proofValue == "zLdp")
+        #expect(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
+    }
+
+    @Test
+    func decoderAcceptsCredentialWithoutStatusBlock() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(includeStatus: false))
+
+        #expect(credential.credentialStatus == nil)
+        #expect(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
+    }
 }
 
 private enum AAMVATestBarcode {
@@ -165,6 +199,7 @@ private enum AAMVATestBarcode {
         elementSeparator: Character = "\n",
         recordSeparator: Character = "\u{1e}",
         segmentTerminator: Character = "\r",
+        descriptorOffsetDelta: Int = 0,
         issuer: String,
         issueDate: String,
         jurisdiction: String,
@@ -193,7 +228,7 @@ private enum AAMVATestBarcode {
 
         let headerWithoutEntries = "\(prefix)\(issuer)100102"
         let entriesLength = 20
-        let dlOffset = headerWithoutEntries.utf8.count + entriesLength
+        let dlOffset = headerWithoutEntries.utf8.count + entriesLength + descriptorOffsetDelta
         let zcOffset = dlOffset + dlSubfile.utf8.count
         let entries = "DL\(pad(dlOffset))\(pad(dlSubfile.utf8.count))ZC\(pad(zcOffset))\(pad(zcSubfile.utf8.count))"
 
@@ -206,30 +241,44 @@ private enum AAMVATestBarcode {
 }
 
 private enum CBORFixture {
-    static func credential(protectedComponentIndexBytes: Data) -> Data {
-        tagged(51_997, array([
+    static func credential(
+        protectedComponentIndexBytes: Data = Data([0x75, 0x01, 0x02, 0x03]),
+        includeStatus: Bool = true,
+        textEncoded: Bool = false
+    ) -> Data {
+        var pairs: [(Data, Data)] = [
+            (unsigned(1), array(textEncoded
+                ? [text("https://www.w3.org/ns/credentials/v2"), text("https://w3id.org/vc-barcodes/v1")]
+                : [unsigned(1), unsigned(2)])),
+            (unsigned(157), array(textEncoded
+                ? [text("VerifiableCredential"), text("OpticalBarcodeCredential")]
+                : [unsigned(118), unsigned(164)])),
+            (unsigned(180), textEncoded ? text("did:web:uat-credentials.dmv.ca.gov") : bytes([20])),
+            (unsigned(176), map([
+                (unsigned(156), textEncoded ? text("AamvaDriversLicenseScannableInformation") : unsigned(160)),
+                (unsigned(168), textEncoded ? text("uAQID") : byteString(protectedComponentIndexBytes))
+            ])),
+            (unsigned(182), map([
+                (unsigned(156), textEncoded ? text("DataIntegrityProof") : unsigned(108)),
+                (unsigned(204), textEncoded ? text("ecdsa-xi-2023") : unsigned(1)),
+                (unsigned(214), textEncoded ? text("assertionMethod") : unsigned(220)),
+                (unsigned(216), textEncoded ? text("zLdp") : byteString(Data([0x7a, 0x01, 0x02, 0x03]))),
+                (unsigned(218), textEncoded ? text("did:web:uat-credentials.dmv.ca.gov#vm-vcb-1") : bytes([22]))
+            ]))
+        ]
+        if includeStatus {
+            pairs.append((unsigned(174), map([
+                (unsigned(156), textEncoded ? text("TerseBitstringStatusListEntry") : unsigned(166)),
+                (unsigned(196), textEncoded
+                    ? text("https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists")
+                    : bytes([21])),
+                (unsigned(198), unsigned(1))
+            ])))
+        }
+
+        return tagged(51_997, array([
             unsigned(31_000_000),
-            map([
-                (unsigned(1), array([unsigned(1), unsigned(2)])),
-                (unsigned(157), array([unsigned(118), unsigned(164)])),
-                (unsigned(180), bytes([20])),
-                (unsigned(176), map([
-                    (unsigned(156), unsigned(160)),
-                    (unsigned(168), byteString(protectedComponentIndexBytes))
-                ])),
-                (unsigned(174), map([
-                    (unsigned(156), unsigned(166)),
-                    (unsigned(196), bytes([21])),
-                    (unsigned(198), unsigned(1))
-                ])),
-                (unsigned(182), map([
-                    (unsigned(156), unsigned(108)),
-                    (unsigned(204), unsigned(1)),
-                    (unsigned(214), unsigned(220)),
-                    (unsigned(216), byteString(Data([0x7a, 0x01, 0x02, 0x03]))),
-                    (unsigned(218), bytes([22]))
-                ]))
-            ])
+            map(pairs)
         ]))
     }
 
@@ -243,6 +292,11 @@ private enum CBORFixture {
 
     private static func byteString(_ data: Data) -> Data {
         encode(majorType: 2, value: UInt64(data.count)) + data
+    }
+
+    private static func text(_ value: String) -> Data {
+        let data = Data(value.utf8)
+        return encode(majorType: 3, value: UInt64(data.count)) + data
     }
 
     private static func array(_ values: [Data]) -> Data {
