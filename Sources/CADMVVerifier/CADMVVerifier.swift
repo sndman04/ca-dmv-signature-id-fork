@@ -16,14 +16,39 @@ public enum CADMVVerificationStatus: Equatable, Sendable {
     case unavailable
 }
 
+/// Privacy-safe diagnostic reason for a non-verified result.
+///
+/// These reasons intentionally avoid raw barcode data, parsed identity fields,
+/// proof values, DID documents, and status-list contents.
+public enum CADMVVerificationFailureReason: Equatable, Sendable {
+    case notCaliforniaDMV
+    case vcbMissing(required: Bool)
+    case vcbBase64Invalid
+    case vcbCBORUnsupported
+    case unsupportedCredentialProfile
+    case environmentMismatch(expected: CADMVVerificationMode)
+    case protectedAAMVADataUnavailable
+    case didResolutionFailed
+    case signatureMismatch
+    case statusUnavailable
+    case revoked
+    case expired
+}
+
 /// Privacy-minimized result safe for normal app control flow and UI messaging.
 public struct CADMVVerificationResult: Equatable, Sendable {
     public let status: CADMVVerificationStatus
     public let message: String?
+    public let failureReason: CADMVVerificationFailureReason?
 
-    public init(status: CADMVVerificationStatus, message: String? = nil) {
+    public init(
+        status: CADMVVerificationStatus,
+        message: String? = nil,
+        failureReason: CADMVVerificationFailureReason? = nil
+    ) {
         self.status = status
         self.message = message
+        self.failureReason = failureReason
     }
 }
 
@@ -54,7 +79,7 @@ public struct CADMVVerificationOptions: Sendable {
 }
 
 /// DMV environment selection.
-public enum CADMVVerificationMode: Sendable {
+public enum CADMVVerificationMode: Equatable, Sendable {
     case production
     case uat
 }
@@ -73,7 +98,10 @@ public enum CADMVVerifier {
             return try await VerificationPipeline(options: options)
                 .verify(rawPDF417: rawPDF417)
         } catch {
-            return VerificationMessages.result(for: .failed)
+            return VerificationMessages.result(
+                for: .failed,
+                failureReason: .unsupportedCredentialProfile
+            )
         }
     }
 }

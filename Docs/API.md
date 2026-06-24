@@ -37,6 +37,18 @@ Defaults:
 
 `checkStatus = true` performs online revocation checking. If the DMV status endpoint is unavailable, redirects outside the allowed fetch policy, returns an unsupported credential shape, or the status-list credential proof cannot be verified, the result is `.unavailable`. Application integrations should treat only `.verified` as verified.
 
+## `CADMVVerificationResult`
+
+```swift
+public struct CADMVVerificationResult: Equatable, Sendable {
+    public let status: CADMVVerificationStatus
+    public let message: String?
+    public let failureReason: CADMVVerificationFailureReason?
+}
+```
+
+`failureReason` is a privacy-safe diagnostic for non-verified results. It never contains raw barcode data, decoded AAMVA fields, proof values, DID documents, or status-list contents.
+
 ## `CADMVVerificationStatus`
 
 ```swift
@@ -58,6 +70,27 @@ Current behavior:
 - `.unavailable`: required status checking cannot complete.
 - `.revoked`: a cryptographically verified status-list credential marks the revocation bit as set.
 - `.expired`: reserved for credential expiration handling when expiration data is available.
+
+## `CADMVVerificationFailureReason`
+
+```swift
+public enum CADMVVerificationFailureReason: Equatable, Sendable {
+    case notCaliforniaDMV
+    case vcbMissing(required: Bool)
+    case vcbBase64Invalid
+    case vcbCBORUnsupported
+    case unsupportedCredentialProfile
+    case environmentMismatch(expected: CADMVVerificationMode)
+    case protectedAAMVADataUnavailable
+    case didResolutionFailed
+    case signatureMismatch
+    case statusUnavailable
+    case revoked
+    case expired
+}
+```
+
+Use this field to route app behavior without logging sensitive document data. For example, `environmentMismatch` can identify UAT/test credentials being checked in production mode, while `didResolutionFailed` separates network/key lookup failures from `signatureMismatch`.
 
 ## `CADMVScanner`
 

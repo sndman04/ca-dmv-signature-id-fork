@@ -1,6 +1,13 @@
 enum VerificationMessages {
-    static func result(for status: CADMVVerificationStatus) -> CADMVVerificationResult {
-        CADMVVerificationResult(status: status, message: message(for: status))
+    static func result(
+        for status: CADMVVerificationStatus,
+        failureReason: CADMVVerificationFailureReason? = nil
+    ) -> CADMVVerificationResult {
+        CADMVVerificationResult(
+            status: status,
+            message: message(for: status),
+            failureReason: failureReason
+        )
     }
 
     static func message(for status: CADMVVerificationStatus) -> String {

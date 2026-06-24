@@ -16,6 +16,7 @@ struct CADMVVerifierTests {
         let result = await CADMVVerifier.verify(rawPDF417: barcode)
 
         #expect(result.status == .notPresent)
+        #expect(result.failureReason == .vcbMissing(required: false))
     }
 
     @Test
@@ -30,6 +31,52 @@ struct CADMVVerifierTests {
         let result = await CADMVVerifier.verify(rawPDF417: barcode)
 
         #expect(result.status == .failed)
+        #expect(result.failureReason == .vcbMissing(required: true))
+    }
+
+    @Test
+    func nonCaliforniaDocumentReportsReason() async {
+        let barcode = AAMVATestBarcode.make(
+            issuer: "636000",
+            issueDate: "09292025",
+            jurisdiction: "NV",
+            encodedVCB: "AQIDBA"
+        )
+
+        let result = await CADMVVerifier.verify(rawPDF417: barcode)
+
+        #expect(result.status == .notPresent)
+        #expect(result.failureReason == .notCaliforniaDMV)
+    }
+
+    @Test
+    func malformedVCBReportsBase64Reason() async {
+        let barcode = AAMVATestBarcode.make(
+            issuer: "636014",
+            issueDate: "08052025",
+            jurisdiction: "CA",
+            encodedVCB: "not valid base64"
+        )
+
+        let result = await CADMVVerifier.verify(rawPDF417: barcode)
+
+        #expect(result.status == .failed)
+        #expect(result.failureReason == .vcbBase64Invalid)
+    }
+
+    @Test
+    func unsupportedCBORReportsReason() async {
+        let barcode = AAMVATestBarcode.make(
+            issuer: "636014",
+            issueDate: "08052025",
+            jurisdiction: "CA",
+            encodedVCB: "AQIDBA"
+        )
+
+        let result = await CADMVVerifier.verify(rawPDF417: barcode)
+
+        #expect(result.status == .failed)
+        #expect(result.failureReason == .vcbCBORUnsupported)
     }
 
     @Test

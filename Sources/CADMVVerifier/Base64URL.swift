@@ -73,11 +73,12 @@ enum Base64URL {
     }
 }
 
-enum CADMVInternalError: Error {
+enum CADMVInternalError: Equatable, Error {
     case malformedBarcode
     case malformedCBOR
     case unsupportedCBOR
     case unsupportedVCB
+    case environmentMismatch(expected: CADMVVerificationMode)
     case didResolutionFailed
     case unsupportedDIDKey
     case statusListDecodeFailed

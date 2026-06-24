@@ -35,7 +35,8 @@ case .verified:
 case .notPresent:
     // No applicable CA DMV digital signature was present.
 case .failed, .revoked, .expired, .unavailable:
-    // Handle according to app policy.
+    // Handle according to app policy. Use result.failureReason for
+    // privacy-safe diagnostics without logging raw document data.
 }
 ```
 

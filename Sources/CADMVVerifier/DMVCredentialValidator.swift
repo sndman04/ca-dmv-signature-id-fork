@@ -24,7 +24,7 @@ enum DMVCredentialValidator {
         let policy = ModePolicy(mode: mode)
         guard credential.issuer == policy.issuerDID,
               credential.proof.verificationMethod.hasPrefix(policy.issuerDID + "#") else {
-            throw CADMVInternalError.unsupportedVCB
+            throw CADMVInternalError.environmentMismatch(expected: mode)
         }
 
         guard credential.proof.type == "DataIntegrityProof",

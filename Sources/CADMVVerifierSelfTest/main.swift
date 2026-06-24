@@ -491,12 +491,14 @@ enum CADMVVerifierSelfTest {
                 options: CADMVVerificationOptions(mode: .uat)
             )
             expect(validResult.status == .verified, "valid UAT fixture should cryptographically verify")
+            expect(validResult.failureReason == nil, "valid UAT fixture should not expose a failure reason")
 
             let invalidResult = await CADMVVerifier.verify(
                 rawPDF417: fixtures.invalidUAT,
                 options: CADMVVerificationOptions(mode: .uat)
             )
             expect(invalidResult.status == .failed, "invalid UAT fixture should fail signature verification")
+            expect(invalidResult.failureReason == .signatureMismatch, "invalid UAT fixture should report signature mismatch")
         }
 
         let tamperedProtectedField = fixtures.validUAT.replacingOccurrences(
@@ -511,10 +513,15 @@ enum CADMVVerifierSelfTest {
                 options: CADMVVerificationOptions(mode: .uat)
             )
             expect(tamperedResult.status == .failed, "tampered protected AAMVA field should fail")
+            expect(tamperedResult.failureReason == .signatureMismatch, "tampered protected AAMVA field should report signature mismatch")
         }
 
         let productionModeResult = await CADMVVerifier.verify(rawPDF417: fixtures.validUAT)
         expect(productionModeResult.status == .failed, "UAT fixture should fail in production mode")
+        expect(
+            productionModeResult.failureReason == .environmentMismatch(expected: .production),
+            "UAT fixture in production mode should report environment mismatch"
+        )
 
         try await withFixtureNetwork { @Sendable request in
             try FixtureNetwork.response(for: request, statusURLsReturnUnavailable: true)
@@ -524,6 +531,18 @@ enum CADMVVerifierSelfTest {
                 options: CADMVVerificationOptions(checkStatus: true, mode: .uat)
             )
             expect(statusRequiredResult.status == .unavailable, "status-required verification should be unavailable when status endpoint returns HTTP failure")
+            expect(statusRequiredResult.failureReason == .statusUnavailable, "status-required HTTP failure should report status unavailable")
+        }
+
+        try await withFixtureNetwork { @Sendable request in
+            try FixtureNetwork.response(for: request, didStatusCode: 503)
+        } operation: {
+            let didFailureResult = await CADMVVerifier.verify(
+                rawPDF417: fixtures.validUAT,
+                options: CADMVVerificationOptions(mode: .uat)
+            )
+            expect(didFailureResult.status == .failed, "DID HTTP failure should fail verification")
+            expect(didFailureResult.failureReason == .didResolutionFailed, "DID HTTP failure should report DID resolution failure")
         }
     }
 

@@ -10,6 +10,7 @@ This package handles raw PDF417 barcode data from government identity documents.
 - Never persist raw barcode data inside the verifier package.
 - Never persist parsed PII inside the verifier package.
 - Keep public results privacy-minimized.
+- Keep diagnostics limited to high-level failure reasons.
 - Fail closed on unsupported or malformed verification data.
 - Restrict network access to DMV-controlled hosts for the selected mode.
 
@@ -20,6 +21,8 @@ The package currently parses AAMVA data, decodes the DMV VCB credential shape co
 It is not a general JSON-LD, RDF canonicalization, or Data Integrity verifier. The native canonicalization paths are limited to the supported DMV credential and status-list shapes, and the current VCB profile expects `protectedComponentIndex` to be `u` plus a 24-bit bitmap. Unsupported shapes must fail closed.
 
 When status checking is required but DMV status infrastructure is unavailable or returns unsupported data, the verifier returns `.unavailable` rather than `.verified`.
+
+`CADMVVerificationResult.failureReason` is safe for app control flow and telemetry classification only if integrations preserve its privacy boundary: never attach raw PDF417 data, parsed AAMVA fields, decoded credentials, proof values, DID documents, or status-list contents to diagnostic events.
 
 ## Debugging Policy
 

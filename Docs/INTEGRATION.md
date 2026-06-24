@@ -10,6 +10,8 @@ let result = await CADMVVerifier.verify(rawPDF417: rawPDF417)
 
 The verifier does not expose parsed identity fields. Apps that need identity data for business workflows should parse and handle that data separately under their own retention and privacy policy.
 
+For non-verified results, `result.failureReason` provides a privacy-safe diagnostic such as `environmentMismatch`, `vcbBase64Invalid`, `didResolutionFailed`, or `signatureMismatch`. Use it for app routing and coarse telemetry only; do not attach raw barcode data, decoded AAMVA fields, proof values, DID documents, or status-list contents.
+
 ## Scanner Flow
 
 Apps that want package-provided scanning should use the optional scanner product. The scanner boundary should only capture PDF417 data and hand it to the verifier.
@@ -24,6 +26,7 @@ Scanner implementations must not:
 - Store raw barcode payloads.
 - Log barcode payloads.
 - Parse identity fields for display or telemetry.
+- Log sensitive document data while handling verifier failure reasons.
 
 ## Status Checking
 
