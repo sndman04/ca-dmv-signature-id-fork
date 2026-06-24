@@ -69,13 +69,13 @@ Raw PDF417 data can contain personally identifiable information.
 Run the SwiftPM tests and the broader fixture-backed self-test:
 
 ```sh
-swift test
+Tools/swift-test.sh
 swift run CADMVVerifierSelfTest
 ```
 
 CI runs both commands on push and pull request. The self-test contains the official valid/invalid UAT fixture parity checks, so do not treat `swift test` alone as the full verification gate.
 
-If `swift test` cannot import XCTest when using Command Line Tools, point SwiftPM at the full Xcode toolchain:
+`Tools/swift-test.sh` automatically points SwiftPM at the full Xcode toolchain when `xcode-select` is using Command Line Tools, because Command Line Tools may not expose XCTest. The equivalent manual command is:
 
 ```sh
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test

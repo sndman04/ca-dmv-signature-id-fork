@@ -23,7 +23,7 @@ jobs:
         run: swift build -c release
 
       - name: Run SwiftPM tests
-        run: swift test
+        run: Tools/swift-test.sh
 
       - name: Run official-fixture self-test
         run: swift run CADMVVerifierSelfTest

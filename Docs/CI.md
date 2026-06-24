@@ -5,7 +5,7 @@ Recommended commands:
 ```sh
 swift build
 swift build -c release
-swift test
+Tools/swift-test.sh
 swift run CADMVVerifierSelfTest
 ```
 
@@ -17,14 +17,14 @@ Reference SDK parity command:
 PATH="/Users/dougalvey/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node Tools/reference-runner.mjs
 ```
 
-If a Command Line Tools-only environment cannot import XCTest, run SwiftPM with the full Xcode toolchain:
+`Tools/swift-test.sh` automatically points SwiftPM at the full Xcode toolchain when `xcode-select` is using Command Line Tools, because Command Line Tools may not expose XCTest. The equivalent manual commands are:
 
 ```sh
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift run CADMVVerifierSelfTest
 ```
 
-The SwiftPM tests cover focused regression cases. The self-test contains the official valid/invalid UAT fixture parity checks and uses fixture-backed DID Web and status endpoint responses. CI must run both `swift test` and `swift run CADMVVerifierSelfTest`.
+The SwiftPM tests cover focused regression cases. The self-test contains the official valid/invalid UAT fixture parity checks and uses fixture-backed DID Web and status endpoint responses. CI must run both `Tools/swift-test.sh` and `swift run CADMVVerifierSelfTest`.
 
 ## Expected Self-Test Coverage
 
