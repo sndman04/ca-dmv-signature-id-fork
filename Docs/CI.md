@@ -17,7 +17,7 @@ Reference SDK parity command:
 PATH="/Users/dougalvey/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin:$PATH" node Tools/reference-runner.mjs
 ```
 
-If a Command Line Tools-only environment cannot import Swift `Testing`, run SwiftPM with the full Xcode toolchain:
+If a Command Line Tools-only environment cannot import XCTest, run SwiftPM with the full Xcode toolchain:
 
 ```sh
 DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift test

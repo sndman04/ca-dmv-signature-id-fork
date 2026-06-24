@@ -1,19 +1,16 @@
 @testable import CADMVVerifier
 import Foundation
-import Testing
+import XCTest
 
-@Suite
-struct CADMVVerifierTests {
-    @Test
-    func malformedBarcodeReportsReason() async {
+final class CADMVVerifierTests: XCTestCase {
+    func testMalformedBarcodeReportsReason() async {
         let result = await CADMVVerifier.verify(rawPDF417: "ANSI")
 
-        #expect(result.status == .failed)
-        #expect(result.failureReason == .malformedBarcode)
+        XCTAssert(result.status == .failed)
+        XCTAssert(result.failureReason == .malformedBarcode)
     }
 
-    @Test
-    func missingOptionalVCBIsNotPresent() async {
+    func testMissingOptionalVCBIsNotPresent() async {
         let barcode = AAMVATestBarcode.make(
             issuer: "636014",
             issueDate: "09282025",
@@ -23,12 +20,11 @@ struct CADMVVerifierTests {
 
         let result = await CADMVVerifier.verify(rawPDF417: barcode)
 
-        #expect(result.status == .notPresent)
-        #expect(result.failureReason == .vcbMissing(required: false))
+        XCTAssert(result.status == .notPresent)
+        XCTAssert(result.failureReason == .vcbMissing(required: false))
     }
 
-    @Test
-    func missingRequiredVCBFails() async {
+    func testMissingRequiredVCBFails() async {
         let barcode = AAMVATestBarcode.make(
             issuer: "636014",
             issueDate: "09292025",
@@ -38,12 +34,11 @@ struct CADMVVerifierTests {
 
         let result = await CADMVVerifier.verify(rawPDF417: barcode)
 
-        #expect(result.status == .failed)
-        #expect(result.failureReason == .vcbMissing(required: true))
+        XCTAssert(result.status == .failed)
+        XCTAssert(result.failureReason == .vcbMissing(required: true))
     }
 
-    @Test
-    func nonCaliforniaDocumentReportsReason() async {
+    func testNonCaliforniaDocumentReportsReason() async {
         let barcode = AAMVATestBarcode.make(
             issuer: "636000",
             issueDate: "09292025",
@@ -53,12 +48,11 @@ struct CADMVVerifierTests {
 
         let result = await CADMVVerifier.verify(rawPDF417: barcode)
 
-        #expect(result.status == .notPresent)
-        #expect(result.failureReason == .notCaliforniaDMV)
+        XCTAssert(result.status == .notPresent)
+        XCTAssert(result.failureReason == .notCaliforniaDMV)
     }
 
-    @Test
-    func malformedVCBReportsBase64Reason() async {
+    func testMalformedVCBReportsBase64Reason() async {
         let barcode = AAMVATestBarcode.make(
             issuer: "636014",
             issueDate: "08052025",
@@ -68,12 +62,11 @@ struct CADMVVerifierTests {
 
         let result = await CADMVVerifier.verify(rawPDF417: barcode)
 
-        #expect(result.status == .failed)
-        #expect(result.failureReason == .vcbBase64Invalid)
+        XCTAssert(result.status == .failed)
+        XCTAssert(result.failureReason == .vcbBase64Invalid)
     }
 
-    @Test
-    func unsupportedCBORReportsReason() async {
+    func testUnsupportedCBORReportsReason() async {
         let barcode = AAMVATestBarcode.make(
             issuer: "636014",
             issueDate: "08052025",
@@ -83,12 +76,11 @@ struct CADMVVerifierTests {
 
         let result = await CADMVVerifier.verify(rawPDF417: barcode)
 
-        #expect(result.status == .failed)
-        #expect(result.failureReason == .vcbCBORUnsupported)
+        XCTAssert(result.status == .failed)
+        XCTAssert(result.failureReason == .vcbCBORUnsupported)
     }
 
-    @Test
-    func aamvaParserReadsSubfilesSequentiallyLikeReferenceDecoder() throws {
+    func testAamvaParserReadsSubfilesSequentiallyLikeReferenceDecoder() throws {
         let barcode = AAMVATestBarcode.make(
             descriptorOffsetDelta: 7,
             issuer: "636014",
@@ -99,12 +91,11 @@ struct CADMVVerifierTests {
 
         let document = try AAMVADocumentParser().parse(rawPDF417: barcode)
 
-        #expect(document.issuerIdentificationNumber == "636014")
-        #expect(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
+        XCTAssert(document.issuerIdentificationNumber == "636014")
+        XCTAssert(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
     }
 
-    @Test
-    func aamvaParserToleratesMultibyteScannerPreamble() throws {
+    func testAamvaParserToleratesMultibyteScannerPreamble() throws {
         let barcode = AAMVATestBarcode.make(
             prefix: "é@\n\u{1e}\rANSI ",
             issuer: "636014",
@@ -115,12 +106,11 @@ struct CADMVVerifierTests {
 
         let document = try AAMVADocumentParser().parse(rawPDF417: barcode)
 
-        #expect(document.issuerIdentificationNumber == "636014")
-        #expect(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
+        XCTAssert(document.issuerIdentificationNumber == "636014")
+        XCTAssert(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
     }
 
-    @Test
-    func parserUsesDeclaredElementSeparator() throws {
+    func testParserUsesDeclaredElementSeparator() throws {
         let barcode = AAMVATestBarcode.make(
             elementSeparator: "\u{1d}",
             issuer: "636014",
@@ -131,13 +121,12 @@ struct CADMVVerifierTests {
 
         let document = try AAMVADocumentParser().parse(rawPDF417: barcode)
 
-        #expect(document.issuerIdentificationNumber == "636014")
-        #expect(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
-        #expect(document.primaryIdentitySubfile?.fields["DAJ"] == "CA")
+        XCTAssert(document.issuerIdentificationNumber == "636014")
+        XCTAssert(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
+        XCTAssert(document.primaryIdentitySubfile?.fields["DAJ"] == "CA")
     }
 
-    @Test
-    func parserNormalizesEscapedControlCharacters() async {
+    func testParserNormalizesEscapedControlCharacters() async {
         let barcode = AAMVATestBarcode.make(
             issuer: "636014",
             issueDate: "09282025",
@@ -152,99 +141,94 @@ struct CADMVVerifierTests {
 
         let result = await CADMVVerifier.verify(rawPDF417: escaped)
 
-        #expect(result.status == .notPresent)
-        #expect(result.failureReason == .vcbMissing(required: false))
+        XCTAssert(result.status == .notPresent)
+        XCTAssert(result.failureReason == .vcbMissing(required: false))
     }
 
-    @Test
-    func protectedComponentIndexDecodesAnyThreeByteBitmap() throws {
+    func testProtectedComponentIndexDecodesAnyThreeByteBitmap() throws {
         let credential = try DMVVCBDecoder.decode(
             CBORFixture.credential(protectedComponentIndexBytes: Data([0x75, 0x01, 0x02, 0x03]))
         )
 
-        #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
+        XCTAssert(credential.credentialSubject.protectedComponentIndex == "uAQID")
     }
 
-    @Test
-    func protectedComponentIndexAcceptsReferenceNumericForm() throws {
+    func testProtectedComponentIndexAcceptsReferenceNumericForm() throws {
         let credential = try DMVVCBDecoder.decode(
             CBORFixture.credential(numericProtectedComponentIndex: 0x010203)
         )
 
-        #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
+        XCTAssert(credential.credentialSubject.protectedComponentIndex == "uAQID")
     }
 
-    @Test
-    func protectedComponentIndexRejectsWrongMultibasePrefix() throws {
-        #expect(throws: CADMVInternalError.unsupportedVCB) {
-            try DMVVCBDecoder.decode(
-                CBORFixture.credential(protectedComponentIndexBytes: Data([0x7a, 0x01, 0x02, 0x03]))
-            )
+    func testProtectedComponentIndexRejectsWrongMultibasePrefix() throws {
+        XCTAssertThrowsError(try DMVVCBDecoder.decode(
+            CBORFixture.credential(protectedComponentIndexBytes: Data([0x7a, 0x01, 0x02, 0x03]))
+        )) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
         }
     }
 
-    @Test
-    func decoderAcceptsExpandedTextValuesFromCBORLD() throws {
+    func testDecoderAcceptsExpandedTextValuesFromCBORLD() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential(textEncoded: true))
 
-        #expect(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
-        #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
-        #expect(credential.proof.proofValue == "zLdp")
-        #expect(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
+        XCTAssert(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
+        XCTAssert(credential.credentialSubject.protectedComponentIndex == "uAQID")
+        XCTAssert(credential.proof.proofValue == "zLdp")
+        XCTAssert(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
     }
 
-    @Test
-    func decoderAcceptsCredentialWithoutStatusBlock() throws {
+    func testDecoderAcceptsCompressedHTTPURLArrayValuesFromReferenceCBORLD() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(statusBaseURLArrayEncoded: true))
+
+        XCTAssert(credential.credentialStatus?.terseStatusListBaseURL == "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists")
+    }
+
+    func testDecoderAcceptsCredentialWithoutStatusBlock() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential(includeStatus: false))
 
-        #expect(credential.credentialStatus == nil)
-        #expect(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
+        XCTAssert(credential.credentialStatus == nil)
+        XCTAssert(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
     }
 
-    @Test
-    func validatorAllowsMissingStatusForStatusChecker() throws {
+    func testValidatorAllowsMissingStatusForStatusChecker() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential(includeStatus: false))
 
-        #expect(throws: Never.self) {
-            try DMVCredentialValidator.validate(credential, mode: .uat)
-        }
+        XCTAssertNoThrow(try DMVCredentialValidator.validate(credential, mode: .uat))
     }
 
-    @Test
-    func decoderAcceptsUncompressedCBORLDProfile() throws {
+    func testDecoderAcceptsUncompressedCBORLDProfile() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.uncompressedCredential())
 
-        #expect(credential.context == [
+        XCTAssertEqual(credential.context, [
             "https://www.w3.org/ns/credentials/v2",
             "https://w3id.org/vc-barcodes/v1"
         ])
-        #expect(credential.type.contains("OpticalBarcodeCredential"))
-        #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
-        #expect(credential.credentialStatus?.terseStatusListIndex == 1)
+        XCTAssert(credential.type.contains("OpticalBarcodeCredential"))
+        XCTAssert(credential.credentialSubject.protectedComponentIndex == "uAQID")
+        XCTAssert(credential.credentialStatus?.terseStatusListIndex == 1)
     }
 
-    @Test
-    func decoderAcceptsLegacyUncompressedCBORLDProfile() throws {
+    func testDecoderAcceptsLegacyUncompressedCBORLDProfile() throws {
         for tag in [UInt64(1_280), UInt64(1_536)] {
             let credential = try DMVVCBDecoder.decode(CBORFixture.uncompressedCredential(tag: tag))
 
-            #expect(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
-            #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
-            #expect(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
+            XCTAssert(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
+            XCTAssert(credential.credentialSubject.protectedComponentIndex == "uAQID")
+            XCTAssert(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
         }
     }
 
-    @Test
-    func decoderAcceptsLegacyCompressedCBORLDProfile() throws {
+    func testDecoderAcceptsLegacyCompressedCBORLDProfile() throws {
         for data in [
             CBORFixture.legacySingletonCompressedCredential(),
             CBORFixture.legacyRangeCompressedCredential()
         ] {
             let credential = try DMVVCBDecoder.decode(data)
 
-            #expect(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
-            #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
-            #expect(credential.credentialStatus?.terseStatusListIndex == 1)
+            XCTAssert(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
+            XCTAssert(credential.credentialSubject.protectedComponentIndex == "uAQID")
+            XCTAssert(credential.credentialStatus?.terseStatusListIndex == 1)
         }
     }
 }
@@ -300,14 +284,16 @@ private enum CBORFixture {
     static func credential(
         protectedComponentIndexBytes: Data = Data([0x75, 0x01, 0x02, 0x03]),
         includeStatus: Bool = true,
-        textEncoded: Bool = false
+        textEncoded: Bool = false,
+        statusBaseURLArrayEncoded: Bool = false
     ) -> Data {
         credential(
             protectedComponentIndexValue: textEncoded
                 ? text("uAQID")
                 : byteString(protectedComponentIndexBytes),
             includeStatus: includeStatus,
-            textEncoded: textEncoded
+            textEncoded: textEncoded,
+            statusBaseURLArrayEncoded: statusBaseURLArrayEncoded
         )
     }
 
@@ -374,12 +360,14 @@ private enum CBORFixture {
     private static func credential(
         protectedComponentIndexValue: Data,
         includeStatus: Bool,
-        textEncoded: Bool
+        textEncoded: Bool,
+        statusBaseURLArrayEncoded: Bool = false
     ) -> Data {
         let payload = compressedCredentialMap(
             protectedComponentIndexValue: protectedComponentIndexValue,
             includeStatus: includeStatus,
-            textEncoded: textEncoded
+            textEncoded: textEncoded,
+            statusBaseURLArrayEncoded: statusBaseURLArrayEncoded
         )
 
         return tagged(51_997, array([
@@ -391,7 +379,8 @@ private enum CBORFixture {
     private static func compressedCredentialMap(
         protectedComponentIndexValue: Data = byteString(Data([0x75, 0x01, 0x02, 0x03])),
         includeStatus: Bool = true,
-        textEncoded: Bool = false
+        textEncoded: Bool = false,
+        statusBaseURLArrayEncoded: Bool = false
     ) -> Data {
         var pairs: [(Data, Data)] = [
             (unsigned(1), array(textEncoded
@@ -416,14 +405,27 @@ private enum CBORFixture {
         if includeStatus {
             pairs.append((unsigned(174), map([
                 (unsigned(156), textEncoded ? text("TerseBitstringStatusListEntry") : unsigned(166)),
-                (unsigned(196), textEncoded
-                    ? text("https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists")
-                    : bytes([21])),
+                (unsigned(196), statusBaseURLValue(
+                    textEncoded: textEncoded,
+                    arrayEncoded: statusBaseURLArrayEncoded
+                )),
                 (unsigned(198), unsigned(1))
             ])))
         }
 
         return map(pairs)
+    }
+
+    private static func statusBaseURLValue(textEncoded: Bool, arrayEncoded: Bool) -> Data {
+        if arrayEncoded {
+            return array([
+                unsigned(2),
+                text("api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists")
+            ])
+        }
+        return textEncoded
+            ? text("https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists")
+            : bytes([21])
     }
 
     private static func unsigned(_ value: UInt64) -> Data {

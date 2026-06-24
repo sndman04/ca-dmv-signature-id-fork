@@ -261,6 +261,8 @@ enum DMVVCBDecoder {
 
     private static func url(from value: CBORValue) throws -> String {
         switch value {
+        case let .array(values):
+            return try compressedURL(from: values)
         case let .byteString(data):
             return try compactURL(from: data)
         case let .textString(text):
@@ -271,6 +273,28 @@ enum DMVVCBDecoder {
         default:
             throw CADMVInternalError.unsupportedVCB
         }
+    }
+
+    private static func compressedURL(from values: [CBORValue]) throws -> String {
+        guard values.count == 2,
+              case let .unsigned(schemeID) = values[0],
+              case let .textString(suffix) = values[1] else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+
+        let prefix: String
+        switch schemeID {
+        case 2:
+            prefix = "https://"
+        default:
+            throw CADMVInternalError.unsupportedVCB
+        }
+
+        let text = prefix + suffix
+        guard isSafeURLText(text) else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return text
     }
 
     private static func compactURL(from data: Data) throws -> String {
