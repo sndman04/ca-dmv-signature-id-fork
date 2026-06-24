@@ -275,6 +275,7 @@ final class CADMVVerifierTests: XCTestCase {
 
         XCTAssert(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
         XCTAssertNil(credential.proof.created)
+        XCTAssertNil(credential.proof.expires)
         XCTAssert(credential.credentialSubject.protectedComponentIndex == "uAQID")
         XCTAssert(credential.proof.proofValue == "zLdp")
         XCTAssert(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
@@ -286,15 +287,35 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssertEqual(credential.proof.created, "2026-01-01T00:00:00Z")
     }
 
+    func testDecoderPreservesCompressedProofExpires() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(proofExpires: "2027-01-01T00:00:00Z"))
+
+        XCTAssertEqual(credential.proof.expires, "2027-01-01T00:00:00Z")
+    }
+
     func testDecoderPreservesExpandedProofCreated() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.uncompressedCredential(proofCreated: "2026-01-01T00:00:00Z"))
 
         XCTAssertEqual(credential.proof.created, "2026-01-01T00:00:00Z")
     }
 
+    func testDecoderPreservesExpandedProofExpires() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.uncompressedCredential(proofExpires: "2027-01-01T00:00:00Z"))
+
+        XCTAssertEqual(credential.proof.expires, "2027-01-01T00:00:00Z")
+    }
+
     func testDecoderRejectsUnsafeProofCreated() throws {
         XCTAssertThrowsError(try DMVVCBDecoder.decode(
             CBORFixture.credential(proofCreated: "2026-01-01T00:00:00Z\" .\n_:x")
+        )) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
+    func testDecoderRejectsUnknownProofKey() throws {
+        XCTAssertThrowsError(try DMVVCBDecoder.decode(
+            CBORFixture.credential(includeUnknownProofKey: true)
         )) { error in
             XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
         }
@@ -408,7 +429,9 @@ private enum CBORFixture {
         includeStatus: Bool = true,
         textEncoded: Bool = false,
         statusBaseURLArrayEncoded: Bool = false,
-        proofCreated: String? = nil
+        proofCreated: String? = nil,
+        proofExpires: String? = nil,
+        includeUnknownProofKey: Bool = false
     ) -> Data {
         credential(
             protectedComponentIndexValue: textEncoded
@@ -417,7 +440,9 @@ private enum CBORFixture {
             includeStatus: includeStatus,
             textEncoded: textEncoded,
             statusBaseURLArrayEncoded: statusBaseURLArrayEncoded,
-            proofCreated: proofCreated
+            proofCreated: proofCreated,
+            proofExpires: proofExpires,
+            includeUnknownProofKey: includeUnknownProofKey
         )
     }
 
@@ -441,7 +466,11 @@ private enum CBORFixture {
         ]))
     }
 
-    static func uncompressedCredential(tag: UInt64 = 51_997, proofCreated: String? = nil) -> Data {
+    static func uncompressedCredential(
+        tag: UInt64 = 51_997,
+        proofCreated: String? = nil,
+        proofExpires: String? = nil
+    ) -> Data {
         var proofPairs = [
             (text("type"), text("DataIntegrityProof")),
             (text("cryptosuite"), text("ecdsa-xi-2023")),
@@ -451,6 +480,9 @@ private enum CBORFixture {
         ]
         if let proofCreated {
             proofPairs.append((text("created"), text(proofCreated)))
+        }
+        if let proofExpires {
+            proofPairs.append((text("expires"), text(proofExpires)))
         }
 
         let credential = map([
@@ -491,14 +523,18 @@ private enum CBORFixture {
         includeStatus: Bool,
         textEncoded: Bool,
         statusBaseURLArrayEncoded: Bool = false,
-        proofCreated: String? = nil
+        proofCreated: String? = nil,
+        proofExpires: String? = nil,
+        includeUnknownProofKey: Bool = false
     ) -> Data {
         let payload = compressedCredentialMap(
             protectedComponentIndexValue: protectedComponentIndexValue,
             includeStatus: includeStatus,
             textEncoded: textEncoded,
             statusBaseURLArrayEncoded: statusBaseURLArrayEncoded,
-            proofCreated: proofCreated
+            proofCreated: proofCreated,
+            proofExpires: proofExpires,
+            includeUnknownProofKey: includeUnknownProofKey
         )
 
         return tagged(51_997, array([
@@ -512,7 +548,9 @@ private enum CBORFixture {
         includeStatus: Bool = true,
         textEncoded: Bool = false,
         statusBaseURLArrayEncoded: Bool = false,
-        proofCreated: String? = nil
+        proofCreated: String? = nil,
+        proofExpires: String? = nil,
+        includeUnknownProofKey: Bool = false
     ) -> Data {
         var proofPairs = [
             (unsigned(156), textEncoded ? text("DataIntegrityProof") : unsigned(108)),
@@ -523,6 +561,12 @@ private enum CBORFixture {
         ]
         if let proofCreated {
             proofPairs.append((textEncoded ? text("created") : unsigned(202), text(proofCreated)))
+        }
+        if let proofExpires {
+            proofPairs.append((textEncoded ? text("expires") : unsigned(208), text(proofExpires)))
+        }
+        if includeUnknownProofKey {
+            proofPairs.append((textEncoded ? text("unknownProofOption") : unsigned(999), text("unsupported")))
         }
 
         var pairs: [(Data, Data)] = [

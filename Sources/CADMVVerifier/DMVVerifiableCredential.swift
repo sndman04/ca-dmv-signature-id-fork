@@ -22,6 +22,7 @@ struct DMVVerifiableCredential: Equatable, Sendable {
     struct Proof: Equatable, Sendable {
         let type: String
         let created: String?
+        let expires: String?
         let cryptosuite: String
         let proofPurpose: String
         let proofValue: String

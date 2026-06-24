@@ -7,6 +7,15 @@ enum DMVVCBDecoder {
     private static let legacySingletonUncompressedTag: UInt64 = 1280
     private static let legacySingletonCompressedTag: UInt64 = 1281
     private static let supportedCBORLDVersion: UInt64 = 31_000_000
+    private static let compressedProofKeys: Set<CBORValue> = [
+        .unsigned(156), .unsigned(202), .unsigned(204), .unsigned(208),
+        .unsigned(214), .unsigned(216), .unsigned(218)
+    ]
+    private static let expandedProofKeys: Set<CBORValue> = [
+        .textString("type"), .textString("created"), .textString("expires"),
+        .textString("cryptosuite"), .textString("proofPurpose"),
+        .textString("proofValue"), .textString("verificationMethod")
+    ]
 
     static func decode(_ data: Data) throws -> DMVVerifiableCredential {
         let value = try CBORReader.decode(data)
@@ -153,9 +162,11 @@ enum DMVVCBDecoder {
     }
 
     private static func expandedProof(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential.Proof {
-        DMVVerifiableCredential.Proof(
+        try rejectUnknownKeys(map, allowed: expandedProofKeys)
+        return DMVVerifiableCredential.Proof(
             type: try requiredText(map, key: "type"),
             created: try optionalDateTimeText(map, key: "created"),
+            expires: try optionalDateTimeText(map, key: "expires"),
             cryptosuite: try requiredText(map, key: "cryptosuite"),
             proofPurpose: try proofPurpose(from: requiredValue(map, key: "proofPurpose")),
             proofValue: try multibaseBase58BTCString(from: requiredValue(map, key: "proofValue")),
@@ -215,6 +226,7 @@ enum DMVVCBDecoder {
     }
 
     private static func proof(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential.Proof {
+        try rejectUnknownKeys(map, allowed: compressedProofKeys)
         let type = try typeValue(from: requiredValue(map, key: 156))
         guard type == "DataIntegrityProof" else {
             throw CADMVInternalError.unsupportedVCB
@@ -223,6 +235,7 @@ enum DMVVCBDecoder {
         return DMVVerifiableCredential.Proof(
             type: type,
             created: try optionalDateTimeText(map, key: 202),
+            expires: try optionalDateTimeText(map, key: 208),
             cryptosuite: try cryptosuite(from: requiredValue(map, key: 204)),
             proofPurpose: try proofPurpose(from: requiredValue(map, key: 214)),
             proofValue: try multibaseBase58BTCString(from: requiredValue(map, key: 216)),
@@ -467,6 +480,12 @@ enum DMVVCBDecoder {
             throw CADMVInternalError.unsupportedVCB
         }
         return values
+    }
+
+    private static func rejectUnknownKeys(_ map: [CBORValue: CBORValue], allowed: Set<CBORValue>) throws {
+        for key in map.keys where !allowed.contains(key) {
+            throw CADMVInternalError.unsupportedVCB
+        }
     }
 
     private static func requiredValue(_ map: [CBORValue: CBORValue], key: UInt64) throws -> CBORValue {

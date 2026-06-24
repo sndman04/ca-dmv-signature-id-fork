@@ -43,6 +43,9 @@ enum EcdsaXi2023Verifier {
         if let created = credential.proof.created {
             lines.append("_:c14n0 <http://purl.org/dc/terms/created> \"\(created)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
         }
+        if let expires = credential.proof.expires {
+            lines.append("_:c14n0 <https://w3id.org/security#expiration> \"\(expires)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
+        }
         lines.append(contentsOf: [
             "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/security#\(credential.proof.type)> .",
             "_:c14n0 <https://w3id.org/security#cryptosuite> \"\(credential.proof.cryptosuite)\"^^<https://w3id.org/security#cryptosuiteString> .",
