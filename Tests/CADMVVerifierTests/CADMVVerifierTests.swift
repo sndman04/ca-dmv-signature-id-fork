@@ -110,6 +110,39 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssert(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
     }
 
+    func testAamvaParserToleratesStrippedANSIHeaderPreamble() throws {
+        let barcode = AAMVATestBarcode.make(
+            prefix: "ANSI ",
+            issuer: "636014",
+            issueDate: "09282025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+
+        let document = try AAMVADocumentParser().parse(rawPDF417: barcode)
+
+        XCTAssert(document.issuerIdentificationNumber == "636014")
+        XCTAssert(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
+        XCTAssert(document.primaryIdentitySubfile?.fields["DAJ"] == "CA")
+    }
+
+    func testAamvaParserInfersSeparatorsWhenPreambleIsStripped() throws {
+        let barcode = AAMVATestBarcode.make(
+            prefix: "ANSI ",
+            elementSeparator: "\u{1d}",
+            issuer: "636014",
+            issueDate: "09282025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+
+        let document = try AAMVADocumentParser().parse(rawPDF417: barcode)
+
+        XCTAssert(document.issuerIdentificationNumber == "636014")
+        XCTAssert(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
+        XCTAssert(document.primaryIdentitySubfile?.fields["DAJ"] == "CA")
+    }
+
     func testParserUsesDeclaredElementSeparator() throws {
         let barcode = AAMVATestBarcode.make(
             elementSeparator: "\u{1d}",
@@ -138,6 +171,25 @@ final class CADMVVerifierTests: XCTestCase {
             .replacingOccurrences(of: "\n", with: "\\n")
             .replacingOccurrences(of: "\r", with: "\\r")
             .replacingOccurrences(of: "\u{1e}", with: "\\u001e")
+
+        let result = await CADMVVerifier.verify(rawPDF417: escaped)
+
+        XCTAssert(result.status == .notPresent)
+        XCTAssert(result.failureReason == .vcbMissing(required: false))
+    }
+
+    func testParserNormalizesEscapedGroupSeparators() async {
+        let barcode = AAMVATestBarcode.make(
+            elementSeparator: "\u{1d}",
+            issuer: "636014",
+            issueDate: "09282025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+        let escaped = barcode
+            .replacingOccurrences(of: "\u{1d}", with: "\\u001d")
+            .replacingOccurrences(of: "\u{1e}", with: "\\u001e")
+            .replacingOccurrences(of: "\r", with: "\\u000d")
 
         let result = await CADMVVerifier.verify(rawPDF417: escaped)
 

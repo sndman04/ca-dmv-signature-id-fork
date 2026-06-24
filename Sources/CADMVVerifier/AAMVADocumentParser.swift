@@ -6,12 +6,8 @@ struct AAMVADocumentParser {
         guard let ansiRange = payload.range(of: Data("ANSI ".utf8)) else {
             throw CADMVInternalError.malformedBarcode
         }
-        guard ansiRange.lowerBound >= 4 else {
-            throw CADMVInternalError.malformedBarcode
-        }
 
-        let elementSeparator = payload[ansiRange.lowerBound - 3]
-        let segmentTerminator = payload[ansiRange.lowerBound - 1]
+        let declaredSeparators = try declaredSeparators(payload: payload, ansiRange: ansiRange)
         let headerStart = ansiRange.upperBound
         guard payload.count - headerStart >= 12 else {
             throw CADMVInternalError.malformedBarcode
@@ -59,7 +55,7 @@ struct AAMVADocumentParser {
 
         var subfiles: [AAMVASubfile] = []
         var subfileCursor = entriesStart + minimumEntryLength
-        for _ in descriptors {
+        for descriptor in descriptors {
             guard payload.count - subfileCursor >= 2 else {
                 throw CADMVInternalError.malformedBarcode
             }
@@ -68,7 +64,13 @@ struct AAMVADocumentParser {
             let designator = String(decoding: payload[subfileCursor..<designatorEnd], as: UTF8.self)
             subfileCursor = designatorEnd
 
-            guard let terminator = payload[subfileCursor...].firstIndex(of: segmentTerminator) else {
+            let separators = separatorsForSubfile(
+                descriptor: descriptor,
+                payload: payload,
+                subfileStart: designatorEnd,
+                declared: declaredSeparators
+            )
+            guard let terminator = payload[subfileCursor...].firstIndex(of: separators.segmentTerminator) else {
                 throw CADMVInternalError.malformedBarcode
             }
             guard let rawSubfile = String(data: payload[subfileCursor..<terminator], encoding: .utf8) else {
@@ -83,8 +85,8 @@ struct AAMVADocumentParser {
                 designator: designator,
                 fields: AAMVAFieldParser.parse(
                     rawSubfile: fieldData,
-                    elementSeparator: elementSeparator,
-                    segmentTerminator: segmentTerminator
+                    elementSeparator: separators.elementSeparator,
+                    segmentTerminator: separators.segmentTerminator
                 )
             ))
         }
@@ -97,6 +99,64 @@ struct AAMVADocumentParser {
             issuerIdentificationNumber: issuer,
             subfiles: subfiles
         )
+    }
+
+    private func declaredSeparators(payload: Data, ansiRange: Range<Data.Index>) throws -> AAMVASeparators {
+        if ansiRange.lowerBound >= 4 {
+            return AAMVASeparators(
+                elementSeparator: payload[ansiRange.lowerBound - 3],
+                segmentTerminator: payload[ansiRange.lowerBound - 1],
+                inferFromSubfileLength: false
+            )
+        }
+
+        guard ansiRange.lowerBound == 0 else {
+            throw CADMVInternalError.malformedBarcode
+        }
+
+        return AAMVASeparators(
+            elementSeparator: UInt8(ascii: "\n"),
+            segmentTerminator: UInt8(ascii: "\r"),
+            inferFromSubfileLength: true
+        )
+    }
+
+    private func separatorsForSubfile(
+        descriptor: AAMVASubfileDescriptor,
+        payload: Data,
+        subfileStart: Data.Index,
+        declared: AAMVASeparators
+    ) -> AAMVASeparators {
+        guard declared.inferFromSubfileLength, descriptor.length >= 3,
+              let terminatorIndex = payload.index(
+            subfileStart,
+            offsetBy: descriptor.length - 3,
+            limitedBy: payload.index(before: payload.endIndex)
+        ) else {
+            return declared
+        }
+
+        let segmentTerminator = payload[terminatorIndex]
+        guard isControlSeparator(segmentTerminator) else {
+            return declared
+        }
+
+        let bodyEnd = max(subfileStart, terminatorIndex)
+        let body = payload[subfileStart..<bodyEnd]
+        let elementSeparator = body.first(where: isControlSeparator) ?? declared.elementSeparator
+        return AAMVASeparators(
+            elementSeparator: elementSeparator == segmentTerminator ? declared.elementSeparator : elementSeparator,
+            segmentTerminator: segmentTerminator,
+            inferFromSubfileLength: declared.inferFromSubfileLength
+        )
+    }
+
+    private func isControlSeparator(_ byte: UInt8) -> Bool {
+        byte == UInt8(ascii: "\n") ||
+            byte == UInt8(ascii: "\r") ||
+            byte == UInt8(ascii: "\t") ||
+            byte == 0x1d ||
+            byte == 0x1e
     }
 }
 
@@ -174,12 +234,7 @@ enum AAMVAPayloadNormalizer {
     }
 
     private static func shouldNormalize(_ value: String) -> Bool {
-        value.contains("\\n") ||
-            value.contains("\\r") ||
-            value.contains("\\u001e") ||
-            value.contains("\\u001E") ||
-            value.contains("\\u{1e}") ||
-            value.contains("\\u{1E}")
+        value.contains("\\")
     }
 
     private static func unicodeScalar(hex: String) -> Unicode.Scalar? {
@@ -201,6 +256,12 @@ private struct AAMVASubfileDescriptor {
     let designator: String
     let offset: Int
     let length: Int
+}
+
+private struct AAMVASeparators {
+    let elementSeparator: UInt8
+    let segmentTerminator: UInt8
+    let inferFromSubfileLength: Bool
 }
 
 enum AAMVAFieldParser {
