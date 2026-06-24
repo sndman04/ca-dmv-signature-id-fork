@@ -73,6 +73,13 @@ enum EcdsaXi2023Verifier {
             "_:c14n1 <https://w3id.org/vc-barcodes#protectedComponentIndex> \"\(credential.credentialSubject.protectedComponentIndex)\"^^<https://w3id.org/security#multibase> ."
         ])
 
+        if let validFrom = credential.validFrom {
+            lines.append("_:c14n0 <https://www.w3.org/2018/credentials#validFrom> \"\(validFrom)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
+        }
+        if let validUntil = credential.validUntil {
+            lines.append("_:c14n0 <https://www.w3.org/2018/credentials#validUntil> \"\(validUntil)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
+        }
+
         if let status {
             lines.append(contentsOf: [
                 "_:c14n2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/vc-barcodes#\(status.type)> .",

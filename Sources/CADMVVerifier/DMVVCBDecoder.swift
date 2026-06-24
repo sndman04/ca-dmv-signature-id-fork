@@ -7,6 +7,16 @@ enum DMVVCBDecoder {
     private static let legacySingletonUncompressedTag: UInt64 = 1280
     private static let legacySingletonCompressedTag: UInt64 = 1281
     private static let supportedCBORLDVersion: UInt64 = 31_000_000
+    private static let compressedCredentialKeys: Set<CBORValue> = [
+        .unsigned(1), .unsigned(157), .unsigned(174), .unsigned(176),
+        .unsigned(180), .unsigned(182), .unsigned(192), .unsigned(194)
+    ]
+    private static let expandedCredentialKeys: Set<CBORValue> = [
+        .textString("@context"), .textString("type"), .textString("issuer"),
+        .textString("validFrom"), .textString("validUntil"),
+        .textString("credentialSubject"), .textString("credentialStatus"),
+        .textString("proof")
+    ]
     private static let compressedProofKeys: Set<CBORValue> = [
         .unsigned(156), .unsigned(202), .unsigned(204), .unsigned(208),
         .unsigned(214), .unsigned(216), .unsigned(218)
@@ -58,14 +68,7 @@ enum DMVVCBDecoder {
             throw CADMVInternalError.unsupportedVCB
         }
 
-        return DMVVerifiableCredential(
-            context: try context(from: requiredArray(map, key: 1)),
-            type: try credentialTypes(from: requiredArray(map, key: 157)),
-            issuer: try url(from: requiredValue(map, key: 180)),
-            credentialSubject: try credentialSubject(from: requiredMap(map, key: 176)),
-            credentialStatus: try optionalMap(map, key: 174).map(credentialStatus(from:)),
-            proof: try proof(from: requiredMap(map, key: 182))
-        )
+        return try compressedCredential(from: map)
     }
 
     private static func decodeLegacyRangeCBORLD(tag: UInt64, value: CBORValue) throws -> DMVVerifiableCredential {
@@ -98,10 +101,13 @@ enum DMVVCBDecoder {
     }
 
     private static func compressedCredential(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential {
-        DMVVerifiableCredential(
+        try rejectUnknownKeys(map, allowed: compressedCredentialKeys)
+        return DMVVerifiableCredential(
             context: try context(from: requiredArray(map, key: 1)),
             type: try credentialTypes(from: requiredArray(map, key: 157)),
             issuer: try url(from: requiredValue(map, key: 180)),
+            validFrom: try optionalDateTimeText(map, key: 192),
+            validUntil: try optionalDateTimeText(map, key: 194),
             credentialSubject: try credentialSubject(from: requiredMap(map, key: 176)),
             credentialStatus: try optionalMap(map, key: 174).map(credentialStatus(from:)),
             proof: try proof(from: requiredMap(map, key: 182))
@@ -132,10 +138,13 @@ enum DMVVCBDecoder {
     }
 
     private static func expandedCredential(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential {
-        DMVVerifiableCredential(
+        try rejectUnknownKeys(map, allowed: expandedCredentialKeys)
+        return DMVVerifiableCredential(
             context: try textArrayOrString(requiredValue(map, key: "@context")),
             type: try textArrayOrString(requiredValue(map, key: "type")),
             issuer: try url(from: requiredValue(map, key: "issuer")),
+            validFrom: try optionalDateTimeText(map, key: "validFrom"),
+            validUntil: try optionalDateTimeText(map, key: "validUntil"),
             credentialSubject: try expandedCredentialSubject(from: requiredMap(map, key: "credentialSubject")),
             credentialStatus: try optionalMap(map, key: "credentialStatus").map(expandedCredentialStatus(from:)),
             proof: try expandedProof(from: requiredMap(map, key: "proof"))

@@ -4,6 +4,8 @@ struct DMVVerifiableCredential: Equatable, Sendable {
     let context: [String]
     let type: [String]
     let issuer: String
+    let validFrom: String?
+    let validUntil: String?
     let credentialSubject: CredentialSubject
     let credentialStatus: CredentialStatus?
     let proof: Proof
