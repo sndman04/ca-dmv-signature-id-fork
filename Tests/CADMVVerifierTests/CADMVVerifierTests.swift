@@ -166,6 +166,15 @@ struct CADMVVerifierTests {
     }
 
     @Test
+    func protectedComponentIndexAcceptsReferenceNumericForm() throws {
+        let credential = try DMVVCBDecoder.decode(
+            CBORFixture.credential(numericProtectedComponentIndex: 0x010203)
+        )
+
+        #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
+    }
+
+    @Test
     func protectedComponentIndexRejectsWrongMultibasePrefix() throws {
         #expect(throws: CADMVInternalError.unsupportedVCB) {
             try DMVVCBDecoder.decode(
@@ -190,6 +199,28 @@ struct CADMVVerifierTests {
 
         #expect(credential.credentialStatus == nil)
         #expect(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
+    }
+
+    @Test
+    func validatorAllowsMissingStatusForStatusChecker() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(includeStatus: false))
+
+        #expect(throws: Never.self) {
+            try DMVCredentialValidator.validate(credential, mode: .uat)
+        }
+    }
+
+    @Test
+    func decoderAcceptsUncompressedCBORLDProfile() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.uncompressedCredential())
+
+        #expect(credential.context == [
+            "https://www.w3.org/ns/credentials/v2",
+            "https://w3id.org/vc-barcodes/v1"
+        ])
+        #expect(credential.type.contains("OpticalBarcodeCredential"))
+        #expect(credential.credentialSubject.protectedComponentIndex == "uAQID")
+        #expect(credential.credentialStatus?.terseStatusListIndex == 1)
     }
 }
 
@@ -246,6 +277,62 @@ private enum CBORFixture {
         includeStatus: Bool = true,
         textEncoded: Bool = false
     ) -> Data {
+        credential(
+            protectedComponentIndexValue: textEncoded
+                ? text("uAQID")
+                : byteString(protectedComponentIndexBytes),
+            includeStatus: includeStatus,
+            textEncoded: textEncoded
+        )
+    }
+
+    static func credential(numericProtectedComponentIndex: UInt64) -> Data {
+        credential(
+            protectedComponentIndexValue: unsigned(numericProtectedComponentIndex),
+            includeStatus: true,
+            textEncoded: false
+        )
+    }
+
+    static func uncompressedCredential() -> Data {
+        tagged(51_997, array([
+            unsigned(0),
+            map([
+                (text("@context"), array([
+                    text("https://www.w3.org/ns/credentials/v2"),
+                    text("https://w3id.org/vc-barcodes/v1")
+                ])),
+                (text("type"), array([
+                    text("VerifiableCredential"),
+                    text("OpticalBarcodeCredential")
+                ])),
+                (text("issuer"), text("did:web:uat-credentials.dmv.ca.gov")),
+                (text("credentialSubject"), map([
+                    (text("type"), text("AamvaDriversLicenseScannableInformation")),
+                    (text("protectedComponentIndex"), text("uAQID"))
+                ])),
+                (text("credentialStatus"), map([
+                    (text("type"), text("TerseBitstringStatusListEntry")),
+                    (text("terseStatusListBaseUrl"), text("https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists")),
+                    (text("terseStatusListIndex"), unsigned(1))
+                ])),
+                (text("proof"), map([
+                    (text("type"), text("DataIntegrityProof")),
+                    (text("cryptosuite"), text("ecdsa-xi-2023")),
+                    (text("proofPurpose"), text("assertionMethod")),
+                    (text("proofValue"), text("zLdp")),
+                    (text("verificationMethod"), text("did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"))
+                ])),
+                (text("ignored"), null())
+            ])
+        ]))
+    }
+
+    private static func credential(
+        protectedComponentIndexValue: Data,
+        includeStatus: Bool,
+        textEncoded: Bool
+    ) -> Data {
         var pairs: [(Data, Data)] = [
             (unsigned(1), array(textEncoded
                 ? [text("https://www.w3.org/ns/credentials/v2"), text("https://w3id.org/vc-barcodes/v1")]
@@ -256,7 +343,7 @@ private enum CBORFixture {
             (unsigned(180), textEncoded ? text("did:web:uat-credentials.dmv.ca.gov") : bytes([20])),
             (unsigned(176), map([
                 (unsigned(156), textEncoded ? text("AamvaDriversLicenseScannableInformation") : unsigned(160)),
-                (unsigned(168), textEncoded ? text("uAQID") : byteString(protectedComponentIndexBytes))
+                (unsigned(168), protectedComponentIndexValue)
             ])),
             (unsigned(182), map([
                 (unsigned(156), textEncoded ? text("DataIntegrityProof") : unsigned(108)),
@@ -297,6 +384,10 @@ private enum CBORFixture {
     private static func text(_ value: String) -> Data {
         let data = Data(value.utf8)
         return encode(majorType: 3, value: UInt64(data.count)) + data
+    }
+
+    private static func null() -> Data {
+        Data([0xf6])
     }
 
     private static func array(_ values: [Data]) -> Data {

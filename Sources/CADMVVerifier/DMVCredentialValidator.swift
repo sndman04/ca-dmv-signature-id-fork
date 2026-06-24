@@ -1,8 +1,7 @@
 enum DMVCredentialValidator {
     static func validate(
         _ credential: DMVVerifiableCredential,
-        mode: CADMVVerificationMode,
-        requireStatus: Bool
+        mode: CADMVVerificationMode
     ) throws {
         guard credential.context == [
             "https://www.w3.org/ns/credentials/v2",
@@ -34,7 +33,7 @@ enum DMVCredentialValidator {
             throw CADMVInternalError.unsupportedVCB
         }
 
-        if requireStatus || credential.credentialStatus != nil {
+        if credential.credentialStatus != nil {
             guard let status = credential.credentialStatus,
                   status.type == "TerseBitstringStatusListEntry",
                   status.terseStatusListBaseURL.hasPrefix(policy.statusListPrefix) else {

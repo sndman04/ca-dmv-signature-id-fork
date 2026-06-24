@@ -8,6 +8,8 @@ indirect enum CBORValue: Hashable, Sendable {
     case array([CBORValue])
     case map([CBORValue: CBORValue])
     case tagged(UInt64, CBORValue)
+    case bool(Bool)
+    case null
 }
 
 enum CBORReader {
@@ -79,6 +81,17 @@ enum CBORReader {
         case 6:
             let tag = try readArgument(additionalInfo, from: data, cursor: &cursor)
             return .tagged(tag, try readValue(from: data, cursor: &cursor, depth: depth + 1))
+        case 7:
+            switch additionalInfo {
+            case 20:
+                return .bool(false)
+            case 21:
+                return .bool(true)
+            case 22, 23:
+                return .null
+            default:
+                throw CADMVInternalError.unsupportedCBOR
+            }
         default:
             throw CADMVInternalError.unsupportedCBOR
         }

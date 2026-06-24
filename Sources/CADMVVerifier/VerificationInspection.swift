@@ -66,10 +66,10 @@ extension CADMVVerifier {
             decodedCredentialIssuer: credential?.issuer,
             decodedCredentialProofValue: credential?.proof.proofValue,
             uatCredentialShapeValid: credential.map {
-                (try? DMVCredentialValidator.validate($0, mode: .uat, requireStatus: false)) != nil
+                (try? DMVCredentialValidator.validate($0, mode: .uat)) != nil
             } ?? false,
             productionCredentialShapeValid: credential.map {
-                (try? DMVCredentialValidator.validate($0, mode: .production, requireStatus: false)) != nil
+                (try? DMVCredentialValidator.validate($0, mode: .production)) != nil
             } ?? false,
             opticalDataHashHex: opticalDataHash?.cadmvHexString,
             verifyDataHex: try credential.flatMap { credential in

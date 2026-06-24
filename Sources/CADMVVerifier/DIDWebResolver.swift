@@ -34,21 +34,64 @@ enum DIDWebResolver {
         let json = try JSONSerialization.jsonObject(with: data)
         guard let root = json as? [String: Any],
               root["id"] as? String == policy.did,
-              let verificationMethods = root["verificationMethod"] as? [[String: Any]],
-              let assertionMethods = root["assertionMethod"] as? [String],
-              assertionMethods.contains(verificationMethod),
-              let method = verificationMethods.first(where: { $0["id"] as? String == verificationMethod }) else {
+              let method = verificationMethodObject(
+                  in: root,
+                  id: verificationMethod,
+                  did: policy.did
+              ) else {
             throw CADMVInternalError.didResolutionFailed
         }
 
-        return try parseKey(method, expectedController: policy.did)
+        return try parseKey(
+            method,
+            expectedID: verificationMethod,
+            expectedController: policy.did
+        )
+    }
+
+    private static func verificationMethodObject(
+        in root: [String: Any],
+        id verificationMethod: String,
+        did: String
+    ) -> [String: Any]? {
+        guard let assertionMethods = root["assertionMethod"] as? [Any] else {
+            return nil
+        }
+
+        let assertionMethodObjects = assertionMethods.compactMap { value -> [String: Any]? in
+            guard let method = value as? [String: Any],
+                  normalizedDIDURL(method["id"] as? String, did: did) == verificationMethod else {
+                return nil
+            }
+            return method
+        }
+        if let embeddedMethod = assertionMethodObjects.first {
+            return embeddedMethod
+        }
+
+        let assertionMethodIDs = assertionMethods.compactMap { value -> String? in
+            guard let id = value as? String else {
+                return nil
+            }
+            return normalizedDIDURL(id, did: did)
+        }
+        guard assertionMethodIDs.contains(verificationMethod),
+              let verificationMethods = root["verificationMethod"] as? [[String: Any]] else {
+            return nil
+        }
+
+        return verificationMethods.first {
+            normalizedDIDURL($0["id"] as? String, did: did) == verificationMethod
+        }
     }
 
     private static func parseKey(
         _ method: [String: Any],
+        expectedID: String,
         expectedController: String
     ) throws -> DIDDocumentKey {
-        guard let id = method["id"] as? String,
+        guard let id = normalizedDIDURL(method["id"] as? String, did: expectedController),
+              id == expectedID,
               let controller = method["controller"] as? String,
               controller == expectedController,
               let type = method["type"] as? String,
@@ -65,6 +108,19 @@ enum DIDWebResolver {
             publicKeyMultibase: publicKeyMultibase,
             compressedP256Key: compressedKey
         )
+    }
+
+    private static func normalizedDIDURL(_ value: String?, did: String) -> String? {
+        guard let value else {
+            return nil
+        }
+        if value.hasPrefix("#") {
+            return did + value
+        }
+        if value.hasPrefix(did + "#") {
+            return value
+        }
+        return nil
     }
 
     private static func compressedP256Key(from publicKeyMultibase: String) throws -> Data {

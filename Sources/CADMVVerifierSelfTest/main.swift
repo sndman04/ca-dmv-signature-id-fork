@@ -615,6 +615,32 @@ enum CADMVVerifierSelfTest {
                 // Expected: assertionMethod authorization is required.
             }
         }
+
+        try await withFixtureNetwork { @Sendable request in
+            try FixtureNetwork.response(for: request, relativeDIDReferences: true)
+        } operation: {
+            let uatKey = try await CADMVVerifier.resolveVerificationMethodForSelfTest(
+                "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+                mode: .uat
+            )
+            expect(
+                uatKey == "02369ab0d3212491cf3526b34e146ba105ae43e6d44b45240e3c2ccf59d06720bb",
+                "UAT DID key should resolve from relative DID document references"
+            )
+        }
+
+        try await withFixtureNetwork { @Sendable request in
+            try FixtureNetwork.response(for: request, embeddedAssertionMethod: true)
+        } operation: {
+            let uatKey = try await CADMVVerifier.resolveVerificationMethodForSelfTest(
+                "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+                mode: .uat
+            )
+            expect(
+                uatKey == "02369ab0d3212491cf3526b34e146ba105ae43e6d44b45240e3c2ccf59d06720bb",
+                "UAT DID key should resolve from embedded assertion method object"
+            )
+        }
     }
 
     private static func testScannerWrapper() async {
@@ -670,6 +696,8 @@ enum FixtureNetwork {
         for request: URLRequest,
         didStatusCode: Int = 200,
         omitAssertionMethod: Bool = false,
+        relativeDIDReferences: Bool = false,
+        embeddedAssertionMethod: Bool = false,
         statusURLsReturnUnavailable: Bool = false
     ) throws -> (Data, URLResponse) {
         guard let url = request.url else {
@@ -682,14 +710,18 @@ enum FixtureNetwork {
             body = didDocument(
                 did: "did:web:uat-credentials.dmv.ca.gov",
                 key: "zDnaeU77sUhXKYqRy8263bsCq9Np7vy2z8epZ9WJ6YSWD1TVU",
-                omitAssertionMethod: omitAssertionMethod
+                omitAssertionMethod: omitAssertionMethod,
+                relativeDIDReferences: relativeDIDReferences,
+                embeddedAssertionMethod: embeddedAssertionMethod
             )
             statusCode = didStatusCode
         } else if url.absoluteString == "https://credentials.dmv.ca.gov/.well-known/did.json" {
             body = didDocument(
                 did: "did:web:credentials.dmv.ca.gov",
                 key: "zDnaeskmyLDwiAmeewyrsaG5SaM3Nz3oSRsw1D17i7USTks9J",
-                omitAssertionMethod: omitAssertionMethod
+                omitAssertionMethod: omitAssertionMethod,
+                relativeDIDReferences: relativeDIDReferences,
+                embeddedAssertionMethod: embeddedAssertionMethod
             )
             statusCode = didStatusCode
         } else if statusURLsReturnUnavailable && url.host == "api.uat-credentials.dmv.ca.gov" {
@@ -713,15 +745,34 @@ enum FixtureNetwork {
     private static func didDocument(
         did: String,
         key: String,
-        omitAssertionMethod: Bool
+        omitAssertionMethod: Bool,
+        relativeDIDReferences: Bool,
+        embeddedAssertionMethod: Bool
     ) -> Data {
-        let assertionMethod = omitAssertionMethod ? "[]" : #"["\#(did)#vm-vcb-1"]"#
+        let methodID = relativeDIDReferences ? "#vm-vcb-1" : "\(did)#vm-vcb-1"
+        let assertionMethod: String
+        if omitAssertionMethod {
+            assertionMethod = "[]"
+        } else if embeddedAssertionMethod {
+            assertionMethod = """
+            [
+              {
+                "id": "\(methodID)",
+                "type": "Multikey",
+                "controller": "\(did)",
+                "publicKeyMultibase": "\(key)"
+              }
+            ]
+            """
+        } else {
+            assertionMethod = #"["\#(methodID)"]"#
+        }
         return Data("""
         {
           "id": "\(did)",
           "verificationMethod": [
             {
-              "id": "\(did)#vm-vcb-1",
+              "id": "\(methodID)",
               "type": "Multikey",
               "controller": "\(did)",
               "publicKeyMultibase": "\(key)"

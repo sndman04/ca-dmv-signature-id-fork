@@ -10,8 +10,15 @@ enum DMVVCBDecoder {
               tag == cborldTag,
               case let .array(topLevel) = taggedValue,
               topLevel.count == 2,
-              topLevel[0] == .unsigned(supportedCBORLDVersion),
+              case let .unsigned(registryEntryID) = topLevel[0],
               case let .map(map) = topLevel[1] else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+
+        guard registryEntryID == supportedCBORLDVersion else {
+            if registryEntryID == 0 {
+                return try expandedCredential(from: map)
+            }
             throw CADMVInternalError.unsupportedVCB
         }
 
@@ -22,6 +29,46 @@ enum DMVVCBDecoder {
             credentialSubject: try credentialSubject(from: requiredMap(map, key: 176)),
             credentialStatus: try optionalMap(map, key: 174).map(credentialStatus(from:)),
             proof: try proof(from: requiredMap(map, key: 182))
+        )
+    }
+
+    private static func expandedCredential(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential {
+        DMVVerifiableCredential(
+            context: try textArrayOrString(requiredValue(map, key: "@context")),
+            type: try textArrayOrString(requiredValue(map, key: "type")),
+            issuer: try url(from: requiredValue(map, key: "issuer")),
+            credentialSubject: try expandedCredentialSubject(from: requiredMap(map, key: "credentialSubject")),
+            credentialStatus: try optionalMap(map, key: "credentialStatus").map(expandedCredentialStatus(from:)),
+            proof: try expandedProof(from: requiredMap(map, key: "proof"))
+        )
+    }
+
+    private static func expandedCredentialSubject(
+        from map: [CBORValue: CBORValue]
+    ) throws -> DMVVerifiableCredential.CredentialSubject {
+        DMVVerifiableCredential.CredentialSubject(
+            type: try requiredText(map, key: "type"),
+            protectedComponentIndex: try protectedComponentIndex(from: requiredValue(map, key: "protectedComponentIndex"))
+        )
+    }
+
+    private static func expandedCredentialStatus(
+        from map: [CBORValue: CBORValue]
+    ) throws -> DMVVerifiableCredential.CredentialStatus {
+        DMVVerifiableCredential.CredentialStatus(
+            type: try requiredText(map, key: "type"),
+            terseStatusListBaseURL: try url(from: requiredValue(map, key: "terseStatusListBaseUrl")),
+            terseStatusListIndex: try unsigned(requiredValue(map, key: "terseStatusListIndex"))
+        )
+    }
+
+    private static func expandedProof(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential.Proof {
+        DMVVerifiableCredential.Proof(
+            type: try requiredText(map, key: "type"),
+            cryptosuite: try requiredText(map, key: "cryptosuite"),
+            proofPurpose: try proofPurpose(from: requiredValue(map, key: "proofPurpose")),
+            proofValue: try multibaseBase58BTCString(from: requiredValue(map, key: "proofValue")),
+            verificationMethod: try url(from: requiredValue(map, key: "verificationMethod"))
         )
     }
 
@@ -205,6 +252,16 @@ enum DMVVCBDecoder {
 
     private static func protectedComponentIndex(from value: CBORValue) throws -> String {
         switch value {
+        case let .unsigned(number):
+            guard number <= 0x00ff_ffff else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            let bytes = Data([
+                UInt8((number >> 16) & 0xff),
+                UInt8((number >> 8) & 0xff),
+                UInt8(number & 0xff)
+            ])
+            return "u" + Base64URL.encode(bytes)
         case let .byteString(data):
             guard data.count == 4,
                   data.first == UInt8(ascii: "u") else {
@@ -246,8 +303,31 @@ enum DMVVCBDecoder {
         return values
     }
 
+    private static func textArrayOrString(_ value: CBORValue) throws -> [String] {
+        switch value {
+        case let .textString(text):
+            return [text]
+        case let .array(values):
+            return try values.map { value in
+                guard case let .textString(text) = value else {
+                    throw CADMVInternalError.unsupportedVCB
+                }
+                return text
+            }
+        default:
+            throw CADMVInternalError.unsupportedVCB
+        }
+    }
+
     private static func requiredMap(_ map: [CBORValue: CBORValue], key: UInt64) throws -> [CBORValue: CBORValue] {
         guard case let .map(values) = map[.unsigned(key)] else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return values
+    }
+
+    private static func requiredMap(_ map: [CBORValue: CBORValue], key: String) throws -> [CBORValue: CBORValue] {
+        guard case let .map(values) = map[.textString(key)] else {
             throw CADMVInternalError.unsupportedVCB
         }
         return values
@@ -263,8 +343,32 @@ enum DMVVCBDecoder {
         return values
     }
 
+    private static func optionalMap(_ map: [CBORValue: CBORValue], key: String) throws -> [CBORValue: CBORValue]? {
+        guard let value = map[.textString(key)] else {
+            return nil
+        }
+        guard case let .map(values) = value else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return values
+    }
+
     private static func requiredValue(_ map: [CBORValue: CBORValue], key: UInt64) throws -> CBORValue {
         guard let value = map[.unsigned(key)] else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return value
+    }
+
+    private static func requiredValue(_ map: [CBORValue: CBORValue], key: String) throws -> CBORValue {
+        guard let value = map[.textString(key)] else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return value
+    }
+
+    private static func requiredText(_ map: [CBORValue: CBORValue], key: String) throws -> String {
+        guard case let .textString(value) = map[.textString(key)] else {
             throw CADMVInternalError.unsupportedVCB
         }
         return value

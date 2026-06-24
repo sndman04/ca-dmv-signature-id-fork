@@ -41,8 +41,7 @@ struct VerificationPipeline {
         do {
             try DMVCredentialValidator.validate(
                 credential,
-                mode: options.mode,
-                requireStatus: options.checkStatus
+                mode: options.mode
             )
         } catch CADMVInternalError.environmentMismatch(let expected) {
             return VerificationMessages.result(
