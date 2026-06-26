@@ -442,6 +442,28 @@ final class CADMVVerifierTests: XCTestCase {
         }
     }
 
+    func testCBORRejectsArrayCountLargerThanRemainingPayload() throws {
+        let oversizedArray = Data([
+            0x9b,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+        ])
+
+        XCTAssertThrowsError(try CBORReader.decode(oversizedArray)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .malformedCBOR)
+        }
+    }
+
+    func testCBORRejectsMapCountLargerThanRemainingPayload() throws {
+        let oversizedMap = Data([
+            0xbb,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+        ])
+
+        XCTAssertThrowsError(try CBORReader.decode(oversizedMap)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .malformedCBOR)
+        }
+    }
+
     func testDecoderAcceptsUncompressedCBORLDProfile() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.uncompressedCredential())
 

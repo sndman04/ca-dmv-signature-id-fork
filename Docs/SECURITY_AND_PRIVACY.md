@@ -12,6 +12,7 @@ This package handles raw PDF417 barcode data from government identity documents.
 - Keep public results privacy-minimized.
 - Keep diagnostics limited to high-level failure reasons.
 - Fail closed on unsupported or malformed verification data.
+- Reject oversized declared CBOR collection counts before allocating storage.
 - Restrict network access to DMV-controlled hosts for the selected mode.
 
 ## Current Implementation Status

@@ -62,6 +62,9 @@ enum CBORReader {
             return .textString(string)
         case 4:
             let count = try readLength(additionalInfo, from: data, cursor: &cursor)
+            guard count <= data.distance(from: cursor, to: data.endIndex) else {
+                throw CADMVInternalError.malformedCBOR
+            }
             var values: [CBORValue] = []
             values.reserveCapacity(count)
             for _ in 0..<count {
@@ -70,6 +73,9 @@ enum CBORReader {
             return .array(values)
         case 5:
             let count = try readLength(additionalInfo, from: data, cursor: &cursor)
+            guard count <= data.distance(from: cursor, to: data.endIndex) / 2 else {
+                throw CADMVInternalError.malformedCBOR
+            }
             var values: [CBORValue: CBORValue] = [:]
             values.reserveCapacity(count)
             for _ in 0..<count {

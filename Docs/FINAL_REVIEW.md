@@ -11,6 +11,7 @@ This review records the current implementation state after focused bug, security
 - Missing required VCB returns `.failed`.
 - Optional missing VCB before the requirement date returns `.notPresent`.
 - Malformed base64 and malformed CBOR-LD return `.failed`.
+- Oversized CBOR array/map declarations are rejected before allocating collection storage.
 - Status-required official UAT verification returns `.unavailable`, not `.verified`, because the live UAT status endpoint is not currently usable.
 - Synthetic JS-reference Bitstring Status List credentials verify with `ecdsa-rdfc-2019`; verified set bits map to `.revoked`, and verified clear bits map to `.verified`.
 
