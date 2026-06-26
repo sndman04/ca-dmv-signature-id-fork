@@ -56,6 +56,8 @@ Common integration settings:
 
 - Use `CADMVVerificationOptions(mode: .uat)` for DMV UAT/test credentials; the default is `.production`.
 - Leave `checkStatus` at its default `false` unless the app can handle `.unavailable` when DMV status infrastructure cannot be reached or verified.
+- DID Web key lookup is required for signature verification. If the device is offline, DNS cannot resolve the DMV DID host, the request times out, or the DID document cannot be read, verification returns `.failed` with `failureReason == .didResolutionFailed`.
+- Keep `networkTimeoutSeconds` positive and finite. Invalid timeout values are treated as the default 10-second timeout.
 - Set `requireVCB: true` only if the app requires signed DMV data even for older California DL/ID documents.
 - Treat only `.verified` as verified; keep `.notPresent`, `.failed`, `.revoked`, `.expired`, and `.unavailable` distinct.
 

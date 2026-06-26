@@ -22,6 +22,8 @@ It is not a general JSON-LD, RDF canonicalization, or Data Integrity verifier. T
 
 When status checking is required but DMV status infrastructure is unavailable or returns unsupported data, the verifier returns `.unavailable` rather than `.verified`.
 
+When DMV DID Web key lookup cannot complete because the device is offline, DNS fails, the request times out, the response is not a direct 2xx HTTP response, or the DID document is malformed, the verifier fails closed with `failureReason == .didResolutionFailed`. Applications should not downgrade this to `.verified`; they may route it to retry, manual review, or another app-specific unavailable/authentication state.
+
 `CADMVVerificationResult.failureReason` is safe for app control flow and telemetry classification only if integrations preserve its privacy boundary: never attach raw PDF417 data, parsed AAMVA fields, decoded credentials, proof values, DID documents, or status-list contents to diagnostic events.
 
 ## Debugging Policy

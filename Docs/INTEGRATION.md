@@ -19,6 +19,8 @@ The verifier does not expose parsed identity fields. Apps that need identity dat
 
 For non-verified results, `result.failureReason` provides a privacy-safe diagnostic such as `malformedBarcode`, `environmentMismatch`, `vcbBase64Invalid`, `didResolutionFailed`, or `signatureMismatch`. Use it for app routing and coarse telemetry only; do not attach raw barcode data, decoded AAMVA fields, proof values, DID documents, or status-list contents.
 
+Signature verification requires resolving the DMV DID Web document for the selected environment. If the device has no usable network path, DNS cannot resolve the DMV DID host, the request times out, the response is not a direct 2xx HTTP response, or the DID document cannot be parsed, `CADMVVerifier.verify` returns `.failed` with `failureReason == .didResolutionFailed`. Handle this separately from `signatureMismatch`; it means the verifier could not obtain trusted DMV key material for the proof.
+
 ## App Handoff Checklist
 
 Recommended app flow:
@@ -81,7 +83,9 @@ let options = CADMVVerificationOptions(checkStatus: true)
 let result = await CADMVVerifier.verify(rawPDF417: rawPDF417, options: options)
 ```
 
-When status checking is enabled and DMV status infrastructure is unavailable, the verifier must return `.unavailable`, not `.verified`.
+When status checking is enabled and DMV status infrastructure is unavailable, the verifier must return `.unavailable` with `failureReason == .statusUnavailable`, not `.verified`.
+
+This is intentionally distinct from DID Web failures. DID Web failures happen before signature verification and return `.failed` with `failureReason == .didResolutionFailed`; status failures happen after signature verification when revocation status cannot be completed safely.
 
 Applications should treat only `result.status == .verified` as a successful DMV digital-signature verification. Keep `.unavailable`, `.failed`, `.revoked`, `.expired`, and `.notPresent` distinct in app state and telemetry.
 

@@ -42,6 +42,8 @@ Defaults:
 - `mode = .production`
 - `networkTimeoutSeconds = 10`
 
+`networkTimeoutSeconds` is applied to DMV DID Web and status-list requests. Non-finite and non-positive values such as `NaN`, infinity, `0`, or negative numbers are treated as the default `10` seconds so integrations do not accidentally disable or destabilize network timeouts.
+
 `mode` selects which DMV environment is accepted. `.production` accepts only
 production DMV issuer, DID, key, and status hosts. `.uat` accepts only DMV
 UAT/test credentials. A credential from the other environment fails with
@@ -54,6 +56,8 @@ documents to return `.notPresent` when no VCB field exists. Set
 California DL/ID scan, including older documents.
 
 `checkStatus = true` performs online revocation checking. If the DMV status endpoint is unavailable, redirects outside the allowed fetch policy, returns an unsupported credential shape, or the status-list credential proof cannot be verified, the result is `.unavailable`. Application integrations should treat only `.verified` as verified.
+
+DID Web key lookup is required for signature verification regardless of `checkStatus`. If the selected DMV DID host cannot be resolved or reached, the request times out, the response is not a direct 2xx HTTP response, or the DID document is malformed, verification returns `.failed` with `failureReason == .didResolutionFailed`.
 
 ## `CADMVVerificationResult`
 
@@ -83,7 +87,7 @@ public enum CADMVVerificationStatus: Equatable, Sendable {
 Current behavior:
 
 - `.verified`: signature verification passed for the supported DMV VCB profile, and status checking either was disabled or verified the credential as not revoked.
-- `.failed`: malformed data, unsupported data, issuer/mode mismatch, invalid signature, or required VCB missing.
+- `.failed`: malformed data, unsupported data, issuer/mode mismatch, DID/key lookup failure, invalid signature, or required VCB missing.
 - `.notPresent`: non-California or pre-requirement-date document without VCB.
 - `.unavailable`: required status checking cannot complete.
 - `.revoked`: a cryptographically verified status-list credential marks the revocation bit as set.
@@ -109,7 +113,7 @@ public enum CADMVVerificationFailureReason: Equatable, Sendable {
 }
 ```
 
-Use this field to route app behavior without logging sensitive document data. For example, `environmentMismatch` can identify UAT/test credentials being checked in production mode, while `didResolutionFailed` separates network/key lookup failures from `signatureMismatch`.
+Use this field to route app behavior without logging sensitive document data. For example, `environmentMismatch` can identify UAT/test credentials being checked in production mode, while `didResolutionFailed` separates DMV DID host resolution, timeout, response, and DID-document parsing failures from `signatureMismatch`.
 
 ## `CADMVScanner`
 

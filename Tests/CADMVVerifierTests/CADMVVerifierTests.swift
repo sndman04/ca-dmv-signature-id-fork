@@ -1,5 +1,8 @@
 @testable import CADMVVerifier
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 import XCTest
 
 final class CADMVVerifierTests: XCTestCase {
@@ -78,6 +81,35 @@ final class CADMVVerifierTests: XCTestCase {
 
         XCTAssert(result.status == .failed)
         XCTAssert(result.failureReason == .vcbCBORUnsupported)
+    }
+
+    func testVerifierReportsDIDResolutionFailureWhenDMVHostCannotResolve() async throws {
+        let barcode = AAMVATestBarcode.make(
+            issuer: "636014",
+            issueDate: "09292025",
+            jurisdiction: "CA",
+            encodedVCB: Base64URL.encode(CBORFixture.credential())
+        )
+
+        try await withTestNetworkHandler({ _ in
+            throw URLError(.cannotFindHost)
+        }) {
+            let result = await CADMVVerifier.verify(
+                rawPDF417: barcode,
+                options: CADMVVerificationOptions(mode: .uat)
+            )
+
+            XCTAssertEqual(result.status, .failed)
+            XCTAssertEqual(result.failureReason, .didResolutionFailed)
+        }
+    }
+
+    func testNetworkTimeoutNormalizerFallsBackForInvalidValues() {
+        XCTAssertEqual(CADMVNetworkSession.normalizedTimeout(Double.nan), 10)
+        XCTAssertEqual(CADMVNetworkSession.normalizedTimeout(Double.infinity), 10)
+        XCTAssertEqual(CADMVNetworkSession.normalizedTimeout(-1), 10)
+        XCTAssertEqual(CADMVNetworkSession.normalizedTimeout(0), 10)
+        XCTAssertEqual(CADMVNetworkSession.normalizedTimeout(0.1), 0.1)
     }
 
     func testAamvaParserReadsSubfilesSequentiallyLikeReferenceDecoder() throws {
@@ -442,6 +474,109 @@ final class CADMVVerifierTests: XCTestCase {
             XCTAssert(credential.issuer == "did:web:uat-credentials.dmv.ca.gov")
             XCTAssert(credential.credentialSubject.protectedComponentIndex == "uAQID")
             XCTAssert(credential.credentialStatus?.terseStatusListIndex == 1)
+        }
+    }
+
+    func testDIDResolverMapsHostLookupFailureToResolutionFailure() async throws {
+        try await withTestNetworkHandler({ _ in
+            throw URLError(.cannotFindHost)
+        }) {
+            await assertDIDResolutionFailure()
+        }
+    }
+
+    func testDIDResolverMapsTimeoutCancellationToResolutionFailure() async throws {
+        try await withTestNetworkHandler({ _ in
+            throw CancellationError()
+        }) {
+            await assertDIDResolutionFailure()
+        }
+    }
+
+    func testDIDResolverMapsNonHTTPResponseToResolutionFailure() async throws {
+        try await withTestNetworkHandler({ request in
+            let url = try XCTUnwrap(request.url)
+            return (Data(), URLResponse(
+                url: url,
+                mimeType: "application/json",
+                expectedContentLength: 0,
+                textEncodingName: "utf-8"
+            ))
+        }) {
+            await assertDIDResolutionFailure()
+        }
+    }
+
+    func testDIDResolverMapsMalformedJSONToResolutionFailure() async throws {
+        try await withTestNetworkHandler({ request in
+            let url = try XCTUnwrap(request.url)
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: url,
+                statusCode: 200,
+                httpVersion: "HTTP/1.1",
+                headerFields: nil
+            ))
+            return (Data("{".utf8), response)
+        }) {
+            await assertDIDResolutionFailure()
+        }
+    }
+
+    func testDIDResolverNormalizesInvalidTimeoutBeforeRequest() async throws {
+        try await withTestNetworkHandler({ request in
+            XCTAssertEqual(request.timeoutInterval, 10)
+            throw URLError(.timedOut)
+        }) {
+            await assertDIDResolutionFailure(timeoutSeconds: Double.nan)
+        }
+    }
+
+    func testStatusListCheckerNormalizesInvalidTimeoutBeforeRequest() async throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential())
+
+        try await withTestNetworkHandler({ request in
+            XCTAssertEqual(request.timeoutInterval, 10)
+            XCTAssertEqual(request.url?.host, "api.uat-credentials.dmv.ca.gov")
+            throw URLError(.timedOut)
+        }) {
+            let result = await StatusListChecker.check(
+                credential: credential,
+                mode: .uat,
+                timeoutSeconds: Double.infinity
+            )
+
+            XCTAssertEqual(result, .unavailable)
+        }
+    }
+
+    private func assertDIDResolutionFailure(
+        timeoutSeconds: Double = 0.1,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async {
+        do {
+            _ = try await DIDWebResolver.resolveVerificationMethod(
+                id: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+                mode: .uat,
+                timeoutSeconds: timeoutSeconds
+            )
+            XCTFail("DID resolution unexpectedly succeeded", file: file, line: line)
+        } catch {
+            XCTAssertEqual(error as? CADMVInternalError, .didResolutionFailed, file: file, line: line)
+        }
+    }
+
+    private func withTestNetworkHandler(
+        _ handler: @escaping CADMVNetworkSession.DataHandler,
+        operation: () async throws -> Void
+    ) async throws {
+        await CADMVNetworkSession.setTestHandler(handler)
+        do {
+            try await operation()
+            await CADMVNetworkSession.setTestHandler(nil)
+        } catch {
+            await CADMVNetworkSession.setTestHandler(nil)
+            throw error
         }
     }
 }

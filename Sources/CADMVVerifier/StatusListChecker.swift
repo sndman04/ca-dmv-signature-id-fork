@@ -19,7 +19,7 @@ enum StatusListChecker {
         }
 
         var request = URLRequest(url: location.url)
-        request.timeoutInterval = timeoutSeconds
+        request.timeoutInterval = CADMVNetworkSession.normalizedTimeout(timeoutSeconds)
 
         do {
             let (data, response) = try await CADMVNetworkSession.data(for: request)

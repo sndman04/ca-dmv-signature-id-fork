@@ -24,14 +24,29 @@ enum DIDWebResolver {
 
         let url = policy.didDocumentURL
         var request = URLRequest(url: url)
-        request.timeoutInterval = timeoutSeconds
-        let (data, response) = try await CADMVNetworkSession.data(for: request)
+        request.timeoutInterval = CADMVNetworkSession.normalizedTimeout(timeoutSeconds)
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await CADMVNetworkSession.data(for: request)
+        } catch is CancellationError {
+            throw CADMVInternalError.didResolutionFailed
+        } catch {
+            throw CADMVInternalError.didResolutionFailed
+        }
+
         guard let httpResponse = response as? HTTPURLResponse,
               (200..<300).contains(httpResponse.statusCode) else {
             throw CADMVInternalError.didResolutionFailed
         }
 
-        let json = try JSONSerialization.jsonObject(with: data)
+        let json: Any
+        do {
+            json = try JSONSerialization.jsonObject(with: data)
+        } catch {
+            throw CADMVInternalError.didResolutionFailed
+        }
+
         guard let root = json as? [String: Any],
               root["id"] as? String == policy.did,
               let method = verificationMethodObject(

@@ -5,6 +5,7 @@ import FoundationNetworking
 
 enum CADMVNetworkSession {
     typealias DataHandler = @Sendable (URLRequest) async throws -> (Data, URLResponse)
+    private static let defaultTimeoutSeconds: TimeInterval = 10
 
     private static let session: URLSession = {
         let configuration = URLSessionConfiguration.ephemeral
@@ -23,6 +24,13 @@ enum CADMVNetworkSession {
             return try await handler(request)
         }
         return try await session.data(for: request)
+    }
+
+    static func normalizedTimeout(_ timeoutSeconds: Double) -> TimeInterval {
+        guard timeoutSeconds.isFinite, timeoutSeconds > 0 else {
+            return defaultTimeoutSeconds
+        }
+        return timeoutSeconds
     }
 
     static func setTestHandler(_ handler: DataHandler?) async {

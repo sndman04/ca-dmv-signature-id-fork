@@ -12,7 +12,7 @@ public enum CADMVVerificationStatus: Equatable, Sendable {
     case revoked
     /// The credential is expired.
     case expired
-    /// Required online verification infrastructure was temporarily unavailable.
+    /// Required online status infrastructure was temporarily unavailable.
     case unavailable
 }
 
@@ -29,8 +29,10 @@ public enum CADMVVerificationFailureReason: Equatable, Sendable {
     case unsupportedCredentialProfile
     case environmentMismatch(expected: CADMVVerificationMode)
     case protectedAAMVADataUnavailable
+    /// DMV DID Web key lookup failed before signature verification could complete.
     case didResolutionFailed
     case signatureMismatch
+    /// DMV status infrastructure was unavailable after signature verification.
     case statusUnavailable
     case revoked
     case expired
@@ -61,7 +63,7 @@ public struct CADMVVerificationOptions: Sendable {
     public var checkStatus: Bool
     /// DMV environment to enforce for issuers, DID documents, and status hosts.
     public var mode: CADMVVerificationMode
-    /// Network timeout for online DID/status checks.
+    /// Network timeout for online DID/status checks. Non-finite and non-positive values use the default timeout.
     public var networkTimeoutSeconds: Double
 
     public init(
