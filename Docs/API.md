@@ -32,6 +32,15 @@ public struct CADMVVerificationOptions: Sendable {
     public var checkStatus: Bool
     public var mode: CADMVVerificationMode
     public var networkTimeoutSeconds: Double
+
+    public init(
+        requireVCB: Bool = false,
+        checkStatus: Bool = false,
+        mode: CADMVVerificationMode = .production,
+        networkTimeoutSeconds: Double = 10
+    )
+
+    public static let `default`: CADMVVerificationOptions
 }
 ```
 
@@ -70,10 +79,38 @@ public struct CADMVVerificationResult: Equatable, Sendable {
     public let status: CADMVVerificationStatus
     public let message: String?
     public let failureReason: CADMVVerificationFailureReason?
+
+    public init(
+        status: CADMVVerificationStatus,
+        message: String? = nil,
+        failureReason: CADMVVerificationFailureReason? = nil
+    )
 }
 ```
 
-`failureReason` is a privacy-safe diagnostic for non-verified results. It never contains raw barcode data, decoded AAMVA fields, proof values, DID documents, or status-list contents.
+`CADMVVerifier.verify(rawPDF417:options:)` returns a `CADMVVerificationResult`
+and does not throw. Verifier-created results include a privacy-safe `message`
+for every status. The public initializer permits `message == nil` for app-owned
+results or tests.
+
+`failureReason` is a privacy-safe diagnostic for non-verified results. It never
+contains raw barcode data, decoded AAMVA fields, proof values, DID documents, or
+status-list contents. It is `nil` for `.verified` results from the verifier.
+
+## `CADMVVerificationMode`
+
+```swift
+public enum CADMVVerificationMode: Equatable, Sendable {
+    case production
+    case uat
+}
+```
+
+`CADMVVerificationMode` is sent through `CADMVVerificationOptions.mode`.
+It controls the accepted DMV issuer, DID Web host, verification-method key, and
+status-list host. It is also returned inside
+`CADMVVerificationFailureReason.environmentMismatch(expected:)` when a
+credential is valid only for the other environment.
 
 ## `CADMVVerificationStatus`
 
@@ -121,12 +158,65 @@ Use this field to route app behavior without logging sensitive document data. Fo
 
 ## `CADMVScanner`
 
-`CADMVScanner` is optional. It provides:
+`CADMVScanner` is optional. It provides an app-facing camera boundary around raw
+PDF417 payload capture. It does not parse identity data or persist camera
+frames.
 
-- `CADMVScannedBarcode`, a safe wrapper around raw PDF417 payload handoff.
-- `CADMVVisionKitPDF417Scanner` on iOS where VisionKit scanning is available.
+```swift
+public struct CADMVScannedBarcode: Equatable, Sendable {
+    public let rawPDF417: String
 
-The scanner target does not parse identity data or persist camera frames.
+    public init(rawPDF417: String)
+
+    public func verify(
+        options: CADMVVerificationOptions = .default
+    ) async -> CADMVVerificationResult
+}
+```
+
+`CADMVScannedBarcode.rawPDF417` is the full scanner-provided PDF417 string. It
+is the same sensitive value accepted by `CADMVVerifier.verify(rawPDF417:)`.
+`CADMVScannedBarcode.verify(options:)` sends `rawPDF417` and `options` directly
+to `CADMVVerifier.verify(rawPDF417:options:)` and returns that verifier result.
+
+```swift
+public enum CADMVScannerAvailability: Equatable, Sendable {
+    case available
+    case unavailable(String)
+}
+
+public enum CADMVScanner {
+    public static var availability: CADMVScannerAvailability
+}
+```
+
+`CADMVScanner.availability` reports whether package-provided native camera
+scanning is available. On supported iOS devices it can return `.available`; on
+unsupported platforms, older iOS versions, unavailable camera hardware, or when
+VisionKit reports scanning unavailable, it returns `.unavailable(String)`.
+
+On iOS 16 and later where VisionKit and UIKit are available, the scanner target
+also exposes:
+
+```swift
+@available(iOS 16.0, *)
+@MainActor
+public final class CADMVVisionKitPDF417Scanner: NSObject {
+    public typealias ScanHandler = @MainActor (CADMVScannedBarcode) -> Void
+
+    public init(onScan: @escaping ScanHandler)
+
+    public var viewController: UIViewController
+
+    public func startScanning() throws
+    public func stopScanning()
+}
+```
+
+The `onScan` handler receives a `CADMVScannedBarcode` when VisionKit recognizes
+a non-empty PDF417 payload. `viewController` is the underlying VisionKit scanner
+view controller for app presentation. `startScanning()` forwards VisionKit
+startup errors to the app; `stopScanning()` stops active scanning.
 
 ## Non-Public Internals
 
