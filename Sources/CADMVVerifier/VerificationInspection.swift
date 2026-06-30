@@ -1,6 +1,26 @@
 import Foundation
 
 @_spi(Testing)
+public struct CADMVStatusListProfileDiagnostic: Equatable, Sendable {
+    public let supported: Bool
+    public let unknownRootKeys: [String]
+    public let unknownCredentialSubjectKeys: [String]
+    public let unknownProofKeys: [String]
+
+    public init(
+        supported: Bool,
+        unknownRootKeys: [String],
+        unknownCredentialSubjectKeys: [String],
+        unknownProofKeys: [String]
+    ) {
+        self.supported = supported
+        self.unknownRootKeys = unknownRootKeys
+        self.unknownCredentialSubjectKeys = unknownCredentialSubjectKeys
+        self.unknownProofKeys = unknownProofKeys
+    }
+}
+
+@_spi(Testing)
 public struct CADMVVerificationInspection: Equatable, Sendable {
     public let issuerAccepted: Bool
     public let vcbRequired: Bool
@@ -143,6 +163,41 @@ extension CADMVVerifier {
         try Gzip.decompress(data, maxOutputBytes: maxOutputBytes)
     }
 
+    public static func isExpiredForSelfTest(_ dateTime: String, now: Date) throws -> Bool {
+        try CredentialExpiration.hasExpired(dateTime, now: now)
+    }
+
+    public static func isCredentialExpiredForSelfTest(
+        validUntil: String?,
+        proofExpires: String?,
+        now: Date
+    ) throws -> Bool {
+        try CredentialExpiration.isExpired(
+            DMVVerifiableCredential(
+                context: [],
+                type: [],
+                issuer: "",
+                validFrom: nil,
+                validUntil: validUntil,
+                credentialSubject: DMVVerifiableCredential.CredentialSubject(
+                    type: "",
+                    protectedComponentIndex: ""
+                ),
+                credentialStatus: nil,
+                proof: DMVVerifiableCredential.Proof(
+                    type: "",
+                    created: nil,
+                    expires: proofExpires,
+                    cryptosuite: "",
+                    proofPurpose: "",
+                    proofValue: "",
+                    verificationMethod: ""
+                )
+            ),
+            now: now
+        )
+    }
+
     public static func setNetworkHandlerForSelfTest(
         _ handler: (@Sendable (URLRequest) async throws -> (Data, URLResponse))?
     ) async {
@@ -153,6 +208,12 @@ extension CADMVVerifier {
         try EcdsaRdfc2019Verifier.createVerifyData(
             DMVStatusListCredentialParser.parse(jsonData)
         ).cadmvHexString
+    }
+
+    public static func statusListProfileDiagnosticForSelfTest(
+        jsonData: Data
+    ) -> CADMVStatusListProfileDiagnostic {
+        DMVStatusListCredentialParser.profileDiagnostic(jsonData)
     }
 
     public static func verifyStatusListCredentialForSelfTest(

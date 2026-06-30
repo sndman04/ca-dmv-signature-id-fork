@@ -5,6 +5,9 @@ struct DMVStatusListCredential: Equatable, Sendable {
     let type: [String]
     let issuer: String
     let validFrom: String?
+    let validUntil: String?
+    let name: String?
+    let description: String?
     let credentialSubject: CredentialSubject
     let proof: Proof
 
@@ -27,7 +30,8 @@ struct DMVStatusListCredential: Equatable, Sendable {
 
 enum DMVStatusListCredentialParser {
     private static let rootKeys: Set<String> = [
-        "@context", "id", "type", "issuer", "validFrom", "credentialSubject", "proof"
+        "@context", "id", "type", "issuer", "validFrom", "validUntil",
+        "name", "description", "credentialSubject", "proof"
     ]
     private static let subjectKeys: Set<String> = [
         "id", "type", "encodedList", "statusPurpose"
@@ -81,6 +85,9 @@ enum DMVStatusListCredentialParser {
               let proofValue = proofObject["proofValue"] as? String,
               isSafeMultibase(proofValue),
               isSafeOptionalDate(root["validFrom"] as? String),
+              isSafeOptionalDate(root["validUntil"] as? String),
+              isSafeOptionalText(root["name"] as? String),
+              isSafeOptionalText(root["description"] as? String),
               isSafeOptionalDate(proofObject["created"] as? String) else {
             throw CADMVInternalError.statusListDecodeFailed
         }
@@ -90,6 +97,9 @@ enum DMVStatusListCredentialParser {
             type: type,
             issuer: issuer,
             validFrom: root["validFrom"] as? String,
+            validUntil: root["validUntil"] as? String,
+            name: root["name"] as? String,
+            description: root["description"] as? String,
             credentialSubject: DMVStatusListCredential.CredentialSubject(
                 id: subjectID,
                 type: subjectType,
@@ -107,6 +117,31 @@ enum DMVStatusListCredentialParser {
         )
     }
 
+    static func profileDiagnostic(_ data: Data) -> CADMVStatusListProfileDiagnostic {
+        guard let json = try? JSONSerialization.jsonObject(with: data),
+              let root = json as? [String: Any] else {
+            return CADMVStatusListProfileDiagnostic(
+                supported: false,
+                unknownRootKeys: [],
+                unknownCredentialSubjectKeys: [],
+                unknownProofKeys: []
+            )
+        }
+
+        let subjectObject = root["credentialSubject"] as? [String: Any] ?? [:]
+        let proofObject = root["proof"] as? [String: Any] ?? [:]
+        let unknownRootKeys = unknownKeys(in: root, allowed: rootKeys)
+        let unknownCredentialSubjectKeys = unknownKeys(in: subjectObject, allowed: subjectKeys)
+        let unknownProofKeys = unknownKeys(in: proofObject, allowed: proofKeys)
+
+        return CADMVStatusListProfileDiagnostic(
+            supported: (try? parse(data)) != nil,
+            unknownRootKeys: unknownRootKeys,
+            unknownCredentialSubjectKeys: unknownCredentialSubjectKeys,
+            unknownProofKeys: unknownProofKeys
+        )
+    }
+
     private static func rejectUnknownKeys(
         _ object: [String: Any],
         allowed: Set<String>
@@ -116,6 +151,15 @@ enum DMVStatusListCredentialParser {
                 throw CADMVInternalError.statusListDecodeFailed
             }
         }
+    }
+
+    private static func unknownKeys(
+        in object: [String: Any],
+        allowed: Set<String>
+    ) -> [String] {
+        object.keys
+            .filter { !allowed.contains($0) }
+            .sorted()
     }
 
     private static func isSafeIRI(_ value: String) -> Bool {
@@ -186,6 +230,18 @@ enum DMVStatusListCredentialParser {
         }
     }
 
+    private static func isSafeOptionalText(_ value: String?) -> Bool {
+        guard let value else {
+            return true
+        }
+        return !value.isEmpty && value.utf8.allSatisfy {
+            $0 >= CharacterSetByte.space &&
+                $0 != CharacterSetByte.doubleQuote &&
+                $0 != CharacterSetByte.backslash &&
+                $0 <= CharacterSetByte.tilde
+        }
+    }
+
     private static func isSafeIRIByte(_ byte: UInt8) -> Bool {
         isASCIIAlphaNumeric(byte) ||
             byte == CharacterSetByte.period ||
@@ -236,10 +292,12 @@ enum DMVStatusListCredentialParser {
         static let nine = UInt8(ascii: "9")
         static let ampersand = UInt8(ascii: "&")
         static let at = UInt8(ascii: "@")
+        static let backslash = UInt8(ascii: "\\")
         static let closeBracket = UInt8(ascii: "]")
         static let closeParen = UInt8(ascii: ")")
         static let colon = UInt8(ascii: ":")
         static let comma = UInt8(ascii: ",")
+        static let doubleQuote = UInt8(ascii: "\"")
         static let dollar = UInt8(ascii: "$")
         static let equal = UInt8(ascii: "=")
         static let exclamation = UInt8(ascii: "!")
@@ -254,6 +312,7 @@ enum DMVStatusListCredentialParser {
         static let semicolon = UInt8(ascii: ";")
         static let singleQuote = UInt8(ascii: "'")
         static let slash = UInt8(ascii: "/")
+        static let space = UInt8(ascii: " ")
         static let star = UInt8(ascii: "*")
         static let tilde = UInt8(ascii: "~")
         static let underscore = UInt8(ascii: "_")

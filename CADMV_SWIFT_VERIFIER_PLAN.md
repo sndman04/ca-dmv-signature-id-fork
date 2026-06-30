@@ -174,7 +174,7 @@ public enum CADMVVerifier {
 Open API questions:
 
 - Should callers be able to inject a network client for tests?
-- Should expired credentials return `expired` even when status checking is unavailable?
+- Resolved: status outcomes take precedence over expiration when status checking is required. If the status list marks the credential revoked, return `revoked`; if required status checking is unavailable, return `unavailable`; otherwise return `expired` when credential `validUntil` or proof `expires` has passed.
 - What exact shape should the safety-forward debug options take?
 - Which operational policy presets should be exposed for implementers, for example offline-only, online-status-required, and custom network policy?
 
@@ -430,6 +430,8 @@ Tasks:
 - [x] Decode gzip/base64url status-list `encodedList`.
 - [x] Return `revoked` when the verified revocation bit is set.
 - [x] Return `unavailable` when status checking is required but unavailable.
+- [x] Return `expired` when verified credential expiration data has passed.
+- [x] Add SPI-only status-list profile drift diagnostics for unknown signed fields.
 
 Exit criteria:
 

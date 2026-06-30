@@ -121,6 +121,20 @@ struct VerificationPipeline {
             }
         }
 
+        do {
+            if try CredentialExpiration.isExpired(credential) {
+                return VerificationMessages.result(
+                    for: .expired,
+                    failureReason: .expired
+                )
+            }
+        } catch {
+            return VerificationMessages.result(
+                for: .failed,
+                failureReason: .unsupportedCredentialProfile
+            )
+        }
+
         return VerificationMessages.result(for: .verified)
     }
 }

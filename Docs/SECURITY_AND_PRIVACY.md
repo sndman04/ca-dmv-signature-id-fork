@@ -17,11 +17,13 @@ This package handles raw PDF417 barcode data from government identity documents.
 
 ## Current Implementation Status
 
-The package currently parses AAMVA data, decodes the DMV VCB credential shape covered by the official UAT samples, resolves DMV DID Web documents, verifies `ecdsa-xi-2023` signatures for that profile, and verifies `ecdsa-rdfc-2019` Bitstring Status List credentials for the supported DMV VC v2 status-list profile.
+The package currently parses AAMVA data, decodes the DMV VCB credential shape covered by the official UAT samples, resolves DMV DID Web documents, verifies `ecdsa-xi-2023` signatures for that profile, verifies `ecdsa-rdfc-2019` Bitstring Status List credentials for the supported DMV VC v2 status-list profile, and returns `.expired` when verified credential expiration data has passed.
 
-It is not a general JSON-LD, RDF canonicalization, or Data Integrity verifier. The native canonicalization paths are limited to the supported DMV credential and status-list shapes, and the current VCB profile accepts `protectedComponentIndex` as `u` plus a 24-bit bitmap or the reference canonicalizer's equivalent numeric 24-bit form. Unsupported shapes must fail closed.
+It is not a general JSON-LD, RDF canonicalization, or Data Integrity verifier. The native canonicalization paths are limited to the supported DMV credential and status-list shapes, and the current VCB profile accepts `protectedComponentIndex` as `u` plus a 24-bit bitmap or the reference canonicalizer's equivalent numeric 24-bit form. The status-list profile accepts the DMV VC v2 core fields plus the standard optional `name`, `description`, and `validUntil` fields observed on live production lists. Unsupported shapes must fail closed.
 
 When status checking is required but DMV status infrastructure is unavailable or returns unsupported data, the verifier returns `.unavailable` rather than `.verified`.
+
+If DMV adds new signed fields to a status-list credential, do not ignore those fields. They affect the signature verification input. The verifier should keep returning `.unavailable` until support is added with a reference vector from the JavaScript implementation. SPI-only profile diagnostics can report unknown status-list key names for development triage without exposing raw barcode data or public debug output.
 
 When DMV DID Web key lookup cannot complete because the device is offline, DNS fails, the request times out, the response is not a direct 2xx HTTP response, or the DID document is malformed, the verifier fails closed with `failureReason == .didResolutionFailed`. Applications should not downgrade this to `.verified`; they may route it to retry, manual review, or another app-specific unavailable/authentication state.
 
@@ -35,6 +37,8 @@ Debug details are not exposed in the public API yet. When added, debug output mu
 - Clearly documented as sensitive.
 - Redacted by default.
 - Designed so production integrations cannot accidentally log PII.
+
+Current SPI-only helpers include a status-list profile diagnostic for detecting unsupported DMV status-list shape drift in tests or development tooling. It reports only key names such as unknown root, `credentialSubject`, or `proof` keys; it is not a public API and should not be surfaced in production logs.
 
 ## Fixture Policy
 

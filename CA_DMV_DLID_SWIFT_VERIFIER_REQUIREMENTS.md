@@ -413,7 +413,6 @@ Resolve these before production release:
 - Should the verifier require online revocation checks by default?
 - What cache policy is acceptable for DID documents and status lists?
 - Which DMV sample fixtures can be redistributed in the test suite?
-- Should expired credentials map to `expired` or `failed` for the consuming product?
+- Resolved: expired credentials map to `expired` after signature verification and any required revocation check succeeds as not revoked.
 - Should the package expose debug details under a compile-time flag only?
 - How will upstream DMV SDK changes be tracked and audited?
-

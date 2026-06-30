@@ -55,10 +55,22 @@ enum EcdsaRdfc2019Verifier {
             "<\(credential.id)> <https://www.w3.org/2018/credentials#issuer> <\(credential.issuer)> ."
         ]
 
+        if let description = credential.description {
+            lines.append("<\(credential.id)> <https://schema.org/description> \"\(description)\" .")
+        }
+
+        if let name = credential.name {
+            lines.append("<\(credential.id)> <https://schema.org/name> \"\(name)\" .")
+        }
+
         if let validFrom = credential.validFrom {
             lines.append("<\(credential.id)> <https://www.w3.org/2018/credentials#validFrom> \"\(validFrom)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
         }
 
-        return lines.joined(separator: "\n") + "\n"
+        if let validUntil = credential.validUntil {
+            lines.append("<\(credential.id)> <https://www.w3.org/2018/credentials#validUntil> \"\(validUntil)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
+        }
+
+        return lines.sorted().joined(separator: "\n") + "\n"
     }
 }

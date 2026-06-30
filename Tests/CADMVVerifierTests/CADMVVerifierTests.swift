@@ -359,6 +359,21 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssertEqual(credential.proof.expires, "2027-01-01T00:00:00Z")
     }
 
+    func testCredentialExpirationBoundary() throws {
+        let now = try XCTUnwrap(ISO8601DateFormatter().date(from: "2026-06-30T12:00:00Z"))
+
+        XCTAssertFalse(try CADMVVerifier.isExpiredForSelfTest("2026-06-30T12:00:01Z", now: now))
+        XCTAssertTrue(try CADMVVerifier.isExpiredForSelfTest("2026-06-30T12:00:00Z", now: now))
+        XCTAssertTrue(try CADMVVerifier.isExpiredForSelfTest("2026-06-30T11:59:59Z", now: now))
+        XCTAssertFalse(try CADMVVerifier.isExpiredForSelfTest("2026-06-30T12:00:00.001Z", now: now))
+        XCTAssertTrue(try CADMVVerifier.isCredentialExpiredForSelfTest(
+            validUntil: "2026-06-30T12:00:01Z",
+            proofExpires: "2026-06-30T11:59:59Z",
+            now: now
+        ))
+        XCTAssertThrowsError(try CADMVVerifier.isExpiredForSelfTest("not-a-date", now: now))
+    }
+
     func testDecoderRejectsUnsafeProofCreated() throws {
         XCTAssertThrowsError(try DMVVCBDecoder.decode(
             CBORFixture.credential(proofCreated: "2026-01-01T00:00:00Z\" .\n_:x")
@@ -387,6 +402,23 @@ final class CADMVVerifierTests: XCTestCase {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential(statusBaseURLArrayEncoded: true))
 
         XCTAssert(credential.credentialStatus?.terseStatusListBaseURL == "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists")
+    }
+
+    func testStatusListLocationUsesTerseBitstringFormulaFromTechnicalGuide() throws {
+        let status = DMVVerifiableCredential.CredentialStatus(
+            type: "TerseBitstringStatusListEntry",
+            terseStatusListBaseURL: "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists",
+            terseStatusListIndex: 3_866_524_935
+        )
+
+        let location = try XCTUnwrap(StatusListChecker.statusListLocation(for: status))
+
+        XCTAssertEqual(
+            location.url.absoluteString,
+            "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/57"
+        )
+        XCTAssertEqual(location.listIndex, 57)
+        XCTAssertEqual(location.statusListIndex, 41_319_687)
     }
 
     func testDecoderAcceptsCredentialWithoutStatusBlock() throws {

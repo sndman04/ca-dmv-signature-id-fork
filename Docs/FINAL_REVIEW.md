@@ -14,6 +14,7 @@ This review records the current implementation state after focused bug, security
 - Oversized CBOR array/map declarations are rejected before allocating collection storage.
 - Status-required official UAT verification returns `.unavailable`, not `.verified`, because the live UAT status endpoint is not currently usable.
 - Synthetic JS-reference Bitstring Status List credentials verify with `ecdsa-rdfc-2019`; verified set bits map to `.revoked`, and verified clear bits map to `.verified`.
+- Credential expiration data is enforced after signature verification and after any required revocation check succeeds as not revoked.
 
 ## Security/Safety Review
 
@@ -21,7 +22,8 @@ This review records the current implementation state after focused bug, security
 - Public result messages do not include raw barcode data, parsed AAMVA fields, proof values, or decoded credentials.
 - DID Web resolution uses explicit DMV URLs for production and UAT modes.
 - Status-list fetches use explicit DMV API host allowlists and suppress redirects.
-- Status-list credential parsing rejects unsupported fields and unsafe strings before native N-Quads generation.
+- Status-list credential parsing rejects unsupported fields and unsafe strings before native N-Quads generation, while accepting the standard optional fields observed on live production status lists.
+- SPI-only status-list profile diagnostics report unknown key names for development triage when DMV status-list shapes drift, while public verification still fails closed as `.unavailable`.
 - The public API does not expose parsed identity fields.
 - Debug/inspection fields are SPI-only for the self-test runner.
 

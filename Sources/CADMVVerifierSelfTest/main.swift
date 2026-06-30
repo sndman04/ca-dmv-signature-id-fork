@@ -19,6 +19,7 @@ enum CADMVVerifierSelfTest {
         testBase58RejectsMalformedInput()
         try! testGzipOutputLimit()
         testBase58LeadingZeroRoundTrip()
+        try! testCredentialExpiration()
         try! testStatusBitIndexing()
         try! testMalformedStatusListCorpus()
         try! testProfileDriftRejections()
@@ -271,6 +272,45 @@ enum CADMVVerifierSelfTest {
         )
     }
 
+    private static func testCredentialExpiration() throws {
+        let now = try unwrapDate("2026-06-30T12:00:00Z")
+        let beforeExpiration = try CADMVVerifier.isExpiredForSelfTest("2026-06-30T12:00:01Z", now: now)
+        let atExpiration = try CADMVVerifier.isExpiredForSelfTest("2026-06-30T12:00:00Z", now: now)
+        let afterExpiration = try CADMVVerifier.isExpiredForSelfTest("2026-06-30T11:59:59Z", now: now)
+        let fractionalSecondExpiration = try CADMVVerifier.isExpiredForSelfTest("2026-06-30T12:00:00.001Z", now: now)
+        let proofExpired = try CADMVVerifier.isCredentialExpiredForSelfTest(
+            validUntil: "2026-06-30T12:00:01Z",
+            proofExpires: "2026-06-30T11:59:59Z",
+            now: now
+        )
+        expect(
+            !beforeExpiration,
+            "credential should not be expired before validUntil"
+        )
+        expect(
+            atExpiration,
+            "credential should expire at validUntil"
+        )
+        expect(
+            afterExpiration,
+            "credential should be expired after validUntil"
+        )
+        expect(
+            !fractionalSecondExpiration,
+            "fractional seconds should be supported"
+        )
+        expect(
+            proofExpired,
+            "credential should expire if either validUntil or proof expires has passed"
+        )
+        do {
+            _ = try CADMVVerifier.isExpiredForSelfTest("not-a-date", now: now)
+            fatalError("malformed expiration date should fail closed")
+        } catch {
+            // Expected: malformed expiration dates must not verify.
+        }
+    }
+
     private static func testStatusBitIndexing() throws {
         let bytes = Data([0b1000_0000, 0b0000_0001])
         expect(
@@ -414,10 +454,86 @@ enum CADMVVerifierSelfTest {
         }
         """
         let data = Data(json.utf8)
+        let supportedDiagnostic = CADMVVerifier.statusListProfileDiagnosticForSelfTest(jsonData: data)
+        expect(
+            supportedDiagnostic.supported,
+            "supported synthetic status-list profile should be reported as supported"
+        )
+        expect(
+            supportedDiagnostic.unknownRootKeys.isEmpty &&
+                supportedDiagnostic.unknownCredentialSubjectKeys.isEmpty &&
+                supportedDiagnostic.unknownProofKeys.isEmpty,
+            "supported synthetic status-list profile should not report unknown keys"
+        )
         let verifyDataHex = try CADMVVerifier.statusListVerifyDataForSelfTest(jsonData: data)
         expect(
             verifyDataHex == "93fa093cba64513885ce626317a174530e4d19527212094b1571d4b8e665a22132f9e3eb0ef441494d9f35b40deed3703c7730e491db83245714e0a1475100c1",
             "synthetic status-list verify-data should match JS ecdsa-rdfc-2019 reference"
+        )
+        let optionalFieldsJSON = json.replacingOccurrences(
+            of: """
+              "validFrom": "2026-01-01T00:00:00Z",
+            """,
+            with: """
+              "validFrom": "2026-01-01T00:00:00Z",
+              "validUntil": "2026-01-02T00:00:00Z",
+              "name": "Status List Credential",
+              "description": "This credential expresses status information for some other credentials in an encoded and compressed list.",
+            """
+        )
+        let optionalFieldsVerifyDataHex = try CADMVVerifier.statusListVerifyDataForSelfTest(
+            jsonData: Data(optionalFieldsJSON.utf8)
+        )
+        expect(
+            optionalFieldsVerifyDataHex == "93fa093cba64513885ce626317a174530e4d19527212094b1571d4b8e665a221754ba90533e8d44df66599957c68a3f9f2cccac0f1380c538f17926967783567",
+            "status-list verify-data with optional live VC fields should match JS ecdsa-rdfc-2019 reference"
+        )
+        let driftedJSON = optionalFieldsJSON
+            .replacingOccurrences(
+                of: """
+                  "description": "This credential expresses status information for some other credentials in an encoded and compressed list.",
+                """,
+                with: """
+                  "credentialSchema": {"id": "https://example.invalid/schema", "type": "JsonSchema"},
+                  "description": "This credential expresses status information for some other credentials in an encoded and compressed list.",
+                """
+            )
+            .replacingOccurrences(
+                of: """
+                "statusPurpose": "revocation"
+                """,
+                with: """
+                "statusPurpose": "revocation",
+                "ttl": 86400
+                """
+            )
+            .replacingOccurrences(
+                of: """
+                "proofValue": "z3KqtjbQJZNSkeufgNj2oVRg9k9fZVoP5SroahjSNghZbU9osz8sL2J4beC9gWoNTkjDn6W9FBJRirMnNt4HuXvcw"
+                """,
+                with: """
+                "proofValue": "z3KqtjbQJZNSkeufgNj2oVRg9k9fZVoP5SroahjSNghZbU9osz8sL2J4beC9gWoNTkjDn6W9FBJRirMnNt4HuXvcw",
+                "domain": "example.invalid"
+                """
+            )
+        let driftDiagnostic = CADMVVerifier.statusListProfileDiagnosticForSelfTest(
+            jsonData: Data(driftedJSON.utf8)
+        )
+        expect(
+            !driftDiagnostic.supported,
+            "drifted status-list profile should not be reported as supported"
+        )
+        expect(
+            driftDiagnostic.unknownRootKeys == ["credentialSchema"],
+            "drifted status-list diagnostic should report unknown root keys"
+        )
+        expect(
+            driftDiagnostic.unknownCredentialSubjectKeys == ["ttl"],
+            "drifted status-list diagnostic should report unknown credentialSubject keys"
+        )
+        expect(
+            driftDiagnostic.unknownProofKeys == ["domain"],
+            "drifted status-list diagnostic should report unknown proof keys"
         )
         let verifies = try CADMVVerifier.verifyStatusListCredentialForSelfTest(
             jsonData: data,
@@ -719,6 +835,13 @@ enum CADMVVerifierSelfTest {
         guard condition() else {
             fatalError(message)
         }
+    }
+
+    private static func unwrapDate(_ dateTime: String) throws -> Date {
+        guard let date = ISO8601DateFormatter().date(from: dateTime) else {
+            fatalError("invalid test date")
+        }
+        return date
     }
 
     private static func base64URL(_ data: Data) -> String {

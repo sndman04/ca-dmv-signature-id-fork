@@ -57,6 +57,10 @@ California DL/ID scan, including older documents.
 
 `checkStatus = true` performs online revocation checking. If the DMV status endpoint is unavailable, redirects outside the allowed fetch policy, returns an unsupported credential shape, or the status-list credential proof cannot be verified, the result is `.unavailable`. Application integrations should treat only `.verified` as verified.
 
+Unsupported status-list credential shapes fail closed. This includes newly added signed fields that the native Swift canonicalizer does not yet know how to include in the signature verification input. Development-only SPI diagnostics can identify unknown status-list key names for maintainers, but public results intentionally remain privacy-minimized.
+
+When a verified credential includes `validUntil` or proof `expires` data, the verifier returns `.expired` after the signature verifies and after any required revocation check completes as not revoked. If status checking is required but unavailable, `.unavailable` takes precedence over `.expired`; if the status list marks the credential revoked, `.revoked` takes precedence.
+
 DID Web key lookup is required for signature verification regardless of `checkStatus`. If the selected DMV DID host cannot be resolved or reached, the request times out, the response is not a direct 2xx HTTP response, or the DID document is malformed, verification returns `.failed` with `failureReason == .didResolutionFailed`.
 
 ## `CADMVVerificationResult`
@@ -86,12 +90,12 @@ public enum CADMVVerificationStatus: Equatable, Sendable {
 
 Current behavior:
 
-- `.verified`: signature verification passed for the supported DMV VCB profile, and status checking either was disabled or verified the credential as not revoked.
+- `.verified`: signature verification passed for the supported DMV VCB profile, status checking either was disabled or verified the credential as not revoked, and available expiration data has not expired.
 - `.failed`: malformed data, unsupported data, issuer/mode mismatch, DID/key lookup failure, invalid signature, or required VCB missing.
 - `.notPresent`: non-California or pre-requirement-date document without VCB.
 - `.unavailable`: required status checking cannot complete.
 - `.revoked`: a cryptographically verified status-list credential marks the revocation bit as set.
-- `.expired`: reserved for credential expiration handling when expiration data is available.
+- `.expired`: signature verification passed and required status checking, if enabled, completed as not revoked, but credential expiration data is at or before the verification time.
 
 ## `CADMVVerificationFailureReason`
 
@@ -132,6 +136,6 @@ The following are deliberately not public API:
 - Decoded VCB credential payloads.
 - Proof values.
 - DID documents.
-- Debug inspection details.
+- Debug inspection details, including SPI-only status-list profile drift diagnostics.
 
 SPI-only helpers exist for `CADMVVerifierSelfTest` and should not be used by application integrations.
