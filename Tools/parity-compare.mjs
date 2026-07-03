@@ -39,6 +39,8 @@ for(const fixture of fixtures) {
 
   const jsResult = js.result;
   const swiftResult = swift.result;
+  const jsProfile = jsResult.credentialProfile;
+  const swiftProfile = swiftResult.credentialProfile;
   const parity = {
     id: fixture.id,
     mode: fixture.mode,
@@ -48,6 +50,10 @@ for(const fixture of fixtures) {
     swiftFirstFailureStage: swiftResult.firstFailureStage,
     jsAamvaHashHex: jsResult.aamvaHashHex,
     swiftAamvaHashHex: swiftResult.aamvaHashHex,
+    jsVCBByteLength: jsResult.vcbByteLength,
+    swiftVCBByteLength: swiftResult.vcbByteLength,
+    jsCredentialProfile: jsProfile,
+    swiftCredentialProfile: swiftProfile,
     passed: true,
     failures: []
   };
@@ -63,6 +69,14 @@ for(const fixture of fixtures) {
   if(jsResult.aamvaHashHex !== swiftResult.aamvaHashHex) {
     parity.passed = false;
     parity.failures.push('AAMVA optical hash mismatch');
+  }
+  if(jsResult.vcbByteLength !== swiftResult.vcbByteLength) {
+    parity.passed = false;
+    parity.failures.push('VCB byte length mismatch');
+  }
+  if(!credentialProfilesMatch({jsProfile, swiftProfile, mode: fixture.mode})) {
+    parity.passed = false;
+    parity.failures.push('credential profile mismatch');
   }
 
   failed = failed || !parity.passed;
@@ -93,6 +107,21 @@ function runJSON(command, args, input) {
     ].filter(Boolean).join('\n'));
   }
   return JSON.parse(result.stdout);
+}
+
+function credentialProfilesMatch({jsProfile, swiftProfile, mode}) {
+  if(jsProfile === null || swiftProfile === null) {
+    return jsProfile === swiftProfile;
+  }
+
+  const expectedShapeKey = mode === 'uat' ?
+    'uatCredentialShapeValid' : 'productionCredentialShapeValid';
+  const expectedOppositeShapeKey = mode === 'uat' ?
+    'productionCredentialShapeValid' : 'uatCredentialShapeValid';
+
+  return swiftProfile[expectedShapeKey] === true &&
+    swiftProfile[expectedOppositeShapeKey] === false &&
+    jsProfile.statusListPresent === swiftProfile.statusListPresent;
 }
 
 function extractStringLiteral(name, text) {

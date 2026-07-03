@@ -351,9 +351,9 @@ Tasks:
 
 Exit criteria:
 
-- Swift CBOR-LD decoding matches the official SDK for every committed fixture.
-- No signature-relevant field is dropped before canonicalization.
-- Unsupported credential shapes fail at a documented stage.
+- [x] Swift CBOR-LD decoding matches the official SDK for every committed fixture.
+- [x] No signature-relevant field is dropped before canonicalization for supported fields; unknown signed fields fail closed until standards canonicalization can preserve them.
+- [x] Unsupported credential shapes fail at a documented stage.
 
 ## Phase 4: Introduce A Standards-Grade Canonicalization Engine
 
