@@ -54,13 +54,6 @@ enum StatusListJSONLDRDFExpander {
 }
 
 enum SupportedStatusListJSONLDRDFConverter {
-    private static let rdfType = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-    private static let xsdDateTime = "http://www.w3.org/2001/XMLSchema#dateTime"
-    private static let securityMultibase = "https://w3id.org/security#multibase"
-    private static let schema = "https://schema.org/"
-    private static let vc = "https://www.w3.org/2018/credentials#"
-    private static let status = "https://www.w3.org/ns/credentials/status#"
-
     static func quads(
         from document: [String: SupportedJSONLDValue]
     ) throws -> [RDFQuad] {
@@ -92,7 +85,7 @@ enum SupportedStatusListJSONLDRDFConverter {
             case (.credentialRoot, "issuer", .some(.string(let issuer))):
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: vc + "issuer",
+                    predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
                     object: .iri(issuer)
                 ))
             case (.credentialRoot, "credentialSubject", .some(.object(let nested))):
@@ -102,7 +95,7 @@ enum SupportedStatusListJSONLDRDFConverter {
                 let nestedSubject = RDFTerm.iri(subjectID)
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: vc + "credentialSubject",
+                    predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
                     object: nestedSubject
                 ))
                 quads.append(contentsOf: try nodeQuads(
@@ -113,37 +106,37 @@ enum SupportedStatusListJSONLDRDFConverter {
             case (.credentialRoot, "description", .some(.string(let description))):
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: schema + "description",
+                    predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
                     object: .literal(value: description, datatype: nil)
                 ))
             case (.credentialRoot, "name", .some(.string(let name))):
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: schema + "name",
+                    predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
                     object: .literal(value: name, datatype: nil)
                 ))
             case (.credentialRoot, "validFrom", .some(.string(let dateTime))):
                 quads.append(try dateTimeQuad(
                     subject: subject,
-                    predicate: vc + "validFrom",
+                    predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
                     value: dateTime
                 ))
             case (.credentialRoot, "validUntil", .some(.string(let dateTime))):
                 quads.append(try dateTimeQuad(
                     subject: subject,
-                    predicate: vc + "validUntil",
+                    predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
                     value: dateTime
                 ))
             case (.credentialSubject, "encodedList", .some(.string(let encodedList))):
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: status + "encodedList",
-                    object: .literal(value: encodedList, datatype: securityMultibase)
+                    predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
+                    object: .literal(value: encodedList, datatype: PinnedJSONLDTermRegistry.securityMultibaseDatatype)
                 ))
             case (.credentialSubject, "statusPurpose", .some(.string(let statusPurpose))):
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: status + "statusPurpose",
+                    predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
                     object: .literal(value: statusPurpose, datatype: nil)
                 ))
             default:
@@ -175,8 +168,8 @@ enum SupportedStatusListJSONLDRDFConverter {
         return try values.map {
             RDFQuad(
                 subject: subject,
-                predicate: rdfType,
-                object: .iri(try typeIRI($0))
+                predicate: PinnedJSONLDTermRegistry.rdfType,
+                object: .iri(try PinnedJSONLDTermRegistry.statusListTypeIRI($0))
             )
         }
     }
@@ -192,7 +185,7 @@ enum SupportedStatusListJSONLDRDFConverter {
         return RDFQuad(
             subject: subject,
             predicate: predicate,
-            object: .literal(value: value, datatype: xsdDateTime)
+            object: .literal(value: value, datatype: PinnedJSONLDTermRegistry.xsdDateTime)
         )
     }
 
@@ -211,17 +204,6 @@ enum SupportedStatusListJSONLDRDFConverter {
         }
     }
 
-    private static func typeIRI(_ value: String) throws -> String {
-        switch value {
-        case "VerifiableCredential":
-            return vc + value
-        case "BitstringStatusListCredential",
-             "BitstringStatusList":
-            return status + value
-        default:
-            throw CADMVInternalError.statusListDecodeFailed
-        }
-    }
 }
 
 private enum StatusListNodeKind {

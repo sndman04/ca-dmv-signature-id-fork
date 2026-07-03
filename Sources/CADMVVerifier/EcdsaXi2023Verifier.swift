@@ -532,11 +532,6 @@ enum DataIntegrityProofCanonicalizer {
 }
 
 enum SupportedProofJSONLDRDFConverter {
-    private static let rdfType = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-    private static let dctermsCreated = "http://purl.org/dc/terms/created"
-    private static let xsdDateTime = "http://www.w3.org/2001/XMLSchema#dateTime"
-    private static let security = "https://w3id.org/security#"
-
     static func quads(
         from document: [String: SupportedJSONLDValue]
     ) throws -> [RDFQuad] {
@@ -551,8 +546,8 @@ enum SupportedProofJSONLDRDFConverter {
             case ("type", .some(.string(let type))):
                 quads.append(RDFQuad(
                     subject: .blank("proof"),
-                    predicate: rdfType,
-                    object: .iri(try proofTypeIRI(type))
+                    predicate: PinnedJSONLDTermRegistry.rdfType,
+                    object: .iri(try PinnedJSONLDTermRegistry.proofTypeIRI(type))
                 ))
             case ("cryptosuite", .some(.string(let cryptosuite))):
                 guard cryptosuite == "ecdsa-xi-2023" || cryptosuite == "ecdsa-rdfc-2019" else {
@@ -560,8 +555,8 @@ enum SupportedProofJSONLDRDFConverter {
                 }
                 quads.append(RDFQuad(
                     subject: .blank("proof"),
-                    predicate: security + "cryptosuite",
-                    object: .literal(value: cryptosuite, datatype: security + "cryptosuiteString")
+                    predicate: try PinnedJSONLDTermRegistry.proofPredicate(key),
+                    object: .literal(value: cryptosuite, datatype: PinnedJSONLDTermRegistry.cryptosuiteStringDatatype)
                 ))
             case ("proofPurpose", .some(.string(let proofPurpose))):
                 guard proofPurpose == "assertionMethod" else {
@@ -569,23 +564,23 @@ enum SupportedProofJSONLDRDFConverter {
                 }
                 quads.append(RDFQuad(
                     subject: .blank("proof"),
-                    predicate: security + "proofPurpose",
-                    object: .iri(security + proofPurpose)
+                    predicate: try PinnedJSONLDTermRegistry.proofPredicate(key),
+                    object: .iri(PinnedJSONLDTermRegistry.securityIRI(proofPurpose))
                 ))
             case ("verificationMethod", .some(.string(let verificationMethod))):
                 quads.append(RDFQuad(
                     subject: .blank("proof"),
-                    predicate: security + "verificationMethod",
+                    predicate: try PinnedJSONLDTermRegistry.proofPredicate(key),
                     object: .iri(verificationMethod)
                 ))
             case ("created", .some(.string(let dateTime))):
                 quads.append(try dateTimeQuad(
-                    predicate: dctermsCreated,
+                    predicate: try PinnedJSONLDTermRegistry.proofPredicate(key),
                     value: dateTime
                 ))
             case ("expires", .some(.string(let dateTime))):
                 quads.append(try dateTimeQuad(
-                    predicate: security + "expiration",
+                    predicate: try PinnedJSONLDTermRegistry.proofPredicate(key),
                     value: dateTime
                 ))
             default:
@@ -605,7 +600,7 @@ enum SupportedProofJSONLDRDFConverter {
         return RDFQuad(
             subject: .blank("proof"),
             predicate: predicate,
-            object: .literal(value: value, datatype: xsdDateTime)
+            object: .literal(value: value, datatype: PinnedJSONLDTermRegistry.xsdDateTime)
         )
     }
 
@@ -628,10 +623,4 @@ enum SupportedProofJSONLDRDFConverter {
         }
     }
 
-    private static func proofTypeIRI(_ value: String) throws -> String {
-        guard value == "DataIntegrityProof" else {
-            throw CADMVInternalError.unsupportedVCB
-        }
-        return security + value
-    }
 }

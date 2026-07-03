@@ -2,6 +2,62 @@
 import XCTest
 
 final class RDFDatasetCanonicalizerTests: XCTestCase {
+    func testPinnedJSONLDTermRegistryMapsSupportedTerms() throws {
+        XCTAssertEqual(
+            try PinnedJSONLDTermRegistry.vcbTypeIRI("OpticalBarcodeCredential"),
+            "https://w3id.org/vc-barcodes#OpticalBarcodeCredential"
+        )
+        XCTAssertEqual(
+            try PinnedJSONLDTermRegistry.statusListTypeIRI("BitstringStatusListCredential"),
+            "https://www.w3.org/ns/credentials/status#BitstringStatusListCredential"
+        )
+        XCTAssertEqual(
+            try PinnedJSONLDTermRegistry.proofTypeIRI("DataIntegrityProof"),
+            "https://w3id.org/security#DataIntegrityProof"
+        )
+        XCTAssertEqual(
+            try PinnedJSONLDTermRegistry.vcbPredicate("terseStatusListIndex"),
+            "https://w3id.org/vc-barcodes#terseStatusListIndex"
+        )
+        XCTAssertEqual(
+            try PinnedJSONLDTermRegistry.statusListPredicate("encodedList"),
+            "https://www.w3.org/ns/credentials/status#encodedList"
+        )
+        XCTAssertEqual(
+            try PinnedJSONLDTermRegistry.proofPredicate("created"),
+            "http://purl.org/dc/terms/created"
+        )
+        XCTAssertEqual(
+            PinnedJSONLDTermRegistry.securityMultibaseDatatype,
+            "https://w3id.org/security#multibase"
+        )
+        XCTAssertEqual(
+            PinnedJSONLDTermRegistry.cryptosuiteStringDatatype,
+            "https://w3id.org/security#cryptosuiteString"
+        )
+    }
+
+    func testPinnedJSONLDTermRegistryRejectsUnsupportedTermsWithProfileErrors() {
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.vcbTypeIRI("UnknownCredential")) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.statusListTypeIRI("UnknownStatusList")) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.proofTypeIRI("UnknownProof")) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.vcbPredicate("unknownSignedField")) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.statusListPredicate("unknownSignedField")) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.proofPredicate("proofValue")) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     func testVCBJSONLDExpanderBuildsDocumentQuadsFromCredentialModel() throws {
         let nquads = try VCBJSONLDRDFExpander.canonicalNQuads(vcbCredential(
             validFrom: "2026-01-01T00:00:00Z",

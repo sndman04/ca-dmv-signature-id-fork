@@ -6,13 +6,6 @@ enum SupportedJSONLDValue: Equatable {
 }
 
 enum SupportedJSONLDRDFConverter {
-    private static let rdfType = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
-    private static let xsdDateTime = "http://www.w3.org/2001/XMLSchema#dateTime"
-    private static let xsdInteger = "http://www.w3.org/2001/XMLSchema#integer"
-    private static let securityMultibase = "https://w3id.org/security#multibase"
-    private static let vc = "https://www.w3.org/2018/credentials#"
-    private static let vcb = "https://w3id.org/vc-barcodes#"
-
     static func quads(
         from document: [String: SupportedJSONLDValue]
     ) throws -> [RDFQuad] {
@@ -41,14 +34,14 @@ enum SupportedJSONLDRDFConverter {
             case (.credentialRoot, "issuer", .some(.string(let issuer))):
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: vc + "issuer",
+                    predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
                     object: .iri(issuer)
                 ))
             case (.credentialRoot, "credentialSubject", .some(.object(let nested))):
                 let nestedSubject = RDFTerm.blank("credentialSubject")
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: vc + "credentialSubject",
+                    predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
                     object: nestedSubject
                 ))
                 quads.append(contentsOf: try nodeQuads(
@@ -60,7 +53,7 @@ enum SupportedJSONLDRDFConverter {
                 let nestedSubject = RDFTerm.blank("credentialStatus")
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: vc + "credentialStatus",
+                    predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
                     object: nestedSubject
                 ))
                 quads.append(contentsOf: try nodeQuads(
@@ -71,32 +64,32 @@ enum SupportedJSONLDRDFConverter {
             case (.credentialRoot, "validFrom", .some(.string(let dateTime))):
                 quads.append(try dateTimeQuad(
                     subject: subject,
-                    predicate: vc + "validFrom",
+                    predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
                     value: dateTime
                 ))
             case (.credentialRoot, "validUntil", .some(.string(let dateTime))):
                 quads.append(try dateTimeQuad(
                     subject: subject,
-                    predicate: vc + "validUntil",
+                    predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
                     value: dateTime
                 ))
             case (.credentialSubject, "protectedComponentIndex", .some(.string(let multibase))):
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: vcb + "protectedComponentIndex",
-                    object: .literal(value: multibase, datatype: securityMultibase)
+                    predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
+                    object: .literal(value: multibase, datatype: PinnedJSONLDTermRegistry.securityMultibaseDatatype)
                 ))
             case (.credentialStatus, "terseStatusListBaseUrl", .some(.string(let url))):
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: vcb + "terseStatusListBaseUrl",
+                    predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
                     object: .iri(url)
                 ))
             case (.credentialStatus, "terseStatusListIndex", .some(.unsigned(let index))):
                 quads.append(RDFQuad(
                     subject: subject,
-                    predicate: vcb + "terseStatusListIndex",
-                    object: .literal(value: String(index), datatype: xsdInteger)
+                    predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
+                    object: .literal(value: String(index), datatype: PinnedJSONLDTermRegistry.xsdInteger)
                 ))
             default:
                 throw CADMVInternalError.unsupportedVCB
@@ -127,8 +120,8 @@ enum SupportedJSONLDRDFConverter {
         return try values.map {
             RDFQuad(
                 subject: subject,
-                predicate: rdfType,
-                object: .iri(try typeIRI($0))
+                predicate: PinnedJSONLDTermRegistry.rdfType,
+                object: .iri(try PinnedJSONLDTermRegistry.vcbTypeIRI($0))
             )
         }
     }
@@ -144,7 +137,7 @@ enum SupportedJSONLDRDFConverter {
         return RDFQuad(
             subject: subject,
             predicate: predicate,
-            object: .literal(value: value, datatype: xsdDateTime)
+            object: .literal(value: value, datatype: PinnedJSONLDTermRegistry.xsdDateTime)
         )
     }
 
@@ -166,18 +159,6 @@ enum SupportedJSONLDRDFConverter {
         }
     }
 
-    private static func typeIRI(_ value: String) throws -> String {
-        switch value {
-        case "VerifiableCredential":
-            return vc + value
-        case "OpticalBarcodeCredential",
-             "AamvaDriversLicenseScannableInformation",
-             "TerseBitstringStatusListEntry":
-            return vcb + value
-        default:
-            throw CADMVInternalError.unsupportedVCB
-        }
-    }
 }
 
 private enum NodeKind {
