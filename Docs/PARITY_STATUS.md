@@ -133,19 +133,20 @@ Completed Phase 4 work:
 - Characterized `unknown-ignorable-cborld-values`: JS preserves text-encoded unknown credential/proof fields but rejects unknown compressed numeric term ids; Swift continues to fail closed until the replacement canonicalizer can preserve those fields safely.
 - Documented the canonicalization engine decision and external bridge acceptance criteria in `Docs/CANONICALIZATION_ENGINE_DECISION.md`.
 - Added `SupportedJSONLDRDFConverter` so VCB document canonicalization now flows through a supported-context JSON-LD-to-RDF conversion boundary instead of directly assembling RDF quads from the credential model; unsupported contexts and unknown signed terms fail closed at that boundary.
+- Expanded generated VCB signature parity to cover runtime-signed credentials with `credentialStatus`, `validFrom`/`validUntil`, and combined status plus validity dates, comparing JS and Swift canonical N-Quads, verify-data, AAMVA hash, byte length, failure stage, and final verification result.
 
 Completed Phase 5 work:
 
 - Added `Tools/signature-policy-characterization.mjs` to record reference Data Integrity proofValue decoding, permissive short/malformed `u` handling before the real signature verifier, and WebCrypto high-S counterpart behavior.
 - Matched JS proofValue multibase policy for text `z` base58btc and `u` base64url encodings while continuing to require exactly 64 raw P-256 signature bytes before Swift Crypto verification.
 - Added Swift tests for proofValue prefix/length rejection and high-S counterpart acceptance through `ECDSAProofVerifier`.
-- Added `Tools/generated-signature-parity.mjs` to create runtime synthetic VCB signatures with an injected DID document and compare JS/Swift valid `z`, valid `u`, tampered proof signature, and tampered protected AAMVA field outcomes, first failure stages, AAMVA hashes, canonical N-Quads, verify-data, and VCB byte lengths.
+- Added `Tools/generated-signature-parity.mjs` to create runtime synthetic VCB signatures with an injected DID document and compare JS/Swift valid `z`, valid `u`, status-bearing credentials, validity-date credentials, combined status plus validity-date credentials, tampered proof signature, and tampered protected AAMVA field outcomes, first failure stages, AAMVA hashes, canonical N-Quads, verify-data, and VCB byte lengths.
 - Added Swift decoder support for reference-emitted no-status compressed proof key ids and numeric epoch-second proof date values.
 
 Remaining Phase 4 gates:
 
 - Replace the remaining supported-context JSON-LD/RDF converter with the selected standards-grade or native-library-backed canonicalization engine.
-- Add reference-equivalent canonical N-Quads or verify-data comparisons for remaining synthetic fixture classes beyond the committed official UAT and status-list parity cases.
+- Add reference-equivalent canonical N-Quads or verify-data comparisons for any remaining synthetic fixture classes beyond the committed official UAT, generated VCB, and status-list parity cases.
 - Apply the documented memory-safety, license, build, and platform criteria if a native-library bridge is selected later.
 
 Completed Phase 5 gates:

@@ -414,11 +414,12 @@ Progress:
 - The RDF dataset model now supports named graphs and blank nodes in graph names, so canonicalization operates on quads rather than only default-graph triples.
 - The JS oracle and parity comparator now compare VCB verify-data for committed official UAT fixtures, including the invalid-signature fixture.
 - The JS oracle smoke gate now also compares synthetic `ecdsa-rdfc-2019` status-list verify-data against Swift for the base status list and optional live-style VC fields.
+- The generated VCB signature parity gate now signs and encodes synthetic credentials with status, validity dates, and combined status plus validity dates, then compares JS and Swift canonical N-Quads, verify-data, byte length, optical hash, and verification result.
 - The observed production mismatch class, where two otherwise valid credentials canonicalized with different subject/status blank-node ordering, is covered by synthetic tests and rechecked locally without storing raw payloads or PII.
 - VCB document canonicalization now goes through `SupportedJSONLDRDFConverter`, a supported-context JSON-LD-to-RDF boundary that consumes a JSON-LD projection and fails closed for unsupported contexts or unknown signed terms instead of silently dropping them.
 - Canonicalization engine selection is documented in `Docs/CANONICALIZATION_ENGINE_DECISION.md`: continue native Swift hardening now, use JS only as a development oracle, and require explicit bridge/dependency acceptance criteria before adding an external engine.
 - This is an intermediate milestone. The current implementation is a fail-closed DMV profile graph builder plus RDF term renderer, not a complete JSON-LD/RDF Dataset Canonicalization replacement.
-- Remaining Phase 4 work includes profile-independent JSON-LD/RDF processing, reference-equivalent comparisons for remaining non-status synthetic fixture classes, and the final standards-grade/native-library-backed engine decision.
+- Remaining Phase 4 work includes profile-independent JSON-LD/RDF processing, reference-equivalent comparisons for any remaining synthetic fixture classes, and the final standards-grade/native-library-backed engine decision.
 
 Exit criteria:
 
@@ -459,7 +460,7 @@ Progress:
 
 - `Tools/signature-policy-characterization.mjs` records reference Data Integrity behavior for `z` base58btc and `u` base64url proof values, unsupported prefixes, malformed base58btc values, permissive short/malformed `u` handling before the real signature verifier, and P-256 high-S counterpart verification through WebCrypto.
 - Swift proof parsing now preserves reference-supported text `z` and `u` proofValue encodings for the verifier, rejects malformed or non-64-byte raw signatures before Swift Crypto verification, and accepts the high-S/low-S counterpart pair consistently with WebCrypto.
-- `Tools/generated-signature-parity.mjs` now generates runtime synthetic VCB signatures and injected DID documents, then compares JS and Swift end-to-end barcode verification for valid `z`, valid `u`, tampered proof signature, and tampered protected AAMVA field cases.
+- `Tools/generated-signature-parity.mjs` now generates runtime synthetic VCB signatures and injected DID documents, then compares JS and Swift end-to-end barcode verification for valid `z`, valid `u`, status-bearing credentials, validity-date credentials, combined status plus validity-date credentials, tampered proof signature, and tampered protected AAMVA field cases.
 - Swift CBOR-LD decode now accepts the reference-emitted compressed proof key layout for no-status credentials and numeric epoch-second proof date values.
 
 ## Phase 6: Replace Status-List Proof Canonicalization

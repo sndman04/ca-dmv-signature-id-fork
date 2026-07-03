@@ -27,6 +27,7 @@ Current committed/generated coverage includes:
 - Synthetic CBOR-LD decode and validation cases.
 - Synthetic DID/network failure cases.
 - Synthetic status-list and expiration cases.
+- Runtime-generated JS/Swift parity cases for signed VCB credentials with no status, `credentialStatus`, `validFrom`/`validUntil`, combined status plus validity dates, alternate `proofValue` encodings, tampered signatures, and tampered protected AAMVA data.
 - Redacted production parity mismatch tracking without private payload data.
 
 Documented gaps:

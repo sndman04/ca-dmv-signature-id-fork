@@ -123,15 +123,31 @@ const protectedDocument = await aamva.select({
   }
 });
 const opticalHash = await aamva.hash({document: protectedDocument});
-const signedCredential = await vc.issue({
-  credential: baseCredential(),
-  suite: new DataIntegrityProof({
-    date: proofCreated,
-    signer: keyPair.signer(),
-    cryptosuite: createEcdsaXi2023Cryptosuite({extraInformation: opticalHash})
-  }),
-  documentLoader
-});
+const signedCredential = await issueCredential(baseCredential());
+const signedCredentialWithStatus = await issueCredential(baseCredential({
+  credentialStatus: {
+    type: 'TerseBitstringStatusListEntry',
+    terseStatusListBaseUrl:
+      'https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists',
+    terseStatusListIndex: 42
+  }
+}));
+const signedCredentialWithValidityDates = await issueCredential(baseCredential({
+  validFrom: '2026-01-01T00:00:00Z',
+  validUntil: '2030-01-01T00:00:00Z'
+}));
+const signedCredentialWithStatusAndValidityDates = await issueCredential(
+  baseCredential({
+    credentialStatus: {
+      type: 'TerseBitstringStatusListEntry',
+      terseStatusListBaseUrl:
+        'https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists',
+      terseStatusListIndex: 65535
+    },
+    validFrom: '2026-01-01T00:00:00Z',
+    validUntil: '2030-01-01T00:00:00Z'
+  })
+);
 const validZVCB = await encodeVCB(signedCredential);
 const validUCredential = withProofValue(
   signedCredential,
@@ -155,6 +171,27 @@ const fixtures = [
   {
     id: 'generated-valid-u-signature',
     payload: makeAAMVABarcode({encodedVCB: await encodeVCB(validUCredential)}),
+    expectVerified: true
+  },
+  {
+    id: 'generated-valid-with-status-signature',
+    payload: makeAAMVABarcode({
+      encodedVCB: await encodeVCB(signedCredentialWithStatus)
+    }),
+    expectVerified: true
+  },
+  {
+    id: 'generated-valid-with-validity-dates-signature',
+    payload: makeAAMVABarcode({
+      encodedVCB: await encodeVCB(signedCredentialWithValidityDates)
+    }),
+    expectVerified: true
+  },
+  {
+    id: 'generated-valid-with-status-and-validity-dates-signature',
+    payload: makeAAMVABarcode({
+      encodedVCB: await encodeVCB(signedCredentialWithStatusAndValidityDates)
+    }),
     expectVerified: true
   },
   {
@@ -203,7 +240,19 @@ if(failed) {
   process.exitCode = 1;
 }
 
-function baseCredential() {
+async function issueCredential(credential) {
+  return vc.issue({
+    credential,
+    suite: new DataIntegrityProof({
+      date: proofCreated,
+      signer: keyPair.signer(),
+      cryptosuite: createEcdsaXi2023Cryptosuite({extraInformation: opticalHash})
+    }),
+    documentLoader
+  });
+}
+
+function baseCredential(extra = {}) {
   return {
     '@context': [
       'https://www.w3.org/ns/credentials/v2',
@@ -214,7 +263,8 @@ function baseCredential() {
     credentialSubject: {
       type: 'AamvaDriversLicenseScannableInformation',
       protectedComponentIndex
-    }
+    },
+    ...extra
   };
 }
 
