@@ -2,9 +2,8 @@ import Crypto
 import Foundation
 
 enum EcdsaRdfc2019Verifier {
-    // Legacy verifier: manually constructs canonical N-Quads for the current
-    // status-list profile. Keep behind DataIntegrityVerificationEngine until
-    // replaced by standards-grade JSON-LD/RDF canonicalization.
+    // DMV status-list profile verifier. It builds the supported graph
+    // explicitly until replaced by standards-grade JSON-LD/RDF canonicalization.
     static func verify(
         credential: DMVStatusListCredential,
         verificationKey: DIDDocumentKey
@@ -24,8 +23,15 @@ enum EcdsaRdfc2019Verifier {
     }
 
     static func createVerifyData(_ credential: DMVStatusListCredential) throws -> Data {
-        let proofHash = Data(SHA256.hash(data: Data(proofCanonicalNQuads(credential).utf8)))
-        let documentHash = Data(SHA256.hash(data: Data(documentCanonicalNQuads(credential).utf8)))
+        let proofHash = Data(SHA256.hash(data: Data(try DataIntegrityProofCanonicalizer.canonicalNQuads(
+            type: credential.proof.type,
+            created: credential.proof.created,
+            expires: nil,
+            cryptosuite: credential.proof.cryptosuite,
+            proofPurpose: credential.proof.proofPurpose,
+            verificationMethod: credential.proof.verificationMethod
+        ).utf8)))
+        let documentHash = Data(SHA256.hash(data: Data(try documentCanonicalNQuads(credential).utf8)))
 
         var data = Data()
         data.append(proofHash)
@@ -33,47 +39,80 @@ enum EcdsaRdfc2019Verifier {
         return data
     }
 
-    private static func proofCanonicalNQuads(_ credential: DMVStatusListCredential) -> String {
-        var lines: [String] = []
-        if let created = credential.proof.created {
-            lines.append("_:c14n0 <http://purl.org/dc/terms/created> \"\(created)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
-        }
-        lines.append(contentsOf: [
-            "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/security#\(credential.proof.type)> .",
-            "_:c14n0 <https://w3id.org/security#cryptosuite> \"\(credential.proof.cryptosuite)\"^^<https://w3id.org/security#cryptosuiteString> .",
-            "_:c14n0 <https://w3id.org/security#proofPurpose> <https://w3id.org/security#\(credential.proof.proofPurpose)> .",
-            "_:c14n0 <https://w3id.org/security#verificationMethod> <\(credential.proof.verificationMethod)> ."
-        ])
-        return lines.joined(separator: "\n") + "\n"
-    }
-
-    private static func documentCanonicalNQuads(_ credential: DMVStatusListCredential) -> String {
-        var lines = [
-            "<\(credential.credentialSubject.id)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/ns/credentials/status#\(credential.credentialSubject.type)> .",
-            "<\(credential.credentialSubject.id)> <https://www.w3.org/ns/credentials/status#encodedList> \"\(credential.credentialSubject.encodedList)\"^^<https://w3id.org/security#multibase> .",
-            "<\(credential.credentialSubject.id)> <https://www.w3.org/ns/credentials/status#statusPurpose> \"\(credential.credentialSubject.statusPurpose)\" .",
-            "<\(credential.id)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .",
-            "<\(credential.id)> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/ns/credentials/status#BitstringStatusListCredential> .",
-            "<\(credential.id)> <https://www.w3.org/2018/credentials#credentialSubject> <\(credential.credentialSubject.id)> .",
-            "<\(credential.id)> <https://www.w3.org/2018/credentials#issuer> <\(credential.issuer)> ."
+    private static func documentCanonicalNQuads(_ credential: DMVStatusListCredential) throws -> String {
+        var quads: [RDFQuad] = [
+            RDFQuad(
+                subject: .iri(credential.credentialSubject.id),
+                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                object: .iri("https://www.w3.org/ns/credentials/status#\(credential.credentialSubject.type)")
+            ),
+            RDFQuad(
+                subject: .iri(credential.credentialSubject.id),
+                predicate: "https://www.w3.org/ns/credentials/status#encodedList",
+                object: .literal(
+                    value: credential.credentialSubject.encodedList,
+                    datatype: "https://w3id.org/security#multibase"
+                )
+            ),
+            RDFQuad(
+                subject: .iri(credential.credentialSubject.id),
+                predicate: "https://www.w3.org/ns/credentials/status#statusPurpose",
+                object: .literal(value: credential.credentialSubject.statusPurpose, datatype: nil)
+            ),
+            RDFQuad(
+                subject: .iri(credential.id),
+                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                object: .iri("https://www.w3.org/2018/credentials#VerifiableCredential")
+            ),
+            RDFQuad(
+                subject: .iri(credential.id),
+                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                object: .iri("https://www.w3.org/ns/credentials/status#BitstringStatusListCredential")
+            ),
+            RDFQuad(
+                subject: .iri(credential.id),
+                predicate: "https://www.w3.org/2018/credentials#credentialSubject",
+                object: .iri(credential.credentialSubject.id)
+            ),
+            RDFQuad(
+                subject: .iri(credential.id),
+                predicate: "https://www.w3.org/2018/credentials#issuer",
+                object: .iri(credential.issuer)
+            )
         ]
 
         if let description = credential.description {
-            lines.append("<\(credential.id)> <https://schema.org/description> \"\(description)\" .")
+            quads.append(RDFQuad(
+                subject: .iri(credential.id),
+                predicate: "https://schema.org/description",
+                object: .literal(value: description, datatype: nil)
+            ))
         }
 
         if let name = credential.name {
-            lines.append("<\(credential.id)> <https://schema.org/name> \"\(name)\" .")
+            quads.append(RDFQuad(
+                subject: .iri(credential.id),
+                predicate: "https://schema.org/name",
+                object: .literal(value: name, datatype: nil)
+            ))
         }
 
         if let validFrom = credential.validFrom {
-            lines.append("<\(credential.id)> <https://www.w3.org/2018/credentials#validFrom> \"\(validFrom)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
+            quads.append(RDFQuad(
+                subject: .iri(credential.id),
+                predicate: "https://www.w3.org/2018/credentials#validFrom",
+                object: .literal(value: validFrom, datatype: "http://www.w3.org/2001/XMLSchema#dateTime")
+            ))
         }
 
         if let validUntil = credential.validUntil {
-            lines.append("<\(credential.id)> <https://www.w3.org/2018/credentials#validUntil> \"\(validUntil)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
+            quads.append(RDFQuad(
+                subject: .iri(credential.id),
+                predicate: "https://www.w3.org/2018/credentials#validUntil",
+                object: .literal(value: validUntil, datatype: "http://www.w3.org/2001/XMLSchema#dateTime")
+            ))
         }
 
-        return lines.sorted().joined(separator: "\n") + "\n"
+        return try RDFDatasetCanonicalizer.canonicalNQuads(quads)
     }
 }

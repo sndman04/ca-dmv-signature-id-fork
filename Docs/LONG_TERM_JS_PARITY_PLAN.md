@@ -400,9 +400,10 @@ Native implementation milestones:
 Progress:
 
 - The VCB document graph now uses derived blank-node labels for the supported DMV credential graph instead of hardcoded `_:c14n` assumptions.
+- VCB proof, status-list proof, and status-list document canonicalization now use structured RDF terms and a shared N-Quads renderer rather than independent raw string emitters.
 - The observed production mismatch class, where two otherwise valid credentials canonicalized with different subject/status blank-node ordering, is covered by synthetic tests and rechecked locally without storing raw payloads or PII.
-- This is an intermediate milestone. The current implementation is a fail-closed DMV profile canonicalizer, not a complete JSON-LD/RDF Dataset Canonicalization replacement.
-- Remaining Phase 4 work includes proof canonicalization, status-list canonicalization, full reference-equivalent verify-data comparisons, and the final standards-grade/native-library-backed engine decision.
+- This is an intermediate milestone. The current implementation is a fail-closed DMV profile graph builder plus RDF term renderer, not a complete JSON-LD/RDF Dataset Canonicalization replacement.
+- Remaining Phase 4 work includes profile-independent JSON-LD/RDF processing, full reference-equivalent verify-data comparisons, and the final standards-grade/native-library-backed engine decision.
 
 Exit criteria:
 

@@ -116,11 +116,13 @@ Completed Phase 3 gates:
 Completed Phase 4 work:
 
 - Replaced hardcoded VCB document blank-node label ordering with deterministic graph-derived labels for the supported DMV credential graph.
+- Routed VCB proof, status-list proof, and status-list document canonicalization through structured RDF terms and the shared N-Quads renderer instead of raw string assembly.
 - Added synthetic regression coverage for the observed production class where status-list and subject blank nodes can swap canonical order based on credential content.
+- Added exact-output proof canonicalization tests for optional `created` and `expires` handling, plus fail-closed coverage for ambiguous blank-node hashes.
 - Rechecked the prohibited-storage production vector locally in memory; the previous `data-integrity-vcb` divergence is resolved without committing raw payloads or PII.
 
 Remaining Phase 4 gates:
 
-- Replace remaining handbuilt proof/status-list canonicalization with the selected standards-grade or native-library-backed canonicalization engine.
+- Replace the remaining profile-specific graph construction with the selected standards-grade or native-library-backed JSON-LD/RDF canonicalization engine.
 - Add reference-equivalent canonical N-Quads or verify-data comparisons for the full committed fixture corpus.
 - Document memory-safety, license, build, and platform implications if the final engine uses a native-library bridge.

@@ -29,7 +29,14 @@ enum EcdsaXi2023Verifier {
         credential: DMVVerifiableCredential,
         opticalDataHash: Data
     ) throws -> Data {
-        let proofHash = Data(SHA256.hash(data: Data(proofCanonicalNQuads(credential).utf8)))
+        let proofHash = Data(SHA256.hash(data: Data(try DataIntegrityProofCanonicalizer.canonicalNQuads(
+            type: credential.proof.type,
+            created: credential.proof.created,
+            expires: credential.proof.expires,
+            cryptosuite: credential.proof.cryptosuite,
+            proofPurpose: credential.proof.proofPurpose,
+            verificationMethod: credential.proof.verificationMethod
+        ).utf8)))
         let documentHash = Data(SHA256.hash(data: Data(try documentCanonicalNQuads(credential).utf8)))
         let externalHash = Data(SHA256.hash(data: opticalDataHash))
 
@@ -38,23 +45,6 @@ enum EcdsaXi2023Verifier {
         data.append(documentHash)
         data.append(externalHash)
         return data
-    }
-
-    private static func proofCanonicalNQuads(_ credential: DMVVerifiableCredential) -> String {
-        var lines: [String] = []
-        if let created = credential.proof.created {
-            lines.append("_:c14n0 <http://purl.org/dc/terms/created> \"\(created)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
-        }
-        if let expires = credential.proof.expires {
-            lines.append("_:c14n0 <https://w3id.org/security#expiration> \"\(expires)\"^^<http://www.w3.org/2001/XMLSchema#dateTime> .")
-        }
-        lines.append(contentsOf: [
-            "_:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/security#\(credential.proof.type)> .",
-            "_:c14n0 <https://w3id.org/security#cryptosuite> \"\(credential.proof.cryptosuite)\"^^<https://w3id.org/security#cryptosuiteString> .",
-            "_:c14n0 <https://w3id.org/security#proofPurpose> <https://w3id.org/security#\(credential.proof.proofPurpose)> .",
-            "_:c14n0 <https://w3id.org/security#verificationMethod> <\(credential.proof.verificationMethod)> ."
-        ])
-        return lines.joined(separator: "\n") + "\n"
     }
 
     private static func documentCanonicalNQuads(_ credential: DMVVerifiableCredential) throws -> String {
@@ -272,5 +262,57 @@ enum RDFDatasetCanonicalizer {
             }
             return "\"\(escaped)\""
         }
+    }
+}
+
+enum DataIntegrityProofCanonicalizer {
+    static func canonicalNQuads(
+        type: String,
+        created: String?,
+        expires: String?,
+        cryptosuite: String,
+        proofPurpose: String,
+        verificationMethod: String
+    ) throws -> String {
+        var quads: [RDFQuad] = [
+            RDFQuad(
+                subject: .blank("proof"),
+                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
+                object: .iri("https://w3id.org/security#\(type)")
+            ),
+            RDFQuad(
+                subject: .blank("proof"),
+                predicate: "https://w3id.org/security#cryptosuite",
+                object: .literal(value: cryptosuite, datatype: "https://w3id.org/security#cryptosuiteString")
+            ),
+            RDFQuad(
+                subject: .blank("proof"),
+                predicate: "https://w3id.org/security#proofPurpose",
+                object: .iri("https://w3id.org/security#\(proofPurpose)")
+            ),
+            RDFQuad(
+                subject: .blank("proof"),
+                predicate: "https://w3id.org/security#verificationMethod",
+                object: .iri(verificationMethod)
+            )
+        ]
+
+        if let created {
+            quads.append(RDFQuad(
+                subject: .blank("proof"),
+                predicate: "http://purl.org/dc/terms/created",
+                object: .literal(value: created, datatype: "http://www.w3.org/2001/XMLSchema#dateTime")
+            ))
+        }
+
+        if let expires {
+            quads.append(RDFQuad(
+                subject: .blank("proof"),
+                predicate: "https://w3id.org/security#expiration",
+                object: .literal(value: expires, datatype: "http://www.w3.org/2001/XMLSchema#dateTime")
+            ))
+        }
+
+        return try RDFDatasetCanonicalizer.canonicalNQuads(quads)
     }
 }
