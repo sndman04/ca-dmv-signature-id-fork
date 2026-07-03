@@ -185,6 +185,80 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         """)
     }
 
+    func testDataIntegrityProofCanonicalizerBuildsJSONLDDocumentBeforeRDFConversion() {
+        let document = DataIntegrityProofCanonicalizer.jsonLDDocument(
+            contexts: [
+                "https://www.w3.org/ns/credentials/v2",
+                "https://w3id.org/vc-barcodes/v1"
+            ],
+            type: "DataIntegrityProof",
+            created: "2026-01-01T00:00:00Z",
+            expires: "2030-01-01T00:00:00Z",
+            cryptosuite: "ecdsa-xi-2023",
+            proofPurpose: "assertionMethod",
+            verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"
+        )
+
+        XCTAssertEqual(document["@context"], .array([
+            .string("https://www.w3.org/ns/credentials/v2"),
+            .string("https://w3id.org/vc-barcodes/v1")
+        ]))
+        XCTAssertEqual(document["type"], .string("DataIntegrityProof"))
+        XCTAssertEqual(document["cryptosuite"], .string("ecdsa-xi-2023"))
+        XCTAssertEqual(document["created"], .string("2026-01-01T00:00:00Z"))
+        XCTAssertEqual(document["expires"], .string("2030-01-01T00:00:00Z"))
+    }
+
+    func testSupportedProofJSONLDConverterRejectsUnsupportedContextTermsAndValues() throws {
+        var document = DataIntegrityProofCanonicalizer.jsonLDDocument(
+            type: "DataIntegrityProof",
+            created: nil,
+            expires: nil,
+            cryptosuite: "ecdsa-rdfc-2019",
+            proofPurpose: "assertionMethod",
+            verificationMethod: "did:web:credentials.dmv.ca.gov#vm-status-1"
+        )
+        document["@context"] = .array([.string("https://example.invalid/context")])
+
+        XCTAssertThrowsError(try SupportedProofJSONLDRDFConverter.quads(from: document)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        var unknownTermDocument = DataIntegrityProofCanonicalizer.jsonLDDocument(
+            type: "DataIntegrityProof",
+            created: nil,
+            expires: nil,
+            cryptosuite: "ecdsa-rdfc-2019",
+            proofPurpose: "assertionMethod",
+            verificationMethod: "did:web:credentials.dmv.ca.gov#vm-status-1"
+        )
+        unknownTermDocument["proofValue"] = .string("must-not-canonicalize")
+
+        XCTAssertThrowsError(try SupportedProofJSONLDRDFConverter.quads(from: unknownTermDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        var unsupportedCryptosuiteDocument = DataIntegrityProofCanonicalizer.jsonLDDocument(
+            type: "DataIntegrityProof",
+            created: nil,
+            expires: nil,
+            cryptosuite: "ecdsa-unknown-2026",
+            proofPurpose: "assertionMethod",
+            verificationMethod: "did:web:credentials.dmv.ca.gov#vm-status-1"
+        )
+
+        XCTAssertThrowsError(try SupportedProofJSONLDRDFConverter.quads(from: unsupportedCryptosuiteDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        unsupportedCryptosuiteDocument["cryptosuite"] = .string("ecdsa-rdfc-2019")
+        unsupportedCryptosuiteDocument["created"] = .string("2026-01-01T00:00:00Z\" .")
+
+        XCTAssertThrowsError(try SupportedProofJSONLDRDFConverter.quads(from: unsupportedCryptosuiteDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     func testProductionStatusIndexCanSortBeforeSubjectBlankNode() throws {
         let nquads = try RDFDatasetCanonicalizer.canonicalNQuads(productionCredentialQuads(
             statusListIndex: 2_663_386_499

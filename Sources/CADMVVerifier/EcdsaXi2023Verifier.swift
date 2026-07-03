@@ -30,6 +30,7 @@ enum EcdsaXi2023Verifier {
         opticalDataHash: Data
     ) throws -> Data {
         let proofHash = Data(SHA256.hash(data: Data(try DataIntegrityProofCanonicalizer.canonicalNQuads(
+            contexts: credential.context,
             type: credential.proof.type,
             created: credential.proof.created,
             expires: credential.proof.expires,
@@ -448,6 +449,7 @@ private extension Dictionary where Key == String, Value == String {
 
 enum DataIntegrityProofCanonicalizer {
     static func canonicalNQuads(
+        contexts: [String] = ["https://www.w3.org/ns/credentials/v2"],
         type: String,
         created: String?,
         expires: String?,
@@ -455,45 +457,152 @@ enum DataIntegrityProofCanonicalizer {
         proofPurpose: String,
         verificationMethod: String
     ) throws -> String {
-        var quads: [RDFQuad] = [
-            RDFQuad(
-                subject: .blank("proof"),
-                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                object: .iri("https://w3id.org/security#\(type)")
-            ),
-            RDFQuad(
-                subject: .blank("proof"),
-                predicate: "https://w3id.org/security#cryptosuite",
-                object: .literal(value: cryptosuite, datatype: "https://w3id.org/security#cryptosuiteString")
-            ),
-            RDFQuad(
-                subject: .blank("proof"),
-                predicate: "https://w3id.org/security#proofPurpose",
-                object: .iri("https://w3id.org/security#\(proofPurpose)")
-            ),
-            RDFQuad(
-                subject: .blank("proof"),
-                predicate: "https://w3id.org/security#verificationMethod",
-                object: .iri(verificationMethod)
+        try SupportedProofJSONLDRDFConverter.canonicalNQuads(
+            document: jsonLDDocument(
+                contexts: contexts,
+                type: type,
+                created: created,
+                expires: expires,
+                cryptosuite: cryptosuite,
+                proofPurpose: proofPurpose,
+                verificationMethod: verificationMethod
             )
+        )
+    }
+
+    static func jsonLDDocument(
+        contexts: [String] = ["https://www.w3.org/ns/credentials/v2"],
+        type: String,
+        created: String?,
+        expires: String?,
+        cryptosuite: String,
+        proofPurpose: String,
+        verificationMethod: String
+    ) -> [String: SupportedJSONLDValue] {
+        var document: [String: SupportedJSONLDValue] = [
+            "@context": .array(contexts.map { .string($0) }),
+            "type": .string(type),
+            "cryptosuite": .string(cryptosuite),
+            "proofPurpose": .string(proofPurpose),
+            "verificationMethod": .string(verificationMethod)
         ]
-
         if let created {
-            quads.append(RDFQuad(
-                subject: .blank("proof"),
-                predicate: "http://purl.org/dc/terms/created",
-                object: .literal(value: created, datatype: "http://www.w3.org/2001/XMLSchema#dateTime")
-            ))
+            document["created"] = .string(created)
         }
-
         if let expires {
-            quads.append(RDFQuad(
-                subject: .blank("proof"),
-                predicate: "https://w3id.org/security#expiration",
-                object: .literal(value: expires, datatype: "http://www.w3.org/2001/XMLSchema#dateTime")
-            ))
+            document["expires"] = .string(expires)
         }
+        return document
+    }
+}
 
-        return try RDFDatasetCanonicalizer.canonicalNQuads(quads)
+enum SupportedProofJSONLDRDFConverter {
+    private static let rdfType = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    private static let dctermsCreated = "http://purl.org/dc/terms/created"
+    private static let xsdDateTime = "http://www.w3.org/2001/XMLSchema#dateTime"
+    private static let security = "https://w3id.org/security#"
+
+    static func canonicalNQuads(
+        document: [String: SupportedJSONLDValue]
+    ) throws -> String {
+        try RDFDatasetCanonicalizer.canonicalNQuads(quads(from: document))
+    }
+
+    static func quads(
+        from document: [String: SupportedJSONLDValue]
+    ) throws -> [RDFQuad] {
+        try requireSupportedContexts(document["@context"])
+        var quads: [RDFQuad] = []
+        for key in document.keys.sorted() {
+            guard key != "@context" else {
+                continue
+            }
+            let value = document[key]
+            switch (key, value) {
+            case ("type", .some(.string(let type))):
+                quads.append(RDFQuad(
+                    subject: .blank("proof"),
+                    predicate: rdfType,
+                    object: .iri(try proofTypeIRI(type))
+                ))
+            case ("cryptosuite", .some(.string(let cryptosuite))):
+                guard cryptosuite == "ecdsa-xi-2023" || cryptosuite == "ecdsa-rdfc-2019" else {
+                    throw CADMVInternalError.unsupportedVCB
+                }
+                quads.append(RDFQuad(
+                    subject: .blank("proof"),
+                    predicate: security + "cryptosuite",
+                    object: .literal(value: cryptosuite, datatype: security + "cryptosuiteString")
+                ))
+            case ("proofPurpose", .some(.string(let proofPurpose))):
+                guard proofPurpose == "assertionMethod" else {
+                    throw CADMVInternalError.unsupportedVCB
+                }
+                quads.append(RDFQuad(
+                    subject: .blank("proof"),
+                    predicate: security + "proofPurpose",
+                    object: .iri(security + proofPurpose)
+                ))
+            case ("verificationMethod", .some(.string(let verificationMethod))):
+                quads.append(RDFQuad(
+                    subject: .blank("proof"),
+                    predicate: security + "verificationMethod",
+                    object: .iri(verificationMethod)
+                ))
+            case ("created", .some(.string(let dateTime))):
+                quads.append(try dateTimeQuad(
+                    predicate: dctermsCreated,
+                    value: dateTime
+                ))
+            case ("expires", .some(.string(let dateTime))):
+                quads.append(try dateTimeQuad(
+                    predicate: security + "expiration",
+                    value: dateTime
+                ))
+            default:
+                throw CADMVInternalError.unsupportedVCB
+            }
+        }
+        return quads
+    }
+
+    private static func dateTimeQuad(
+        predicate: String,
+        value: String
+    ) throws -> RDFQuad {
+        guard DMVVCBDecoder.isSafeDateTimeTextForRDF(value) else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return RDFQuad(
+            subject: .blank("proof"),
+            predicate: predicate,
+            object: .literal(value: value, datatype: xsdDateTime)
+        )
+    }
+
+    private static func requireSupportedContexts(_ value: SupportedJSONLDValue?) throws {
+        guard case .array(let contexts) = value else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        let strings = try contexts.map { value in
+            guard case .string(let context) = value else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return context
+        }
+        switch strings {
+        case ["https://www.w3.org/ns/credentials/v2"],
+             ["https://www.w3.org/ns/credentials/v2", "https://w3id.org/vc-barcodes/v1"]:
+            return
+        default:
+            throw CADMVInternalError.unsupportedVCB
+        }
+    }
+
+    private static func proofTypeIRI(_ value: String) throws -> String {
+        guard value == "DataIntegrityProof" else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return security + value
     }
 }

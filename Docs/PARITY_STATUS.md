@@ -135,6 +135,7 @@ Completed Phase 4 work:
 - Added `SupportedJSONLDRDFConverter` so VCB document canonicalization now flows through a supported-context JSON-LD-to-RDF conversion boundary instead of directly assembling RDF quads from the credential model; unsupported contexts and unknown signed terms fail closed at that boundary.
 - Expanded generated VCB signature parity to cover runtime-signed credentials with `credentialStatus`, `validFrom`/`validUntil`, and combined status plus validity dates, comparing JS and Swift canonical N-Quads, verify-data, AAMVA hash, byte length, failure stage, and final verification result.
 - Added `StatusListJSONLDRDFExpander` and `SupportedStatusListJSONLDRDFConverter` so status-list document canonicalization also flows through a supported-context JSON-LD-to-RDF boundary; unsupported contexts, unknown signed terms, unknown type values, and unsafe date text fail closed there.
+- Routed Data Integrity proof canonicalization through `SupportedProofJSONLDRDFConverter`, so VCB and status-list proof configs now build supported JSON-LD first and fail closed for unsupported contexts, unknown proof terms, unsupported cryptosuites, unsupported proof purposes, unknown proof types, and unsafe date text.
 
 Completed Phase 5 work:
 

@@ -25,6 +25,7 @@ enum EcdsaRdfc2019Verifier {
 
     static func createVerifyData(_ credential: DMVStatusListCredential) throws -> Data {
         let proofHash = Data(SHA256.hash(data: Data(try DataIntegrityProofCanonicalizer.canonicalNQuads(
+            contexts: ["https://www.w3.org/ns/credentials/v2"],
             type: credential.proof.type,
             created: credential.proof.created,
             expires: nil,

@@ -78,6 +78,7 @@ Current guardrails:
 - Unknown status-list signed fields fail closed or return `.unavailable`.
 - VCB document canonicalization passes through a supported-context JSON-LD-to-RDF conversion boundary before RDF Dataset Canonicalization; unsupported contexts and unknown signed terms fail closed there.
 - Status-list document canonicalization passes through a supported-context JSON-LD-to-RDF conversion boundary before RDF Dataset Canonicalization; unsupported contexts, unknown signed terms, unknown type values, and unsafe date text fail closed there.
+- Data Integrity proof canonicalization passes through a supported-context JSON-LD-to-RDF conversion boundary before RDF Dataset Canonicalization; unsupported contexts, unknown proof terms, unsupported proof config values, and unsafe date text fail closed there.
 - Official UAT VCB proof canonical N-Quads, document canonical N-Quads, AAMVA optical hash, and verify-data are compared against the JavaScript SDK.
 - Synthetic status-list verify-data is compared against the JavaScript SDK.
 - RDFC n-degree canonicalization has an explicit recursion/work budget.
