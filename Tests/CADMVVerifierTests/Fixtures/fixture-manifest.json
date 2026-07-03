@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "policy": {
+    "rawRealPayloadsCommitted": false,
+    "realPIICommitted": false,
+    "allowedStorageLevels": ["committed", "generated", "redacted-vector", "local-only", "documented-gap"]
+  },
+  "fixtures": [
+    {
+      "id": "official-valid-uat",
+      "class": "official",
+      "storageLevel": "committed",
+      "source": "References/cadmv-dlid-verifier-sdk/tests/001-main.test.js",
+      "jsParityRequired": true,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "verified",
+      "expectedFirstFailureStage": null,
+      "categories": ["valid-uat", "status-checking-disabled", "official-uats", "positive-vcb-signature"]
+    },
+    {
+      "id": "official-invalid-uat",
+      "class": "official",
+      "storageLevel": "committed",
+      "source": "References/cadmv-dlid-verifier-sdk/tests/001-main.test.js",
+      "jsParityRequired": true,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "failed",
+      "expectedFirstFailureStage": "data-integrity-vcb",
+      "categories": ["signature-mismatch-proof", "official-uats", "negative-vcb-signature"]
+    },
+    {
+      "id": "synthetic-aamva-parser-corpus",
+      "class": "synthetic",
+      "storageLevel": "generated",
+      "source": "Tests/CADMVVerifierTests/CADMVVerifierTests.swift",
+      "jsParityRequired": false,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "varies",
+      "expectedFirstFailureStage": "varies",
+      "categories": [
+        "missing-vcb-before-requirement",
+        "missing-vcb-after-requirement",
+        "require-vcb-before-requirement",
+        "non-california-issuer",
+        "california-issuer-non-ca-daj",
+        "dl-primary-subfile",
+        "multiple-subfiles-valid-offsets",
+        "malformed-subfile-descriptors",
+        "unknown-subfile-designators",
+        "escaped-scanner-control-characters",
+        "raw-control-characters",
+        "segment-terminator-variants",
+        "empty-payload",
+        "payload-missing-ansi",
+        "truncated-header",
+        "truncated-descriptors",
+        "invalid-issue-dates",
+        "boundary-issue-dates",
+        "leap-year-dates",
+        "impossible-dates"
+      ]
+    },
+    {
+      "id": "synthetic-cborld-corpus",
+      "class": "synthetic",
+      "storageLevel": "generated",
+      "source": "Tests/CADMVVerifierTests/CADMVVerifierTests.swift",
+      "jsParityRequired": false,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "varies",
+      "expectedFirstFailureStage": "varies",
+      "categories": [
+        "malformed-base64-vcb",
+        "base64-with-scanner-whitespace",
+        "cborld-valid-minimal-dmv-credential",
+        "unsupported-cborld-registry",
+        "duplicate-cbor-map-keys",
+        "oversized-cbor-array-declaration",
+        "oversized-cbor-map-declaration",
+        "deeply-nested-cbor",
+        "unsupported-credential-contexts",
+        "unsupported-credential-types",
+        "unsupported-proof-types",
+        "unsupported-cryptosuites",
+        "unsupported-proof-purposes",
+        "uat-credential-in-production-mode",
+        "production-credential-in-uat-mode"
+      ]
+    },
+    {
+      "id": "synthetic-did-network-corpus",
+      "class": "synthetic",
+      "storageLevel": "generated",
+      "source": "Tests/CADMVVerifierTests/CADMVVerifierTests.swift and Sources/CADMVVerifierSelfTest/main.swift",
+      "jsParityRequired": false,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "failed",
+      "expectedFirstFailureStage": "did-resolution",
+      "categories": [
+        "did-resolution-timeout",
+        "did-document-missing-verification-method",
+        "did-document-key-type-mismatch",
+        "did-document-host-redirect",
+        "did-document-malformed-json",
+        "did-document-wrong-controller",
+        "did-document-multiple-verification-methods",
+        "did-document-unsupported-key-type"
+      ]
+    },
+    {
+      "id": "synthetic-status-list-corpus",
+      "class": "synthetic",
+      "storageLevel": "generated",
+      "source": "Sources/CADMVVerifierSelfTest/main.swift",
+      "jsParityRequired": true,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "varies",
+      "expectedFirstFailureStage": "varies",
+      "categories": [
+        "status-checking-enabled-not-revoked",
+        "status-checking-enabled-revoked",
+        "status-checking-enabled-unavailable",
+        "status-list-credential-proof-invalid",
+        "status-list-profile-unknown-signed-fields",
+        "status-list-bit-index-0",
+        "status-list-bit-index-7",
+        "status-list-bit-index-8",
+        "status-list-bit-index-63",
+        "status-list-bit-index-64",
+        "status-list-bit-index-last",
+        "status-list-bit-index-out-of-range"
+      ]
+    },
+    {
+      "id": "synthetic-expiration-corpus",
+      "class": "synthetic",
+      "storageLevel": "generated",
+      "source": "Tests/CADMVVerifierTests/CADMVVerifierTests.swift and Sources/CADMVVerifierSelfTest/main.swift",
+      "jsParityRequired": false,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "varies",
+      "expectedFirstFailureStage": "expiration",
+      "categories": [
+        "credential-before-expiration",
+        "credential-exactly-at-expiration",
+        "credential-after-expiration",
+        "credential-malformed-expiration-date",
+        "proof-expires-and-validUntil"
+      ]
+    },
+    {
+      "id": "production-redacted-vector-001",
+      "class": "redacted-vector",
+      "storageLevel": "redacted-vector",
+      "source": "Docs/PARITY_STATUS.md",
+      "jsParityRequired": true,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "verified",
+      "expectedFirstFailureStage": null,
+      "categories": ["valid-production-credential-shape", "production-redacted-parity-mismatch"]
+    },
+    {
+      "id": "id-primary-subfile",
+      "class": "synthetic",
+      "storageLevel": "documented-gap",
+      "source": "Docs/LONG_TERM_JS_PARITY_PLAN.md",
+      "jsParityRequired": true,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "varies",
+      "expectedFirstFailureStage": "varies",
+      "categories": ["id-primary-subfile"],
+      "gapReason": "Synthetic generator currently emits DL subfiles only; add ID generator coverage before Phase 2 is treated as release-complete."
+    },
+    {
+      "id": "unknown-ignorable-cborld-values",
+      "class": "synthetic",
+      "storageLevel": "documented-gap",
+      "source": "Docs/LONG_TERM_JS_PARITY_PLAN.md",
+      "jsParityRequired": true,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "varies",
+      "expectedFirstFailureStage": "varies",
+      "categories": ["unknown-ignorable-cborld-values"],
+      "gapReason": "Needs official SDK characterization; current Swift policy fails closed on unknown signed credential fields."
+    }
+  ]
+}

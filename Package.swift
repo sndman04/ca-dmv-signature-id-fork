@@ -58,6 +58,9 @@ let package = Package(
             name: "CADMVVerifierTests",
             dependencies: ["CADMVVerifier"],
             exclude: ["Fixtures/README.md"],
+            resources: [
+                .process("Fixtures/fixture-manifest.json")
+            ],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
             ]

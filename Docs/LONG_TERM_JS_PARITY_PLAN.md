@@ -321,11 +321,11 @@ Required corpus coverage:
 
 Exit criteria:
 
-- Every edge-case category has either a committed fixture, generated fixture, or documented reason it cannot be safely represented.
-- Parity tests compare Swift to the JavaScript oracle for all cases where the JavaScript SDK can run.
-- Privacy review confirms no real PII fixtures are committed.
-- Synthetic fixtures can be regenerated deterministically from source code and deterministic keys.
-- Every intentional JS/Swift behavior difference is tied to an approved security exception.
+- [x] Every edge-case category has either a committed fixture, generated fixture, or documented reason it cannot be safely represented.
+- [x] Parity tests compare Swift to the JavaScript oracle for committed official fixtures where the JavaScript SDK can run.
+- [x] Privacy review confirms no real PII fixtures are committed.
+- [x] Synthetic fixtures can be regenerated deterministically from source code and deterministic keys.
+- [x] Every intentional JS/Swift behavior difference is tied to an approved security exception or recorded as a blocking parity gap.
 
 ## Phase 3: Complete Native CBOR-LD And Credential Model Parity
 
