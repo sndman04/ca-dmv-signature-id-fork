@@ -593,6 +593,87 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 """
             ),
             (
+                "test060c-core-escaping",
+                """
+                <urn:ex:s:000:s\\u20701> <urn:ex:000:p\\u2070> <urn:ex:000:o\\u2070> <urn:ex:000:g\\u2070> .
+                <urn:ex:s:000:s⁰2> <urn:ex:000:p⁰> <urn:ex:000:o⁰> <urn:ex:000:g⁰> .
+                <urn:ex:s:001> <urn:ex:000:empty> "" .
+                <urn:ex:s:001> <urn:ex:001:simple> "simple" .
+                <urn:ex:s:001> <urn:ex:002:quote> "\\"" .
+                <urn:ex:s:001> <urn:ex:003:backslash> "\\\\" .
+                <urn:ex:s:001> <urn:ex:004:nl> "\\n" .
+                <urn:ex:s:001> <urn:ex:005:cr> "\\r" .
+                <urn:ex:s:001> <urn:ex:006:all> "\\"\\\\\\n\\r" .
+                <urn:ex:s:001> <urn:ex:007:uchar> "\\u0022\\u005c" .
+                <urn:ex:s:001> <urn:ex:008:echar> "\\t\\b\\n\\r\\f\\"\\'\\\\" .
+                <urn:ex:s:001> <urn:ex:009> "\\\\u0039" .
+                <urn:ex:s:001> <urn:ex:010> "\\\\n" .
+                <urn:ex:s:001> <urn:ex:011> "\\\\\\\\" .
+                <urn:ex:s:001> <urn:ex:012> "\\"\\"" .
+                <urn:ex:s:001> <urn:ex:015> "\\u221e" .
+                <urn:ex:s:001> <urn:ex:016> "∞" .
+                <urn:ex:s:001> <urn:ex:017> <urn:ex:\\u0065\\u0078> .
+                <urn:ex:s:001> <urn:ex:018> <urn:ex:\\u221e> .
+                <urn:ex:s:001> <urn:ex:019> <urn:ex:\\u002b> .
+                <urn:ex:s:003> <urn:ex:022> "d"^^<urn:ex:\\u0064\\u0074> .
+                <urn:ex:s:003> <urn:ex:023> "d"^^<urn:ex:\\u0064> .
+                <urn:ex:s:004> <urn:ex:024> "\\u0000\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\u0008\\u0009\\u000a\\u000b\\u000c\\u000d\\u000e\\u000f" .
+                <urn:ex:s:004> <urn:ex:025> "\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001a\\u001b\\u001c\\u001d\\u001e\\u001f" .
+                <urn:ex:s:004> <urn:ex:026> "\\u0020\\u0021\\u0022\\u0023\\u0024\\u0025\\u0026\\u0027\\u0028\\u0029\\u002a\\u002b\\u002c\\u002d\\u002e\\u002f" .
+                <urn:ex:s:004> <urn:ex:027> "\\u0030\\u0031\\u0032\\u0033\\u0034\\u0035\\u0036\\u0037\\u0038\\u0039\\u003a\\u003b\\u003c\\u003d\\u003e\\u003f" .
+                <urn:ex:s:004> <urn:ex:028> "\\u0040\\u0041\\u0042\\u0043\\u0044\\u0045\\u0046\\u0047\\u0048\\u0049\\u004a\\u004b\\u004c\\u004d\\u004e\\u004f" .
+                <urn:ex:s:004> <urn:ex:029> "\\u0050\\u0051\\u0052\\u0053\\u0054\\u0055\\u0056\\u0057\\u0058\\u0059\\u005a\\u005b\\u005c\\u005d\\u005e\\u005f" .
+                <urn:ex:s:004> <urn:ex:030> "\\u0060\\u0061\\u0062\\u0063\\u0064\\u0065\\u0066\\u0067\\u0068\\u0069\\u006a\\u006b\\u006c\\u006d\\u006e\\u006f" .
+                <urn:ex:s:004> <urn:ex:031> "\\u0070\\u0071\\u0072\\u0073\\u0074\\u0075\\u0076\\u0077\\u0078\\u0079\\u007a\\u007b\\u007c\\u007d\\u007e\\u007f" .
+                <urn:ex:s:004> <urn:ex:033> "\\U0001F303" .
+                <urn:ex:s:004> <urn:ex:034> "🌃" .
+                <urn:ex:s:005> <urn:ex:035> <urn:ex:\\U0001F303> .
+                <urn:ex:s:006> <urn:ex:036> "o" <urn:ex:\\u221e> .
+                <urn:ex:s:006> <urn:ex:037> "o" <urn:ex:∞> .
+                <urn:ex:s:006> <urn:ex:039> "\\u0009\\u0020<>\\"{}|^`\\\\" .
+
+                """,
+                """
+                <urn:ex:s:000:s⁰1> <urn:ex:000:p⁰> <urn:ex:000:o⁰> <urn:ex:000:g⁰> .
+                <urn:ex:s:000:s⁰2> <urn:ex:000:p⁰> <urn:ex:000:o⁰> <urn:ex:000:g⁰> .
+                <urn:ex:s:001> <urn:ex:000:empty> "" .
+                <urn:ex:s:001> <urn:ex:001:simple> "simple" .
+                <urn:ex:s:001> <urn:ex:002:quote> "\\"" .
+                <urn:ex:s:001> <urn:ex:003:backslash> "\\\\" .
+                <urn:ex:s:001> <urn:ex:004:nl> "\\n" .
+                <urn:ex:s:001> <urn:ex:005:cr> "\\r" .
+                <urn:ex:s:001> <urn:ex:006:all> "\\"\\\\\\n\\r" .
+                <urn:ex:s:001> <urn:ex:007:uchar> "\\"\\\\" .
+                <urn:ex:s:001> <urn:ex:008:echar> "\\t\\b\\n\\r\\f\\"'\\\\" .
+                <urn:ex:s:001> <urn:ex:009> "\\\\u0039" .
+                <urn:ex:s:001> <urn:ex:010> "\\\\n" .
+                <urn:ex:s:001> <urn:ex:011> "\\\\\\\\" .
+                <urn:ex:s:001> <urn:ex:012> "\\"\\"" .
+                <urn:ex:s:001> <urn:ex:015> "∞" .
+                <urn:ex:s:001> <urn:ex:016> "∞" .
+                <urn:ex:s:001> <urn:ex:017> <urn:ex:ex> .
+                <urn:ex:s:001> <urn:ex:018> <urn:ex:∞> .
+                <urn:ex:s:001> <urn:ex:019> <urn:ex:+> .
+                <urn:ex:s:003> <urn:ex:022> "d"^^<urn:ex:dt> .
+                <urn:ex:s:003> <urn:ex:023> "d"^^<urn:ex:d> .
+                <urn:ex:s:004> <urn:ex:024> "\\u0000\\u0001\\u0002\\u0003\\u0004\\u0005\\u0006\\u0007\\b\\t\\n\\u000B\\f\\r\\u000E\\u000F" .
+                <urn:ex:s:004> <urn:ex:025> "\\u0010\\u0011\\u0012\\u0013\\u0014\\u0015\\u0016\\u0017\\u0018\\u0019\\u001A\\u001B\\u001C\\u001D\\u001E\\u001F" .
+                <urn:ex:s:004> <urn:ex:026> " !\\"#$%&'()*+,-./" .
+                <urn:ex:s:004> <urn:ex:027> "0123456789:;<=>?" .
+                <urn:ex:s:004> <urn:ex:028> "@ABCDEFGHIJKLMNO" .
+                <urn:ex:s:004> <urn:ex:029> "PQRSTUVWXYZ[\\\\]^_" .
+                <urn:ex:s:004> <urn:ex:030> "`abcdefghijklmno" .
+                <urn:ex:s:004> <urn:ex:031> "pqrstuvwxyz{|}~\\u007F" .
+                <urn:ex:s:004> <urn:ex:033> "🌃" .
+                <urn:ex:s:004> <urn:ex:034> "🌃" .
+                <urn:ex:s:005> <urn:ex:035> <urn:ex:🌃> .
+                <urn:ex:s:006> <urn:ex:036> "o" <urn:ex:∞> .
+                <urn:ex:s:006> <urn:ex:037> "o" <urn:ex:∞> .
+                <urn:ex:s:006> <urn:ex:039> "\\t <>\\"{}|^`\\\\" .
+
+                """
+            ),
+            (
                 "test076c",
                 """
                 <https://www.example.org/s> <https://www.example.org/p> <https://www.example.org/o> .
@@ -776,13 +857,19 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
     private func parseNQuads(_ text: String) throws -> [RDFQuad] {
         try text
             .split(separator: "\n", omittingEmptySubsequences: false)
-            .compactMap { rawLine -> RDFQuad? in
+            .enumerated()
+            .compactMap { lineNumber, rawLine -> RDFQuad? in
                 let line = rawLine.trimmingCharacters(in: .whitespaces)
                 guard !line.isEmpty else {
                     return nil
                 }
-                var parser = NQuadsLineParser(line)
-                return try parser.parseQuad()
+                do {
+                    var parser = NQuadsLineParser(line)
+                    return try parser.parseQuad()
+                } catch {
+                    XCTFail("Failed to parse N-Quads fixture line \(lineNumber + 1): \(line)")
+                    throw error
+                }
             }
     }
 }
@@ -880,14 +967,18 @@ private struct NQuadsLineParser {
 
     private mutating func parseIRI() throws -> String {
         try consume("<")
-        let start = index
+        var iri = ""
         while index < line.endIndex, line[index] != ">" {
-            index = line.index(after: index)
+            if line[index] == "\\" {
+                iri.append(try parseEscape())
+            } else {
+                iri.append(line[index])
+                index = line.index(after: index)
+            }
         }
         guard index < line.endIndex else {
             throw CADMVInternalError.unsupportedVCB
         }
-        let iri = String(line[start..<index])
         try consume(">")
         return iri
     }
@@ -897,37 +988,63 @@ private struct NQuadsLineParser {
         var value = ""
         while index < line.endIndex {
             let character = line[index]
-            index = line.index(after: index)
             if character == "\"" {
+                index = line.index(after: index)
                 return value
             }
             if character == "\\" {
-                guard index < line.endIndex else {
-                    throw CADMVInternalError.unsupportedVCB
-                }
-                let escaped = line[index]
-                index = line.index(after: index)
-                switch escaped {
-                case "\"", "\\":
-                    value.append(escaped)
-                case "n":
-                    value.append("\n")
-                case "r":
-                    value.append("\r")
-                case "t":
-                    value.append("\t")
-                case "b":
-                    value.append("\u{08}")
-                case "f":
-                    value.append("\u{0C}")
-                default:
-                    throw CADMVInternalError.unsupportedVCB
-                }
+                value.append(try parseEscape())
             } else {
                 value.append(character)
+                index = line.index(after: index)
             }
         }
         throw CADMVInternalError.unsupportedVCB
+    }
+
+    private mutating func parseEscape() throws -> Character {
+        try consume("\\")
+        guard index < line.endIndex else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        let escaped = line[index]
+        index = line.index(after: index)
+        switch escaped {
+        case "\"", "'", "\\":
+            return escaped
+        case "n":
+            return "\n"
+        case "r":
+            return "\r"
+        case "t":
+            return "\t"
+        case "b":
+            return "\u{08}"
+        case "f":
+            return "\u{0C}"
+        case "u":
+            return try parseUnicodeEscape(hexDigitCount: 4)
+        case "U":
+            return try parseUnicodeEscape(hexDigitCount: 8)
+        default:
+            throw CADMVInternalError.unsupportedVCB
+        }
+    }
+
+    private mutating func parseUnicodeEscape(hexDigitCount: Int) throws -> Character {
+        var hex = ""
+        for _ in 0..<hexDigitCount {
+            guard index < line.endIndex, line[index].isHexDigit else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            hex.append(line[index])
+            index = line.index(after: index)
+        }
+        guard let value = UInt32(hex, radix: 16),
+              let scalar = UnicodeScalar(value) else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return Character(scalar)
     }
 
     private mutating func consumeIdentifier() throws -> String {
