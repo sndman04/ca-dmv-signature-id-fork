@@ -127,6 +127,58 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssert(document.primaryIdentitySubfile?.fields["DBD"] == "09282025")
     }
 
+    func testAamvaParserAcceptsIDPrimarySubfile() throws {
+        let barcode = AAMVATestBarcode.make(
+            identitySubfileDesignator: "ID",
+            issuer: "636014",
+            issueDate: "09292025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+
+        let document = try AAMVADocumentParser().parse(rawPDF417: barcode)
+
+        XCTAssertEqual(document.primaryIdentitySubfile?.designator, "ID")
+        XCTAssertEqual(document.primaryIdentitySubfile?.fields["DAQ"], "SYNTHETIC-ID")
+        XCTAssertTrue(document.isCaliforniaDMVDocument)
+        XCTAssertTrue(document.requiresCaliforniaVCB)
+    }
+
+    func testVerifierRequiresVCBForIDPrimarySubfileAfterRequirementDate() async {
+        let barcode = AAMVATestBarcode.make(
+            identitySubfileDesignator: "ID",
+            issuer: "636014",
+            issueDate: "09292025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+
+        let result = await CADMVVerifier.verify(rawPDF417: barcode)
+
+        XCTAssertEqual(result.status, .failed)
+        XCTAssertEqual(result.failureReason, .vcbMissing(required: true))
+    }
+
+    func testProtectedDocumentUsesIDPrimarySubfileFields() throws {
+        let barcode = AAMVATestBarcode.make(
+            identitySubfileDesignator: "ID",
+            issuer: "636014",
+            issueDate: "09292025",
+            jurisdiction: "CA",
+            encodedVCB: nil
+        )
+        let document = try AAMVADocumentParser().parse(rawPDF417: barcode)
+
+        let protectedFields = try AAMVACanonicalizer.protectedDocument(
+            from: document,
+            componentIndex: "u____"
+        )
+
+        XCTAssertEqual(protectedFields["DAQ"], "SYNTHETIC-ID")
+        XCTAssertEqual(protectedFields["DBD"], "09292025")
+        XCTAssertEqual(protectedFields["DAJ"], "CA")
+    }
+
     func testAamvaParserToleratesMultibyteScannerPreamble() throws {
         let barcode = AAMVATestBarcode.make(
             prefix: "é@\n\u{1e}\rANSI ",
@@ -642,6 +694,7 @@ private enum AAMVATestBarcode {
         recordSeparator: Character = "\u{1e}",
         segmentTerminator: Character = "\r",
         descriptorOffsetDelta: Int = 0,
+        identitySubfileDesignator: String = "DL",
         issuer: String,
         issueDate: String,
         jurisdiction: String,
@@ -650,8 +703,9 @@ private enum AAMVATestBarcode {
         let prefix = prefix == "@\n\u{1e}\rANSI "
             ? "@\(elementSeparator)\(recordSeparator)\(segmentTerminator)ANSI "
             : prefix
-        let dlSubfile = [
-            "DLDAQSYNTHETIC",
+        precondition(["DL", "ID"].contains(identitySubfileDesignator))
+        let identitySubfile = [
+            "\(identitySubfileDesignator)DAQSYNTHETIC-\(identitySubfileDesignator)",
             "DBD\(issueDate)",
             "DAJ\(jurisdiction)"
         ].joined(separator: String(elementSeparator)) + String(segmentTerminator)
@@ -670,11 +724,11 @@ private enum AAMVATestBarcode {
 
         let headerWithoutEntries = "\(prefix)\(issuer)100102"
         let entriesLength = 20
-        let dlOffset = headerWithoutEntries.utf8.count + entriesLength + descriptorOffsetDelta
-        let zcOffset = dlOffset + dlSubfile.utf8.count
-        let entries = "DL\(pad(dlOffset))\(pad(dlSubfile.utf8.count))ZC\(pad(zcOffset))\(pad(zcSubfile.utf8.count))"
+        let identityOffset = headerWithoutEntries.utf8.count + entriesLength + descriptorOffsetDelta
+        let zcOffset = identityOffset + identitySubfile.utf8.count
+        let entries = "\(identitySubfileDesignator)\(pad(identityOffset))\(pad(identitySubfile.utf8.count))ZC\(pad(zcOffset))\(pad(zcSubfile.utf8.count))"
 
-        return headerWithoutEntries + entries + dlSubfile + zcSubfile
+        return headerWithoutEntries + entries + identitySubfile + zcSubfile
     }
 
     private static func pad(_ value: Int) -> String {

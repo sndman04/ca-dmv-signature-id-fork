@@ -23,7 +23,7 @@ The manifest maps required Phase 2 corpus categories to official fixtures, synth
 Current committed/generated coverage includes:
 
 - Official valid and invalid UAT fixtures from the reference SDK.
-- Synthetic AAMVA parser and malformed-input cases.
+- Synthetic AAMVA parser and malformed-input cases, including DL and ID primary identity subfiles.
 - Synthetic CBOR-LD decode and validation cases.
 - Synthetic DID/network failure cases.
 - Synthetic status-list and expiration cases.
@@ -31,7 +31,6 @@ Current committed/generated coverage includes:
 
 Documented gaps:
 
-- `id-primary-subfile`: the current synthetic generator emits DL subfiles. Add ID subfile generation before release completion.
 - `unknown-ignorable-cborld-values`: requires official SDK characterization. Current Swift policy fails closed on unknown signed credential fields.
 
 These documented gaps satisfy Phase 2 inventory requirements, but they do not satisfy the final project requirement that nothing remain skipped or deferred. They must be converted into generated or committed test coverage before the long-term replacement is complete.

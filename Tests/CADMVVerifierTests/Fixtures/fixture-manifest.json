@@ -44,6 +44,7 @@
         "non-california-issuer",
         "california-issuer-non-ca-daj",
         "dl-primary-subfile",
+        "id-primary-subfile",
         "multiple-subfiles-valid-offsets",
         "malformed-subfile-descriptors",
         "unknown-subfile-designators",
@@ -158,18 +159,6 @@
       "expectedPublicResult": "verified",
       "expectedFirstFailureStage": null,
       "categories": ["valid-production-credential-shape", "production-redacted-parity-mismatch"]
-    },
-    {
-      "id": "id-primary-subfile",
-      "class": "synthetic",
-      "storageLevel": "documented-gap",
-      "source": "Docs/LONG_TERM_JS_PARITY_PLAN.md",
-      "jsParityRequired": true,
-      "nativeSwiftParityRequired": true,
-      "expectedPublicResult": "varies",
-      "expectedFirstFailureStage": "varies",
-      "categories": ["id-primary-subfile"],
-      "gapReason": "Synthetic generator currently emits DL subfiles only; add ID generator coverage before Phase 2 is treated as release-complete."
     },
     {
       "id": "unknown-ignorable-cborld-values",

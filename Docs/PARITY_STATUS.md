@@ -97,6 +97,7 @@ Completed Phase 2 work:
 - Added `Tests/CADMVVerifierTests/Fixtures/fixture-manifest.json`.
 - Added `Docs/FIXTURE_CORPUS.md`.
 - Added manifest validation tests for required categories and privacy constraints.
+- Materialized generated `ID` primary-subfile coverage for AAMVA parsing, applicability, VCB requirement handling, and protected-field selection.
 
 Completed Phase 2 gates:
 

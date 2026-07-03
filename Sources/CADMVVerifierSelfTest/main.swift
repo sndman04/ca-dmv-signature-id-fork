@@ -1051,13 +1051,15 @@ struct ReferenceSDKFixtures {
 
 enum AAMVATestBarcode {
     static func make(
+        identitySubfileDesignator: String = "DL",
         issuer: String,
         issueDate: String,
         jurisdiction: String,
         encodedVCB: String?
     ) -> String {
-        let dlSubfile = [
-            "DLDAQSYNTHETIC",
+        precondition(["DL", "ID"].contains(identitySubfileDesignator))
+        let identitySubfile = [
+            "\(identitySubfileDesignator)DAQSYNTHETIC-\(identitySubfileDesignator)",
             "DBD\(issueDate)",
             "DAJ\(jurisdiction)"
         ].joined(separator: "\n") + "\r"
@@ -1077,11 +1079,11 @@ enum AAMVATestBarcode {
         let prefix = "@\n\u{1e}\rANSI "
         let headerWithoutEntries = "\(prefix)\(issuer)100102"
         let entriesLength = 20
-        let dlOffset = headerWithoutEntries.count + entriesLength
-        let zcOffset = dlOffset + dlSubfile.count
-        let entries = "DL\(pad(dlOffset))\(pad(dlSubfile.count))ZC\(pad(zcOffset))\(pad(zcSubfile.count))"
+        let identityOffset = headerWithoutEntries.utf8.count + entriesLength
+        let zcOffset = identityOffset + identitySubfile.utf8.count
+        let entries = "\(identitySubfileDesignator)\(pad(identityOffset))\(pad(identitySubfile.utf8.count))ZC\(pad(zcOffset))\(pad(zcSubfile.utf8.count))"
 
-        return headerWithoutEntries + entries + dlSubfile + zcSubfile
+        return headerWithoutEntries + entries + identitySubfile + zcSubfile
     }
 
     private static func pad(_ value: Int) -> String {
