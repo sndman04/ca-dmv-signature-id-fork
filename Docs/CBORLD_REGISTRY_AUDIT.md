@@ -92,7 +92,7 @@ Unknown signed fields fail closed today because the legacy handbuilt canonicaliz
 Current parity checks:
 
 - `Tools/parity-compare.mjs` compares JS and Swift official UAT fixture summaries.
-- The comparison includes final validity, first failure stage, AAMVA optical hash, VCB byte length, and privacy-safe credential profile flags.
+- The comparison includes final validity, first failure stage, AAMVA optical hash, VCB verify-data, VCB byte length, and privacy-safe credential profile flags.
 - `FixtureManifestTests` verifies Phase 2 fixture category coverage and privacy constraints.
 
 Current known gap:

@@ -50,6 +50,8 @@ for(const fixture of fixtures) {
     swiftFirstFailureStage: swiftResult.firstFailureStage,
     jsAamvaHashHex: jsResult.aamvaHashHex,
     swiftAamvaHashHex: swiftResult.aamvaHashHex,
+    jsVerifyDataHex: jsResult.verifyDataHex,
+    swiftVerifyDataHex: swiftResult.verifyDataHex,
     jsVCBByteLength: jsResult.vcbByteLength,
     swiftVCBByteLength: swiftResult.vcbByteLength,
     jsCredentialProfile: jsProfile,
@@ -69,6 +71,10 @@ for(const fixture of fixtures) {
   if(jsResult.aamvaHashHex !== swiftResult.aamvaHashHex) {
     parity.passed = false;
     parity.failures.push('AAMVA optical hash mismatch');
+  }
+  if(jsResult.verifyDataHex !== swiftResult.verifyDataHex) {
+    parity.passed = false;
+    parity.failures.push('VCB verify-data mismatch');
   }
   if(jsResult.vcbByteLength !== swiftResult.vcbByteLength) {
     parity.passed = false;

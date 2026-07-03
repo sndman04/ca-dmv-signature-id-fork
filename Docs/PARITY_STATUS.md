@@ -86,7 +86,7 @@ Completed Phase 1 work:
 - `Tools/reference-runner.mjs --stdin` accepts raw payloads from stdin and emits privacy-minimized JSON.
 - `Tools/reference-oracle-smoke.sh` can run oracle smoke checks when Node and reference SDK dependencies are installed, or explicitly report a skip when they are unavailable.
 - `CADMVVerifierOracle` emits privacy-minimized Swift verifier summaries for stdin payloads.
-- `Tools/parity-compare.mjs` compares Swift and JS summaries for committed official UAT fixtures.
+- `Tools/parity-compare.mjs` compares Swift and JS summaries for committed official UAT fixtures, including VCB verify-data.
 
 Completed Phase 1 gates:
 
@@ -119,6 +119,7 @@ Completed Phase 4 work:
 - Routed VCB proof, status-list proof, and status-list document canonicalization through structured RDF terms and the shared N-Quads renderer instead of raw string assembly.
 - Added RDFC-style n-degree hashing for shared first-degree blank-node hashes, with an explicit recursion budget to fail closed on overly complex inputs.
 - Added RDF dataset graph-name support, including blank nodes used as graph names, so the canonicalizer handles quads rather than default-graph triples only.
+- Added JS oracle VCB verify-data output and made `Tools/parity-compare.mjs` fail on official-fixture verify-data mismatches.
 - Added synthetic regression coverage for the observed production class where status-list and subject blank nodes can swap canonical order based on credential content.
 - Added exact-output proof canonicalization tests for optional `created` and `expires` handling, plus W3C shared-hash canonicalization coverage.
 - Rechecked the prohibited-storage production vector locally in memory; the previous `data-integrity-vcb` divergence is resolved without committing raw payloads or PII.
@@ -126,5 +127,5 @@ Completed Phase 4 work:
 Remaining Phase 4 gates:
 
 - Replace the remaining profile-specific graph construction with the selected standards-grade or native-library-backed JSON-LD/RDF canonicalization engine.
-- Add reference-equivalent canonical N-Quads or verify-data comparisons for the full committed fixture corpus.
+- Add reference-equivalent canonical N-Quads or verify-data comparisons for remaining synthetic/status-list fixture classes.
 - Document memory-safety, license, build, and platform implications if the final engine uses a native-library bridge.

@@ -48,6 +48,7 @@ enum CADMVVerifierOracle {
                     ]
                 },
                 "aamvaHashHex": inspection?.opticalDataHashHex,
+                "verifyDataHex": inspection?.verifyDataHex,
                 "statusListIndexPresent": inspection?.statusListIndex != nil
             ] as [String: Any?]
         ]

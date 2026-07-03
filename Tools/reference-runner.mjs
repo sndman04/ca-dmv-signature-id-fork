@@ -2,6 +2,15 @@
 
 import fs from 'node:fs';
 import {verify} from '../References/cadmv-dlid-verifier-sdk/lib/index.js';
+import {
+  createCryptosuite as createEcdsaXi2023Cryptosuite
+} from '../References/cadmv-dlid-verifier-sdk/node_modules/@digitalbazaar/ecdsa-xi-2023-cryptosuite/lib/index.js';
+import {JsonLdDocumentLoader}
+  from '../References/cadmv-dlid-verifier-sdk/node_modules/jsonld-document-loader/lib/index.js';
+import {contexts as vcbContexts}
+  from '../References/cadmv-dlid-verifier-sdk/node_modules/@digitalbazaar/vc-barcodes-context/lib/index.js';
+import {contexts as vcContexts}
+  from '../References/cadmv-dlid-verifier-sdk/node_modules/@digitalbazaar/credentials-context/lib/index.js';
 
 const referenceSdkCommit = '03c5485513ff6f2de6b46950a159b8f2cd427859';
 const args = new Set(process.argv.slice(2));
@@ -41,7 +50,7 @@ async function runStdinOracle() {
     mode,
     requireVcb,
     verifyStatus,
-    result: summarizeResult(result)
+    result: await summarizeResult(result)
   }, null, 2));
 }
 
@@ -67,9 +76,9 @@ async function runFixtureSummary() {
   const summary = {
     referenceSdkCommit,
     fixtures: {
-      validUAT: summarizeResult(valid),
-      invalidUAT: summarizeResult(invalid),
-      validUATWithStatus: summarizeResult(status)
+      validUAT: await summarizeResult(valid),
+      invalidUAT: await summarizeResult(invalid),
+      validUATWithStatus: await summarizeResult(status)
     },
     knownStatusIssue:
       status.valid === false &&
@@ -87,7 +96,7 @@ async function runFixtureSummary() {
   }
 }
 
-function summarizeResult(result) {
+async function summarizeResult(result) {
   const debug = result.debug;
   const credential = debug?.credential;
   const statusResult = debug?.verifyResult?.statusResult;
@@ -116,11 +125,41 @@ function summarizeResult(result) {
     } : null,
     aamvaHashHex: debug?.aamvaHash ?
       Buffer.from(debug.aamvaHash).toString('hex') : null,
+    verifyDataHex: await vcbVerifyDataHex(debug),
     status: statusResult ? {
       verified: statusResult.verified ?? null,
       error: statusResult.error?.message ?? null
     } : null
   };
+}
+
+async function vcbVerifyDataHex(debug) {
+  const credential = debug?.credential;
+  const aamvaHash = debug?.aamvaHash;
+  const proof = credential?.proof;
+  if(!credential || !aamvaHash || !proof) {
+    return null;
+  }
+
+  const document = structuredClone(credential);
+  delete document.proof;
+  const cryptosuite = createEcdsaXi2023Cryptosuite({
+    extraInformation: aamvaHash
+  });
+  const verifyData = await cryptosuite.createVerifyData({
+    cryptosuite,
+    document,
+    proof,
+    documentLoader: buildContextOnlyLoader()
+  });
+  return Buffer.from(verifyData).toString('hex');
+}
+
+function buildContextOnlyLoader() {
+  const jld = new JsonLdDocumentLoader();
+  jld.addDocuments({documents: vcContexts});
+  jld.addDocuments({documents: vcbContexts});
+  return jld.build();
 }
 
 function firstFailureStage({result, error, cause}) {

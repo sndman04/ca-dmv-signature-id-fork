@@ -45,7 +45,7 @@ node Tools/reference-runner.mjs --stdin --mode=prod
 node Tools/parity-compare.mjs
 ```
 
-The stdin mode emits JSON with the selected SDK baseline, mode, high-level outcome, first failure stage, VCB byte count, credential profile class, and AAMVA optical hash. It must not be used to log raw PDF417 payloads or decoded identity fields.
+The stdin mode emits JSON with the selected SDK baseline, mode, high-level outcome, first failure stage, VCB byte count, credential profile class, AAMVA optical hash, and VCB verify-data hex when a VCB can be decoded. It must not be used to log raw PDF417 payloads or decoded identity fields.
 
 ## Expected Self-Test Coverage
 
