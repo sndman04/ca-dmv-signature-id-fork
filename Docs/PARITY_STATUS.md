@@ -122,7 +122,7 @@ Completed Phase 4 work:
 - Replaced hardcoded VCB document blank-node label ordering with deterministic graph-derived labels for the supported DMV credential graph.
 - Moved supported VCB document JSON-LD-to-RDF expansion into `VCBJSONLDRDFExpander`, keeping the verifier focused on proof/document/external hash composition and signature verification.
 - Routed VCB proof, status-list proof, and status-list document canonicalization through structured RDF terms and the shared N-Quads renderer instead of raw string assembly.
-- Added RDFC-style n-degree hashing for shared first-degree blank-node hashes, with an explicit recursion budget to fail closed on overly complex inputs.
+- Added RDFC-style n-degree hashing for shared first-degree blank-node hashes, with an explicit recursion/work budget and negative coverage that fails closed when the budget is exceeded.
 - Added RDF dataset graph-name support, including blank nodes used as graph names, so the canonicalizer handles quads rather than default-graph triples only.
 - Added JS oracle VCB verify-data output and made `Tools/parity-compare.mjs` fail on official-fixture verify-data mismatches.
 - Added JS/Swift VCB proof and document canonical N-Quads comparisons for committed official UAT fixtures.

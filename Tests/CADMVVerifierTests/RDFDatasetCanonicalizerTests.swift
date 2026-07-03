@@ -320,6 +320,20 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         """)
     }
 
+    func testNDegreeCanonicalizationFailsClosedWhenWorkBudgetIsExceeded() {
+        let quads = (0..<129).map { index in
+            RDFQuad(
+                subject: .blank("node\(index)"),
+                predicate: "https://example.com/predicate",
+                object: .literal(value: "same-first-degree-hash", datatype: nil)
+            )
+        }
+
+        XCTAssertThrowsError(try RDFDatasetCanonicalizer.canonicalNQuads(quads)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     func testCanonicalizerRendersNamedGraphIRI() throws {
         let nquads = try RDFDatasetCanonicalizer.canonicalNQuads([
             RDFQuad(
