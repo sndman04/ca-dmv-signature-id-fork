@@ -64,23 +64,43 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssert(nquads.contains("_:c14n2 <https://www.w3.org/2018/credentials#credentialSubject> _:c14n0 ."))
     }
 
-    func testAmbiguousBlankNodeHashesFailClosed() {
+    func testSharedFirstDegreeHashesUseNDegreeCanonicalization() throws {
         let quads = [
             RDFQuad(
-                subject: .blank("first"),
-                predicate: "https://example.com/value",
-                object: .literal(value: "same", datatype: nil)
+                subject: .iri("http://example.com/#p"),
+                predicate: "http://example.com/#q",
+                object: .blank("e0")
             ),
             RDFQuad(
-                subject: .blank("second"),
-                predicate: "https://example.com/value",
-                object: .literal(value: "same", datatype: nil)
+                subject: .iri("http://example.com/#p"),
+                predicate: "http://example.com/#q",
+                object: .blank("e1")
+            ),
+            RDFQuad(
+                subject: .blank("e0"),
+                predicate: "http://example.com/#p",
+                object: .blank("e2")
+            ),
+            RDFQuad(
+                subject: .blank("e1"),
+                predicate: "http://example.com/#p",
+                object: .blank("e3")
+            ),
+            RDFQuad(
+                subject: .blank("e2"),
+                predicate: "http://example.com/#r",
+                object: .blank("e3")
             )
         ]
 
-        XCTAssertThrowsError(try RDFDatasetCanonicalizer.canonicalNQuads(quads)) { error in
-            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
-        }
+        XCTAssertEqual(try RDFDatasetCanonicalizer.canonicalNQuads(quads), """
+        <http://example.com/#p> <http://example.com/#q> _:c14n2 .
+        <http://example.com/#p> <http://example.com/#q> _:c14n3 .
+        _:c14n0 <http://example.com/#r> _:c14n1 .
+        _:c14n2 <http://example.com/#p> _:c14n1 .
+        _:c14n3 <http://example.com/#p> _:c14n0 .
+
+        """)
     }
 
     private func productionCredentialQuads(statusListIndex: UInt64) -> [RDFQuad] {
