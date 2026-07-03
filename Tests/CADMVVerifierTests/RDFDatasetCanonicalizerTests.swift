@@ -708,6 +708,100 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         }
     }
 
+    func testW3CRDFC10IssuedIdentifierMapSubset() throws {
+        let cases: [(id: String, input: String, expected: [String: String])] = [
+            (
+                "test003m",
+                """
+                _:e0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Foo> .
+
+                """,
+                ["e0": "c14n0"]
+            ),
+            (
+                "test020m",
+                """
+                <http://example.org/vocab#test> <http://example.org/vocab#A> _:e0 .
+                <http://example.org/vocab#test> <http://example.org/vocab#B> _:e1 .
+                _:e0 <http://example.org/vocab#next> _:e2 .
+                _:e1 <http://example.org/vocab#next> _:e2 .
+
+                """,
+                ["e1": "c14n0", "e2": "c14n1", "e0": "c14n2"]
+            ),
+            (
+                "test057m",
+                """
+                _:b1 <http://xmlns.com/foaf/0.1/homepage> <http://manu.sporny.org/> _:g .
+                _:b1 <http://xmlns.com/foaf/0.1/name> "Manu Sporny" _:g .
+
+                """,
+                ["g": "c14n0", "b1": "c14n1"]
+            ),
+            (
+                "test070m",
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#A> _:e1 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#B> _:e1 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e1 <http://example.org/g1> .
+
+                """,
+                ["e0": "c14n0", "e1": "c14n1"]
+            ),
+            (
+                "test071m",
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#A> _:e1 _:g1 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e1 _:g1 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e1 _:g1 .
+
+                """,
+                ["e0": "c14n0", "g1": "c14n1", "e1": "c14n2"]
+            ),
+            (
+                "test072m",
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#A> _:e0 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 <http://example.org/g1> .
+
+                """,
+                ["e0": "c14n0"]
+            ),
+            (
+                "test073m",
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#graph> _:g1 .
+                <http://example.org/test> <http://example.org/vocab#A> _:e0  _:g1 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 _:g1 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 _:g1 .
+
+                """,
+                ["g1": "c14n0", "e0": "c14n1"]
+            )
+        ]
+
+        for testCase in cases {
+            XCTAssertEqual(
+                try RDFDatasetCanonicalizer.canonicalIdentifierMap(parseNQuads(testCase.input)),
+                testCase.expected,
+                testCase.id
+            )
+        }
+    }
+
     func testW3CRDFC10NegativeCliqueGraphFailsClosed() {
         let quads = (0..<10).flatMap { subjectIndex in
             (0..<10).map { objectIndex in

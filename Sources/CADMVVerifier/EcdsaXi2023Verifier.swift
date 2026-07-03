@@ -90,20 +90,18 @@ enum RDFDatasetCanonicalizer {
         guard !dataset.isEmpty else {
             return ""
         }
-        let identifiers = blankNodeIdentifiers(in: dataset)
-        let labels = try canonicalLabels(for: identifiers, quads: dataset)
+        let labels = try canonicalLabels(for: dataset)
         return dataset
             .map { render($0, labels: labels) }
             .sorted()
             .joined(separator: "\n") + "\n"
     }
 
-    private static func canonicalLabels(
-        for identifiers: [String],
-        quads: [RDFQuad]
-    ) throws -> [String: String] {
+    static func canonicalIdentifierMap(_ quads: [RDFQuad]) throws -> [String: String] {
+        let dataset = Array(Set(quads))
+        let identifiers = blankNodeIdentifiers(in: dataset)
         let firstDegreeHashes = Dictionary(uniqueKeysWithValues: identifiers.map {
-            ($0, firstDegreeHash(identifier: $0, quads: quads))
+            ($0, firstDegreeHash(identifier: $0, quads: dataset))
         })
         var hashGroups = Dictionary(grouping: identifiers, by: { firstDegreeHashes[$0] ?? "" })
         var canonicalIssuer = BlankNodeIdentifierIssuer(prefix: "c14n")
@@ -133,7 +131,7 @@ enum RDFDatasetCanonicalizer {
                 _ = temporaryIssuer.issueIdentifier(for: identifier)
                 return try hashNDegreeQuads(
                     identifier: identifier,
-                    quads: quads,
+                    quads: dataset,
                     firstDegreeHashes: firstDegreeHashes,
                     canonicalIssuer: canonicalIssuer,
                     issuer: temporaryIssuer,
@@ -160,7 +158,11 @@ enum RDFDatasetCanonicalizer {
         guard canonicalIssuer.issuedIdentifiers.count == identifiers.count else {
             throw CADMVInternalError.unsupportedVCB
         }
-        return Dictionary(uniqueKeysWithValues: canonicalIssuer.issuedIdentifierMap.map {
+        return canonicalIssuer.issuedIdentifierMap
+    }
+
+    private static func canonicalLabels(for quads: [RDFQuad]) throws -> [String: String] {
+        try Dictionary(uniqueKeysWithValues: canonicalIdentifierMap(quads).map {
             ($0.key, "_:\($0.value)")
         })
     }

@@ -138,6 +138,7 @@ Completed Phase 4 work:
 - Routed Data Integrity proof canonicalization through `SupportedProofJSONLDRDFConverter`, so VCB and status-list proof configs now build supported JSON-LD first and fail closed for unsupported contexts, unknown proof terms, unsupported cryptosuites, unsupported proof purposes, unknown proof types, and unsafe date text.
 - Added `JSONLDCanonicalizationEngine` and the default `SupportedProfileJSONLDCanonicalizationEngine` so VCB document, status-list document, and proof canonicalization share one replaceable engine seam; focused tests assert each path routes through the configured profile.
 - Added W3C RDFC-1.0 subset coverage for empty datasets, blank nodes, graph names, shared graph names, language/datatype literals, Unicode and control-character escaping, duplicate input quads, and the negative clique graph; the native canonicalizer now de-duplicates RDF datasets before canonical labeling/rendering.
+- Added an internal RDFC issued-identifier map API and W3C map-test subset coverage, so canonical blank-node labeling can be asserted directly instead of only through rendered N-Quads.
 
 Completed Phase 5 work:
 
