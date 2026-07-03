@@ -66,7 +66,7 @@ Phase 3 is complete.
 
 Phase 4 is in progress.
 
-Phase 5 is in progress.
+Phase 5 is complete.
 
 Completed:
 
@@ -138,6 +138,8 @@ Completed Phase 5 work:
 - Added `Tools/signature-policy-characterization.mjs` to record reference Data Integrity proofValue decoding, permissive short/malformed `u` handling before the real signature verifier, and WebCrypto high-S counterpart behavior.
 - Matched JS proofValue multibase policy for text `z` base58btc and `u` base64url encodings while continuing to require exactly 64 raw P-256 signature bytes before Swift Crypto verification.
 - Added Swift tests for proofValue prefix/length rejection and high-S counterpart acceptance through `ECDSAProofVerifier`.
+- Added `Tools/generated-signature-parity.mjs` to create runtime synthetic VCB signatures with an injected DID document and compare JS/Swift valid `z`, valid `u`, tampered proof signature, and tampered protected AAMVA field outcomes, first failure stages, AAMVA hashes, canonical N-Quads, verify-data, and VCB byte lengths.
+- Added Swift decoder support for reference-emitted no-status compressed proof key ids and numeric epoch-second proof date values.
 
 Remaining Phase 4 gates:
 
@@ -145,7 +147,7 @@ Remaining Phase 4 gates:
 - Add reference-equivalent canonical N-Quads or verify-data comparisons for remaining synthetic fixture classes beyond the committed official UAT and status-list parity cases.
 - Apply the documented memory-safety, license, build, and platform criteria if a native-library bridge is selected later.
 
-Remaining Phase 5 gates:
+Completed Phase 5 gates:
 
-- Add end-to-end JS/Swift parity fixtures for generated signatures beyond the committed official UAT valid/invalid signature pair.
-- Keep `signatureMismatch` reserved for genuine proof verification failures after canonical N-Quads and verify-data parity are established.
+- Generated end-to-end signature parity fixtures beyond the committed official UAT valid/invalid pair pass through the JS oracle smoke gate.
+- `signatureMismatch` is covered by generated cases where JS and Swift agree on canonical N-Quads and verify-data and only the signature/protected AAMVA mutation causes `data-integrity-vcb` failure.

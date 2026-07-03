@@ -1,5 +1,8 @@
 @_spi(Testing) import CADMVVerifier
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 @main
 enum CADMVVerifierOracle {
@@ -20,6 +23,7 @@ enum CADMVVerifierOracle {
             as: UTF8.self
         )
 
+        try await installInjectedDIDDocumentIfPresent()
         let result = await CADMVVerifier.verify(
             rawPDF417: payload,
             options: CADMVVerificationOptions(
@@ -67,6 +71,30 @@ enum CADMVVerifierOracle {
         )
         FileHandle.standardOutput.write(data)
         FileHandle.standardOutput.write(Data("\n".utf8))
+    }
+
+    private static func installInjectedDIDDocumentIfPresent() async throws {
+        guard let didDocumentJSON = ProcessInfo.processInfo.environment["CADMV_ORACLE_DID_DOCUMENT_JSON"] else {
+            return
+        }
+        let data = Data(didDocumentJSON.utf8)
+        _ = try JSONSerialization.jsonObject(with: data)
+        await CADMVVerifier.setNetworkHandlerForSelfTest { request in
+            guard let url = request.url,
+                  [
+                      "https://uat-credentials.dmv.ca.gov/.well-known/did.json",
+                      "https://credentials.dmv.ca.gov/.well-known/did.json"
+                  ].contains(url.absoluteString),
+                  let response = HTTPURLResponse(
+                      url: url,
+                      statusCode: 200,
+                      httpVersion: nil,
+                      headerFields: ["Content-Type": "application/json"]
+                  ) else {
+                throw URLError(.unsupportedURL)
+            }
+            return (data, response)
+        }
     }
 
     private static func runStatusListVerifyDataOracle() throws {

@@ -377,6 +377,23 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssertNoThrow(try DMVCredentialValidator.validate(credential, mode: .uat))
     }
 
+    func testDecoderAcceptsReferenceNoStatusCompressedProofKeys() throws {
+        let credential = try DMVVCBDecoder.decode(
+            CBORFixture.noStatusCredentialWithReferenceProofKeys(
+                proofCreated: "2026-01-01T00:00:00Z",
+                proofExpires: "2026-02-01T00:00:00Z"
+            )
+        )
+
+        XCTAssertNil(credential.credentialStatus)
+        XCTAssertEqual(credential.proof.created, "2026-01-01T00:00:00Z")
+        XCTAssertEqual(credential.proof.expires, "2026-02-01T00:00:00Z")
+        XCTAssertEqual(credential.proof.cryptosuite, "ecdsa-xi-2023")
+        XCTAssertEqual(credential.proof.proofPurpose, "assertionMethod")
+        XCTAssertEqual(credential.proof.proofValue, "zLdp")
+        XCTAssertEqual(credential.proof.verificationMethod, "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
+    }
+
     func testDecoderPreservesTextProofValuesForSignatureVerifierPolicy() throws {
         for proofValue in ["z0", "u***"] {
             let credential = try DMVVCBDecoder.decode(CBORFixture.credential(
@@ -813,6 +830,27 @@ private enum CBORFixture {
         ]))
     }
 
+    static func noStatusCredentialWithReferenceProofKeys(
+        proofCreated: String,
+        proofExpires: String
+    ) -> Data {
+        tagged(51_997, array([
+            unsigned(31_000_000),
+            compressedCredentialMap(
+                includeStatus: false,
+                proofPairs: [
+                    (unsigned(156), unsigned(108)),
+                    (unsigned(198), unsigned(1_767_225_600)),
+                    (unsigned(200), unsigned(1)),
+                    (unsigned(204), text(proofExpires)),
+                    (unsigned(210), unsigned(216)),
+                    (unsigned(212), byteString(Data([0x7a, 0x01, 0x02, 0x03]))),
+                    (unsigned(214), bytes([22]))
+                ]
+            )
+        ]))
+    }
+
     static func uncompressedCredential(
         tag: UInt64 = 51_997,
         validFrom: String? = nil,
@@ -924,9 +962,10 @@ private enum CBORFixture {
         proofCreated: String? = nil,
         proofExpires: String? = nil,
         includeUnknownCredentialKey: Bool = false,
-        includeUnknownProofKey: Bool = false
+        includeUnknownProofKey: Bool = false,
+        proofPairs overrideProofPairs: [(Data, Data)]? = nil
     ) -> Data {
-        var proofPairs = [
+        var proofPairs = overrideProofPairs ?? [
             (unsigned(156), textEncoded ? text("DataIntegrityProof") : unsigned(108)),
             (unsigned(204), textEncoded ? text("ecdsa-xi-2023") : unsigned(1)),
             (unsigned(214), textEncoded ? text("assertionMethod") : unsigned(220)),

@@ -18,8 +18,10 @@ enum DMVVCBDecoder {
         .textString("proof")
     ]
     private static let compressedProofKeys: Set<CBORValue> = [
+        .unsigned(198), .unsigned(200),
         .unsigned(156), .unsigned(202), .unsigned(204), .unsigned(208),
-        .unsigned(214), .unsigned(216), .unsigned(218)
+        .unsigned(210), .unsigned(212), .unsigned(214), .unsigned(216),
+        .unsigned(218)
     ]
     private static let expandedProofKeys: Set<CBORValue> = [
         .textString("type"), .textString("created"), .textString("expires"),
@@ -240,15 +242,46 @@ enum DMVVCBDecoder {
         guard type == "DataIntegrityProof" else {
             throw CADMVInternalError.unsupportedVCB
         }
+        let keySet = compressedProofKeySet(for: map)
 
         return DMVVerifiableCredential.Proof(
             type: type,
-            created: try optionalDateTimeText(map, key: 202),
-            expires: try optionalDateTimeText(map, key: 208),
-            cryptosuite: try cryptosuite(from: requiredValue(map, key: 204)),
-            proofPurpose: try proofPurpose(from: requiredValue(map, key: 214)),
-            proofValue: try multibaseSignatureString(from: requiredValue(map, key: 216)),
-            verificationMethod: try url(from: requiredValue(map, key: 218))
+            created: try optionalDateTimeText(map, key: keySet.created),
+            expires: try optionalDateTimeText(map, key: keySet.expires),
+            cryptosuite: try cryptosuite(from: requiredValue(map, key: keySet.cryptosuite)),
+            proofPurpose: try proofPurpose(from: requiredValue(map, key: keySet.proofPurpose)),
+            proofValue: try multibaseSignatureString(from: requiredValue(map, key: keySet.proofValue)),
+            verificationMethod: try url(from: requiredValue(map, key: keySet.verificationMethod))
+        )
+    }
+
+    private static func compressedProofKeySet(
+        for map: [CBORValue: CBORValue]
+    ) -> (
+        created: UInt64,
+        expires: UInt64,
+        cryptosuite: UInt64,
+        proofPurpose: UInt64,
+        proofValue: UInt64,
+        verificationMethod: UInt64
+    ) {
+        if map[.unsigned(200)] != nil || map[.unsigned(210)] != nil {
+            return (
+                created: 198,
+                expires: 204,
+                cryptosuite: 200,
+                proofPurpose: 210,
+                proofValue: 212,
+                verificationMethod: 214
+            )
+        }
+        return (
+            created: 202,
+            expires: 208,
+            cryptosuite: 204,
+            proofPurpose: 214,
+            proofValue: 216,
+            verificationMethod: 218
         )
     }
 
@@ -274,7 +307,7 @@ enum DMVVCBDecoder {
 
     private static func proofPurpose(from value: CBORValue) throws -> String {
         switch value {
-        case .unsigned(220), .textString("assertionMethod"):
+        case .unsigned(216), .unsigned(220), .textString("assertionMethod"):
             return "assertionMethod"
         case .textString("https://w3id.org/security#assertionMethod"):
             return "assertionMethod"
@@ -546,11 +579,25 @@ enum DMVVCBDecoder {
     }
 
     private static func dateTimeText(from value: CBORValue) throws -> String {
-        guard case let .textString(text) = value,
-              isSafeDateTimeText(text) else {
+        switch value {
+        case let .textString(text):
+            guard isSafeDateTimeText(text) else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return text
+        case let .unsigned(seconds):
+            return iso8601DateTimeText(fromUnixSeconds: seconds)
+        default:
             throw CADMVInternalError.unsupportedVCB
         }
-        return text
+    }
+
+    private static func iso8601DateTimeText(fromUnixSeconds seconds: UInt64) -> String {
+        let date = Date(timeIntervalSince1970: TimeInterval(seconds))
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter.string(from: date)
     }
 
     private static func requiredUnsigned(_ map: [CBORValue: CBORValue], key: UInt64) throws -> UInt64 {

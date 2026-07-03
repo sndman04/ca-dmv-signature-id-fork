@@ -458,6 +458,8 @@ Progress:
 
 - `Tools/signature-policy-characterization.mjs` records reference Data Integrity behavior for `z` base58btc and `u` base64url proof values, unsupported prefixes, malformed base58btc values, permissive short/malformed `u` handling before the real signature verifier, and P-256 high-S counterpart verification through WebCrypto.
 - Swift proof parsing now preserves reference-supported text `z` and `u` proofValue encodings for the verifier, rejects malformed or non-64-byte raw signatures before Swift Crypto verification, and accepts the high-S/low-S counterpart pair consistently with WebCrypto.
+- `Tools/generated-signature-parity.mjs` now generates runtime synthetic VCB signatures and injected DID documents, then compares JS and Swift end-to-end barcode verification for valid `z`, valid `u`, tampered proof signature, and tampered protected AAMVA field cases.
+- Swift CBOR-LD decode now accepts the reference-emitted compressed proof key layout for no-status credentials and numeric epoch-second proof date values.
 
 ## Phase 6: Replace Status-List Proof Canonicalization
 

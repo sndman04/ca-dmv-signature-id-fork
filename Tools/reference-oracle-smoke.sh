@@ -22,5 +22,6 @@ printf 'ANSI' | "$node_bin" Tools/reference-runner.mjs --stdin --mode=prod >/dev
 "$node_bin" Tools/status-list-parity.mjs >/dev/null
 "$node_bin" Tools/cborld-unknown-field-characterization.mjs >/dev/null
 "$node_bin" Tools/signature-policy-characterization.mjs >/dev/null
+"$node_bin" Tools/generated-signature-parity.mjs >/dev/null
 
 echo "Reference oracle smoke: passed."
