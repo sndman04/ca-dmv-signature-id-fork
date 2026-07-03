@@ -1,4 +1,4 @@
-@testable import CADMVVerifier
+@_spi(Testing) @testable import CADMVVerifier
 import Foundation
 #if canImport(FoundationNetworking)
 import FoundationNetworking

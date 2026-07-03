@@ -7,6 +7,7 @@ swift build
 swift build -c release
 Tools/swift-test.sh
 swift run CADMVVerifierSelfTest
+Tools/parity-status.sh
 ```
 
 GitHub Actions runs these commands on push and pull request in `.github/workflows/ci.yml`.
@@ -25,6 +26,8 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift run CADMVVerifier
 ```
 
 The SwiftPM tests cover focused regression cases. The self-test contains the official valid/invalid UAT fixture parity checks and uses fixture-backed DID Web and status endpoint responses. CI must run both `Tools/swift-test.sh` and `swift run CADMVVerifierSelfTest`.
+
+`Tools/parity-status.sh` reports known JS/Swift parity gaps from `Docs/PARITY_STATUS.md` separately from Swift unit-test failures. During Phase 0 it is informational because the migration plan intentionally records known blocking parity work before the JS oracle harness is complete.
 
 ## Expected Self-Test Coverage
 

@@ -27,3 +27,6 @@ jobs:
 
       - name: Run official-fixture self-test
         run: swift run CADMVVerifierSelfTest
+
+      - name: Report parity status
+        run: Tools/parity-status.sh

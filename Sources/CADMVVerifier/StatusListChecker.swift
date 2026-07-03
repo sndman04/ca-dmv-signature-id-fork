@@ -9,7 +9,8 @@ enum StatusListChecker {
     static func check(
         credential: DMVVerifiableCredential,
         mode: CADMVVerificationMode,
-        timeoutSeconds: Double
+        timeoutSeconds: Double,
+        dataIntegrityEngine: any DataIntegrityVerificationEngine = LegacyHandbuiltDataIntegrityEngine.shared
     ) async -> CADMVStatusCheckResult {
         guard let status = credential.credentialStatus,
               status.type == "TerseBitstringStatusListEntry",
@@ -39,7 +40,8 @@ enum StatusListChecker {
                 expectedURL: location.url,
                 statusListIndex: location.statusListIndex,
                 credentialIssuer: credential.issuer,
-                verificationKey: key
+                verificationKey: key,
+                dataIntegrityEngine: dataIntegrityEngine
             )
         } catch {
             return .unavailable
@@ -55,7 +57,8 @@ enum StatusListChecker {
         expectedURL: URL,
         statusListIndex: UInt64,
         credentialIssuer: String,
-        verificationKey: DIDDocumentKey
+        verificationKey: DIDDocumentKey,
+        dataIntegrityEngine: any DataIntegrityVerificationEngine = LegacyHandbuiltDataIntegrityEngine.shared
     ) throws -> CADMVStatusCheckResult {
         guard statusListCredential.id == expectedURL.absoluteString,
               statusListCredential.issuer == credentialIssuer,
@@ -63,8 +66,8 @@ enum StatusListChecker {
             return .unavailable
         }
 
-        guard try EcdsaRdfc2019Verifier.verify(
-            credential: statusListCredential,
+        guard try dataIntegrityEngine.verifyStatusListCredential(
+            statusListCredential,
             verificationKey: verificationKey
         ) else {
             return .unavailable

@@ -2,6 +2,15 @@ import Foundation
 
 struct VerificationPipeline {
     let options: CADMVVerificationOptions
+    let dataIntegrityEngine: any DataIntegrityVerificationEngine
+
+    init(
+        options: CADMVVerificationOptions,
+        dataIntegrityEngine: any DataIntegrityVerificationEngine = LegacyHandbuiltDataIntegrityEngine.shared
+    ) {
+        self.options = options
+        self.dataIntegrityEngine = dataIntegrityEngine
+    }
 
     func verify(rawPDF417: String) async throws -> CADMVVerificationResult {
         let document = try AAMVADocumentParser().parse(rawPDF417: rawPDF417)
@@ -83,7 +92,7 @@ struct VerificationPipeline {
         }
 
         do {
-            guard try EcdsaXi2023Verifier.verify(
+            guard try dataIntegrityEngine.verifyVCB(
                 credential: credential,
                 opticalDataHash: opticalDataHash,
                 verificationKey: key
@@ -104,7 +113,8 @@ struct VerificationPipeline {
             switch await StatusListChecker.check(
                 credential: credential,
                 mode: options.mode,
-                timeoutSeconds: options.networkTimeoutSeconds
+                timeoutSeconds: options.networkTimeoutSeconds,
+                dataIntegrityEngine: dataIntegrityEngine
             ) {
             case .notRevoked:
                 break

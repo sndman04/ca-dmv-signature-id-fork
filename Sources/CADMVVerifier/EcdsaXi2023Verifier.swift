@@ -2,6 +2,9 @@ import Crypto
 import Foundation
 
 enum EcdsaXi2023Verifier {
+    // Legacy verifier: manually constructs canonical N-Quads for the narrow DMV
+    // profile. Keep behind DataIntegrityVerificationEngine until replaced by
+    // standards-grade JSON-LD/RDF canonicalization.
     static func verify(
         credential: DMVVerifiableCredential,
         opticalDataHash: Data,

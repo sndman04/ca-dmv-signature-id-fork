@@ -30,6 +30,10 @@ Implementation status:
 
 Cryptographic verification is implemented for the DMV VCB profile covered by the official UAT samples. Status-list credential verification is implemented for the supported DMV VC v2 Bitstring Status List profile and covered by a synthetic JavaScript-reference vector. The official UAT sample still returns `unavailable` when status checking is required because the live UAT status endpoint does not currently provide a usable status-list credential.
 
+The current handwritten N-Quads verification path is a parity scaffold, not the long-term strategy. See `Docs/LONG_TERM_JS_PARITY_PLAN.md` for the phased plan to replace brittle manual canonicalization with JavaScript SDK parity and standards-grade canonicalization.
+
+Current parity migration status is tracked in `Docs/PARITY_STATUS.md`.
+
 ## Guiding Priorities
 
 1. Security and safety come first.

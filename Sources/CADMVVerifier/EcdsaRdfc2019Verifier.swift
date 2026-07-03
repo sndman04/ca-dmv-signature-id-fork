@@ -2,6 +2,9 @@ import Crypto
 import Foundation
 
 enum EcdsaRdfc2019Verifier {
+    // Legacy verifier: manually constructs canonical N-Quads for the current
+    // status-list profile. Keep behind DataIntegrityVerificationEngine until
+    // replaced by standards-grade JSON-LD/RDF canonicalization.
     static func verify(
         credential: DMVStatusListCredential,
         verificationKey: DIDDocumentKey
