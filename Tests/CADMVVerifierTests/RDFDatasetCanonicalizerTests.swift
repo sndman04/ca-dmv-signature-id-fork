@@ -71,6 +71,18 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         }
     }
 
+    func testVCBDocumentCanonicalizationRoutesThroughConfiguredEngine() throws {
+        let engine = RecordingJSONLDCanonicalizationEngine()
+        let nquads = try VCBJSONLDRDFExpander.canonicalNQuads(
+            vcbCredential(validFrom: "2026-01-01T00:00:00Z"),
+            engine: engine
+        )
+
+        XCTAssertEqual(nquads, RecordingJSONLDCanonicalizationEngine.sentinelNQuads)
+        XCTAssertEqual(engine.canonicalProfiles, [.vcbDocument])
+        XCTAssertEqual(engine.canonicalDocuments.first?["validFrom"], .string("2026-01-01T00:00:00Z"))
+    }
+
     func testStatusListJSONLDExpanderBuildsDocumentQuadsFromCredentialModel() throws {
         let credential = statusListCredential(
             validFrom: "2026-01-01T00:00:00Z",
@@ -145,6 +157,18 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         }
     }
 
+    func testStatusListDocumentCanonicalizationRoutesThroughConfiguredEngine() throws {
+        let engine = RecordingJSONLDCanonicalizationEngine()
+        let nquads = try StatusListJSONLDRDFExpander.canonicalNQuads(
+            statusListCredential(name: "Status List Credential"),
+            engine: engine
+        )
+
+        XCTAssertEqual(nquads, RecordingJSONLDCanonicalizationEngine.sentinelNQuads)
+        XCTAssertEqual(engine.canonicalProfiles, [.statusListDocument])
+        XCTAssertEqual(engine.canonicalDocuments.first?["name"], .string("Status List Credential"))
+    }
+
     func testDataIntegrityProofCanonicalizerIncludesOptionalCreatedAndExpires() throws {
         let nquads = try DataIntegrityProofCanonicalizer.canonicalNQuads(
             type: "DataIntegrityProof",
@@ -207,6 +231,27 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssertEqual(document["cryptosuite"], .string("ecdsa-xi-2023"))
         XCTAssertEqual(document["created"], .string("2026-01-01T00:00:00Z"))
         XCTAssertEqual(document["expires"], .string("2030-01-01T00:00:00Z"))
+    }
+
+    func testProofCanonicalizationRoutesThroughConfiguredEngine() throws {
+        let engine = RecordingJSONLDCanonicalizationEngine()
+        let nquads = try DataIntegrityProofCanonicalizer.canonicalNQuads(
+            contexts: [
+                "https://www.w3.org/ns/credentials/v2",
+                "https://w3id.org/vc-barcodes/v1"
+            ],
+            type: "DataIntegrityProof",
+            created: "2026-01-01T00:00:00Z",
+            expires: nil,
+            cryptosuite: "ecdsa-xi-2023",
+            proofPurpose: "assertionMethod",
+            verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+            engine: engine
+        )
+
+        XCTAssertEqual(nquads, RecordingJSONLDCanonicalizationEngine.sentinelNQuads)
+        XCTAssertEqual(engine.canonicalProfiles, [.dataIntegrityProof])
+        XCTAssertEqual(engine.canonicalDocuments.first?["created"], .string("2026-01-01T00:00:00Z"))
     }
 
     func testSupportedProofJSONLDConverterRejectsUnsupportedContextTermsAndValues() throws {
@@ -501,5 +546,36 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 proofValue: "zLdp"
             )
         )
+    }
+}
+
+private final class RecordingJSONLDCanonicalizationEngine: JSONLDCanonicalizationEngine, @unchecked Sendable {
+    static let sentinelNQuads = "<https://example.com/subject> <https://example.com/predicate> \"sentinel\" .\n"
+
+    private(set) var canonicalDocuments: [[String: SupportedJSONLDValue]] = []
+    private(set) var canonicalProfiles: [SupportedJSONLDCanonicalizationProfile] = []
+
+    func canonicalNQuads(
+        document: [String: SupportedJSONLDValue],
+        profile: SupportedJSONLDCanonicalizationProfile
+    ) throws -> String {
+        canonicalDocuments.append(document)
+        canonicalProfiles.append(profile)
+        return Self.sentinelNQuads
+    }
+
+    func quads(
+        from document: [String: SupportedJSONLDValue],
+        profile: SupportedJSONLDCanonicalizationProfile
+    ) throws -> [RDFQuad] {
+        canonicalDocuments.append(document)
+        canonicalProfiles.append(profile)
+        return [
+            RDFQuad(
+                subject: .iri("https://example.com/subject"),
+                predicate: "https://example.com/predicate",
+                object: .literal(value: "sentinel", datatype: nil)
+            )
+        ]
     }
 }

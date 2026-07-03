@@ -13,12 +13,6 @@ enum SupportedJSONLDRDFConverter {
     private static let vc = "https://www.w3.org/2018/credentials#"
     private static let vcb = "https://w3id.org/vc-barcodes#"
 
-    static func canonicalNQuads(
-        document: [String: SupportedJSONLDValue]
-    ) throws -> String {
-        try RDFDatasetCanonicalizer.canonicalNQuads(quads(from: document))
-    }
-
     static func quads(
         from document: [String: SupportedJSONLDValue]
     ) throws -> [RDFQuad] {

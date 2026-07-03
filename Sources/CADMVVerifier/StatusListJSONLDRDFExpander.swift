@@ -1,13 +1,21 @@
 enum StatusListJSONLDRDFExpander {
-    static func canonicalNQuads(_ credential: DMVStatusListCredential) throws -> String {
-        try SupportedStatusListJSONLDRDFConverter.canonicalNQuads(
-            document: jsonLDDocument(from: credential)
+    static func canonicalNQuads(
+        _ credential: DMVStatusListCredential,
+        engine: any JSONLDCanonicalizationEngine = SupportedProfileJSONLDCanonicalizationEngine.shared
+    ) throws -> String {
+        try engine.canonicalNQuads(
+            document: jsonLDDocument(from: credential),
+            profile: .statusListDocument
         )
     }
 
-    static func documentQuads(_ credential: DMVStatusListCredential) throws -> [RDFQuad] {
-        try SupportedStatusListJSONLDRDFConverter.quads(
-            from: jsonLDDocument(from: credential)
+    static func documentQuads(
+        _ credential: DMVStatusListCredential,
+        engine: any JSONLDCanonicalizationEngine = SupportedProfileJSONLDCanonicalizationEngine.shared
+    ) throws -> [RDFQuad] {
+        try engine.quads(
+            from: jsonLDDocument(from: credential),
+            profile: .statusListDocument
         )
     }
 
@@ -52,12 +60,6 @@ enum SupportedStatusListJSONLDRDFConverter {
     private static let schema = "https://schema.org/"
     private static let vc = "https://www.w3.org/2018/credentials#"
     private static let status = "https://www.w3.org/ns/credentials/status#"
-
-    static func canonicalNQuads(
-        document: [String: SupportedJSONLDValue]
-    ) throws -> String {
-        try RDFDatasetCanonicalizer.canonicalNQuads(quads(from: document))
-    }
 
     static func quads(
         from document: [String: SupportedJSONLDValue]

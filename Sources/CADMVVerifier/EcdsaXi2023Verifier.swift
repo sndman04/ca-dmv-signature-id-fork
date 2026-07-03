@@ -455,9 +455,10 @@ enum DataIntegrityProofCanonicalizer {
         expires: String?,
         cryptosuite: String,
         proofPurpose: String,
-        verificationMethod: String
+        verificationMethod: String,
+        engine: any JSONLDCanonicalizationEngine = SupportedProfileJSONLDCanonicalizationEngine.shared
     ) throws -> String {
-        try SupportedProofJSONLDRDFConverter.canonicalNQuads(
+        try engine.canonicalNQuads(
             document: jsonLDDocument(
                 contexts: contexts,
                 type: type,
@@ -466,7 +467,8 @@ enum DataIntegrityProofCanonicalizer {
                 cryptosuite: cryptosuite,
                 proofPurpose: proofPurpose,
                 verificationMethod: verificationMethod
-            )
+            ),
+            profile: .dataIntegrityProof
         )
     }
 
@@ -501,12 +503,6 @@ enum SupportedProofJSONLDRDFConverter {
     private static let dctermsCreated = "http://purl.org/dc/terms/created"
     private static let xsdDateTime = "http://www.w3.org/2001/XMLSchema#dateTime"
     private static let security = "https://w3id.org/security#"
-
-    static func canonicalNQuads(
-        document: [String: SupportedJSONLDValue]
-    ) throws -> String {
-        try RDFDatasetCanonicalizer.canonicalNQuads(quads(from: document))
-    }
 
     static func quads(
         from document: [String: SupportedJSONLDValue]
