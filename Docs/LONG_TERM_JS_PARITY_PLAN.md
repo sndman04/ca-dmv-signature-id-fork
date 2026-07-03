@@ -397,6 +397,13 @@ Native implementation milestones:
   - external optical-data hash
   - byte concatenation order matching `ecdsa-xi-2023`
 
+Progress:
+
+- The VCB document graph now uses derived blank-node labels for the supported DMV credential graph instead of hardcoded `_:c14n` assumptions.
+- The observed production mismatch class, where two otherwise valid credentials canonicalized with different subject/status blank-node ordering, is covered by synthetic tests and rechecked locally without storing raw payloads or PII.
+- This is an intermediate milestone. The current implementation is a fail-closed DMV profile canonicalizer, not a complete JSON-LD/RDF Dataset Canonicalization replacement.
+- Remaining Phase 4 work includes proof canonicalization, status-list canonicalization, full reference-equivalent verify-data comparisons, and the final standards-grade/native-library-backed engine decision.
+
 Exit criteria:
 
 - Native or native-library-backed canonicalization produces reference-equivalent verify-data for all committed official and synthetic fixtures.

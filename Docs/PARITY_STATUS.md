@@ -46,12 +46,12 @@ Fixture class: redacted-vector
 Storage level: prohibited
 JS SDK baseline: local reference checkout at 03c5485513ff6f2de6b46950a159b8f2cd427859
 JS outcome: verified
-Swift outcome: failed / signatureMismatch
-Matching stages: aamva-applicability, vcb-discovery, cborld-decode, credential-validation, aamva-protected-data, did-resolution
-First divergence stage: data-integrity-vcb
-Blocking: yes
+Swift outcome: verified
+Matching stages: aamva-applicability, vcb-discovery, cborld-decode, credential-validation, aamva-protected-data, did-resolution, data-integrity-vcb
+First divergence stage: none
+Blocking: no
 Security exception: none
-Notes: Raw payload and decoded identity data are not stored. The observed AAMVA optical hash matched the JS reference output, which points to legacy handbuilt Data Integrity canonicalization as the likely divergence source.
+Notes: Raw payload and decoded identity data are not stored. The original observed AAMVA optical hash matched the JS reference output, which isolated the issue to the VCB Data Integrity canonicalization path. Rechecked locally in memory after deriving VCB document blank-node labels from the RDF graph instead of hardcoding them; JS and Swift now both verify this vector.
 ```
 
 ## Phase Status
@@ -64,7 +64,7 @@ Phase 2 is complete.
 
 Phase 3 is complete.
 
-Phase 4 is next.
+Phase 4 is in progress.
 
 Completed:
 
@@ -112,3 +112,15 @@ Completed Phase 3 gates:
 
 - Build and parity checks pass with no warnings.
 - Phase 3 changes committed and pushed.
+
+Completed Phase 4 work:
+
+- Replaced hardcoded VCB document blank-node label ordering with deterministic graph-derived labels for the supported DMV credential graph.
+- Added synthetic regression coverage for the observed production class where status-list and subject blank nodes can swap canonical order based on credential content.
+- Rechecked the prohibited-storage production vector locally in memory; the previous `data-integrity-vcb` divergence is resolved without committing raw payloads or PII.
+
+Remaining Phase 4 gates:
+
+- Replace remaining handbuilt proof/status-list canonicalization with the selected standards-grade or native-library-backed canonicalization engine.
+- Add reference-equivalent canonical N-Quads or verify-data comparisons for the full committed fixture corpus.
+- Document memory-safety, license, build, and platform implications if the final engine uses a native-library bridge.
