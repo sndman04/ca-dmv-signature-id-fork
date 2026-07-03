@@ -49,7 +49,7 @@ enum EcdsaXi2023Verifier {
     }
 }
 
-enum RDFTerm: Equatable {
+enum RDFTerm: Hashable {
     case blank(String)
     case iri(String)
     case literal(value: String, datatype: String?)
@@ -62,7 +62,7 @@ enum RDFTerm: Equatable {
     }
 }
 
-struct RDFQuad: Equatable {
+struct RDFQuad: Hashable {
     let subject: RDFTerm
     let predicate: String
     let object: RDFTerm
@@ -85,9 +85,13 @@ enum RDFDatasetCanonicalizer {
     private static let maximumNDegreeHashCalls = 128
 
     static func canonicalNQuads(_ quads: [RDFQuad]) throws -> String {
-        let identifiers = blankNodeIdentifiers(in: quads)
-        let labels = try canonicalLabels(for: identifiers, quads: quads)
-        return quads
+        let dataset = Array(Set(quads))
+        guard !dataset.isEmpty else {
+            return ""
+        }
+        let identifiers = blankNodeIdentifiers(in: dataset)
+        let labels = try canonicalLabels(for: identifiers, quads: dataset)
+        return dataset
             .map { render($0, labels: labels) }
             .sorted()
             .joined(separator: "\n") + "\n"

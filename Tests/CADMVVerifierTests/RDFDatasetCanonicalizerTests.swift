@@ -418,6 +418,194 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         """)
     }
 
+    func testW3CRDFC10ConformanceSubset() throws {
+        // Subset copied from the W3C RDFC-1.0 test suite. These cover the
+        // current native RDF model surface: blank nodes, named graphs, shared
+        // graph names, and duplicate input quads.
+        let cases: [(id: String, input: String, expected: String)] = [
+            (
+                "test001c",
+                "",
+                ""
+            ),
+            (
+                "test003c",
+                """
+                _:e0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Foo> .
+
+                """,
+                """
+                _:c14n0 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://example.org/vocab#Foo> .
+
+                """
+            ),
+            (
+                "test020c",
+                """
+                <http://example.org/vocab#test> <http://example.org/vocab#A> _:e0 .
+                <http://example.org/vocab#test> <http://example.org/vocab#B> _:e1 .
+                _:e0 <http://example.org/vocab#next> _:e2 .
+                _:e1 <http://example.org/vocab#next> _:e2 .
+
+                """,
+                """
+                <http://example.org/vocab#test> <http://example.org/vocab#A> _:c14n2 .
+                <http://example.org/vocab#test> <http://example.org/vocab#B> _:c14n0 .
+                _:c14n0 <http://example.org/vocab#next> _:c14n1 .
+                _:c14n2 <http://example.org/vocab#next> _:c14n1 .
+
+                """
+            ),
+            (
+                "test057c",
+                """
+                _:b1 <http://xmlns.com/foaf/0.1/homepage> <http://manu.sporny.org/> _:g .
+                _:b1 <http://xmlns.com/foaf/0.1/name> "Manu Sporny" _:g .
+
+                """,
+                """
+                _:c14n1 <http://xmlns.com/foaf/0.1/homepage> <http://manu.sporny.org/> _:c14n0 .
+                _:c14n1 <http://xmlns.com/foaf/0.1/name> "Manu Sporny" _:c14n0 .
+
+                """
+            ),
+            (
+                "test070c",
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#A> _:e1 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#B> _:e1 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e1 <http://example.org/g1> .
+
+                """,
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#A> _:c14n1 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#B> _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:c14n1 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#embed> _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:c14n1 <http://example.org/g1> .
+
+                """
+            ),
+            (
+                "test071c",
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#A> _:e1 _:g1 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e1 _:g1 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e1 _:g1 .
+
+                """,
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#A> _:c14n2 _:c14n1 .
+                <http://example.org/test> <http://example.org/vocab#B> _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:c14n2 _:c14n1 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:c14n2 _:c14n1 .
+
+                """
+            ),
+            (
+                "test072c",
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#A> _:e0 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 <http://example.org/g1> .
+
+                """,
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#A> _:c14n0 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#B> _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:c14n0 <http://example.org/g1> .
+                <http://example.org/test> <http://example.org/vocab#embed> _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:c14n0 <http://example.org/g1> .
+
+                """
+            ),
+            (
+                "test073c",
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 .
+                <http://example.org/test> <http://example.org/vocab#graph> _:g1 .
+                <http://example.org/test> <http://example.org/vocab#A> _:e0  _:g1 .
+                <http://example.org/test> <http://example.org/vocab#B> _:e0 _:g1 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:e0 _:g1 .
+
+                """,
+                """
+                <http://example.org/test> <http://example.org/vocab#A> _:c14n1 .
+                <http://example.org/test> <http://example.org/vocab#A> _:c14n1 _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#B> _:c14n1 .
+                <http://example.org/test> <http://example.org/vocab#B> _:c14n1 _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:c14n1 .
+                <http://example.org/test> <http://example.org/vocab#embed> _:c14n1 _:c14n0 .
+                <http://example.org/test> <http://example.org/vocab#graph> _:c14n0 .
+
+                """
+            ),
+            (
+                "test076c",
+                """
+                <https://www.example.org/s> <https://www.example.org/p> <https://www.example.org/o> .
+                <https://www.example.org/s> <https://www.example.org/p> <https://www.example.org/o> .
+
+                """,
+                """
+                <https://www.example.org/s> <https://www.example.org/p> <https://www.example.org/o> .
+
+                """
+            ),
+            (
+                "test077c",
+                """
+                <https://www.example.org/s> <https://www.example.org/p> _:o .
+                <https://www.example.org/s> <https://www.example.org/p> _:o .
+
+                """,
+                """
+                <https://www.example.org/s> <https://www.example.org/p> _:c14n0 .
+
+                """
+            )
+        ]
+
+        for testCase in cases {
+            XCTAssertEqual(
+                try RDFDatasetCanonicalizer.canonicalNQuads(parseNQuads(testCase.input)),
+                testCase.expected,
+                testCase.id
+            )
+        }
+    }
+
+    func testW3CRDFC10NegativeCliqueGraphFailsClosed() {
+        let quads = (0..<10).flatMap { subjectIndex in
+            (0..<10).map { objectIndex in
+                RDFQuad(
+                    subject: .blank("e\(subjectIndex)"),
+                    predicate: "http:/example.com/p",
+                    object: .blank("e\(objectIndex)")
+                )
+            }
+        }
+
+        XCTAssertThrowsError(try RDFDatasetCanonicalizer.canonicalNQuads(quads)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     private func productionCredentialQuads(statusListIndex: UInt64) -> [RDFQuad] {
         [
             RDFQuad(
@@ -547,6 +735,19 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             )
         )
     }
+
+    private func parseNQuads(_ text: String) throws -> [RDFQuad] {
+        try text
+            .split(separator: "\n", omittingEmptySubsequences: false)
+            .compactMap { rawLine -> RDFQuad? in
+                let line = rawLine.trimmingCharacters(in: .whitespaces)
+                guard !line.isEmpty else {
+                    return nil
+                }
+                var parser = NQuadsLineParser(line)
+                return try parser.parseQuad()
+            }
+    }
 }
 
 private final class RecordingJSONLDCanonicalizationEngine: JSONLDCanonicalizationEngine, @unchecked Sendable {
@@ -577,5 +778,133 @@ private final class RecordingJSONLDCanonicalizationEngine: JSONLDCanonicalizatio
                 object: .literal(value: "sentinel", datatype: nil)
             )
         ]
+    }
+}
+
+private struct NQuadsLineParser {
+    private let line: String
+    private var index: String.Index
+
+    init(_ line: String) {
+        self.line = line
+        self.index = line.startIndex
+    }
+
+    mutating func parseQuad() throws -> RDFQuad {
+        let subject = try parseTerm()
+        try skipSpaces()
+        let predicate = try parseIRI()
+        try skipSpaces()
+        let object = try parseTerm()
+        try skipSpaces()
+        let graph: RDFTerm?
+        if peek() == "." {
+            graph = nil
+        } else {
+            graph = try parseTerm()
+            try skipSpaces()
+        }
+        try consume(".")
+        try skipSpaces()
+        guard index == line.endIndex else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return RDFQuad(
+            subject: subject,
+            predicate: predicate,
+            object: object,
+            graph: graph
+        )
+    }
+
+    private mutating func parseTerm() throws -> RDFTerm {
+        try skipSpaces()
+        if peek() == "<" {
+            return .iri(try parseIRI())
+        }
+        if line[index...].hasPrefix("_:") {
+            try consume("_:")
+            return .blank(try consumeIdentifier())
+        }
+        if peek() == "\"" {
+            return .literal(value: try parseLiteral(), datatype: nil)
+        }
+        throw CADMVInternalError.unsupportedVCB
+    }
+
+    private mutating func parseIRI() throws -> String {
+        try consume("<")
+        let start = index
+        while index < line.endIndex, line[index] != ">" {
+            index = line.index(after: index)
+        }
+        guard index < line.endIndex else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        let iri = String(line[start..<index])
+        try consume(">")
+        return iri
+    }
+
+    private mutating func parseLiteral() throws -> String {
+        try consume("\"")
+        var value = ""
+        while index < line.endIndex {
+            let character = line[index]
+            index = line.index(after: index)
+            if character == "\"" {
+                return value
+            }
+            if character == "\\" {
+                guard index < line.endIndex else {
+                    throw CADMVInternalError.unsupportedVCB
+                }
+                let escaped = line[index]
+                index = line.index(after: index)
+                switch escaped {
+                case "\"", "\\":
+                    value.append(escaped)
+                case "n":
+                    value.append("\n")
+                case "r":
+                    value.append("\r")
+                case "t":
+                    value.append("\t")
+                default:
+                    throw CADMVInternalError.unsupportedVCB
+                }
+            } else {
+                value.append(character)
+            }
+        }
+        throw CADMVInternalError.unsupportedVCB
+    }
+
+    private mutating func consumeIdentifier() throws -> String {
+        let start = index
+        while index < line.endIndex, !line[index].isWhitespace, line[index] != "." {
+            index = line.index(after: index)
+        }
+        guard start != index else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return String(line[start..<index])
+    }
+
+    private mutating func consume(_ text: String) throws {
+        guard line[index...].hasPrefix(text) else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        index = line.index(index, offsetBy: text.count)
+    }
+
+    private mutating func skipSpaces() throws {
+        while index < line.endIndex, line[index].isWhitespace {
+            index = line.index(after: index)
+        }
+    }
+
+    private func peek() -> Character? {
+        index < line.endIndex ? line[index] : nil
     }
 }
