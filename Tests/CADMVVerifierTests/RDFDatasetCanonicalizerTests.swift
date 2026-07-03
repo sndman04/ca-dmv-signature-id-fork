@@ -71,6 +71,80 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         }
     }
 
+    func testStatusListJSONLDExpanderBuildsDocumentQuadsFromCredentialModel() throws {
+        let credential = statusListCredential(
+            validFrom: "2026-01-01T00:00:00Z",
+            validUntil: "2030-01-01T00:00:00Z",
+            name: "Status List Credential",
+            description: "Revocation status list"
+        )
+        let document = StatusListJSONLDRDFExpander.jsonLDDocument(from: credential)
+        let nquads = try StatusListJSONLDRDFExpander.canonicalNQuads(credential)
+
+        XCTAssertEqual(document["@context"], .array([
+            .string("https://www.w3.org/ns/credentials/v2")
+        ]))
+        XCTAssertEqual(document["id"], .string("https://example.com/status/1"))
+        XCTAssertEqual(document["issuer"], .string("did:web:credentials.dmv.ca.gov"))
+        XCTAssert(nquads.contains("<https://www.w3.org/2018/credentials#VerifiableCredential>"))
+        XCTAssert(nquads.contains("<https://www.w3.org/ns/credentials/status#BitstringStatusListCredential>"))
+        XCTAssert(nquads.contains("<https://www.w3.org/ns/credentials/status#BitstringStatusList>"))
+        XCTAssert(nquads.contains("\"uH4sIAAAAAAAAA2NhAAD717UlAgAAAA\"^^<https://w3id.org/security#multibase>"))
+        XCTAssert(nquads.contains("\"revocation\""))
+        XCTAssert(nquads.contains("\"Status List Credential\""))
+        XCTAssert(nquads.contains("\"Revocation status list\""))
+        XCTAssert(nquads.contains("\"2026-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime>"))
+        XCTAssert(nquads.contains("\"2030-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime>"))
+    }
+
+    func testStatusListJSONLDExpanderOmitsAbsentOptionalFields() throws {
+        let quads = try StatusListJSONLDRDFExpander.documentQuads(statusListCredential())
+
+        XCTAssertEqual(quads.count, 7)
+        XCTAssertFalse(quads.contains {
+            $0.predicate == "https://schema.org/name"
+        })
+        XCTAssertFalse(quads.contains {
+            $0.predicate == "https://schema.org/description"
+        })
+        XCTAssertFalse(quads.contains {
+            $0.predicate == "https://www.w3.org/2018/credentials#validFrom"
+        })
+        XCTAssertFalse(quads.contains {
+            $0.predicate == "https://www.w3.org/2018/credentials#validUntil"
+        })
+    }
+
+    func testStatusListJSONLDConverterRejectsUnsupportedContextTermsAndTypes() throws {
+        var document = StatusListJSONLDRDFExpander.jsonLDDocument(from: statusListCredential())
+        document["@context"] = .array([.string("https://example.invalid/context")])
+
+        XCTAssertThrowsError(try SupportedStatusListJSONLDRDFConverter.quads(from: document)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+
+        var unknownTermDocument = StatusListJSONLDRDFExpander.jsonLDDocument(from: statusListCredential())
+        unknownTermDocument["unknownSignedField"] = .string("must-not-drop")
+
+        XCTAssertThrowsError(try SupportedStatusListJSONLDRDFConverter.quads(from: unknownTermDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+
+        var unknownTypeDocument = StatusListJSONLDRDFExpander.jsonLDDocument(from: statusListCredential())
+        unknownTypeDocument["type"] = .array([.string("VerifiableCredential"), .string("UnknownCredential")])
+
+        XCTAssertThrowsError(try SupportedStatusListJSONLDRDFConverter.quads(from: unknownTypeDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+
+        var unsafeDateDocument = StatusListJSONLDRDFExpander.jsonLDDocument(from: statusListCredential())
+        unsafeDateDocument["validFrom"] = .string("2026-01-01T00:00:00Z\" .")
+
+        XCTAssertThrowsError(try SupportedStatusListJSONLDRDFConverter.quads(from: unsafeDateDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+    }
+
     func testDataIntegrityProofCanonicalizerIncludesOptionalCreatedAndExpires() throws {
         let nquads = try DataIntegrityProofCanonicalizer.canonicalNQuads(
             type: "DataIntegrityProof",
@@ -303,6 +377,40 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 proofPurpose: "assertionMethod",
                 proofValue: "zLdp",
                 verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"
+            )
+        )
+    }
+
+    private func statusListCredential(
+        validFrom: String? = nil,
+        validUntil: String? = nil,
+        name: String? = nil,
+        description: String? = nil
+    ) -> DMVStatusListCredential {
+        DMVStatusListCredential(
+            id: "https://example.com/status/1",
+            type: [
+                "VerifiableCredential",
+                "BitstringStatusListCredential"
+            ],
+            issuer: "did:web:credentials.dmv.ca.gov",
+            validFrom: validFrom,
+            validUntil: validUntil,
+            name: name,
+            description: description,
+            credentialSubject: DMVStatusListCredential.CredentialSubject(
+                id: "https://example.com/status/1#list",
+                type: "BitstringStatusList",
+                encodedList: "uH4sIAAAAAAAAA2NhAAD717UlAgAAAA",
+                statusPurpose: "revocation"
+            ),
+            proof: DMVStatusListCredential.Proof(
+                type: "DataIntegrityProof",
+                created: "2026-01-01T00:00:00Z",
+                verificationMethod: "did:web:credentials.dmv.ca.gov#vm-status-1",
+                cryptosuite: "ecdsa-rdfc-2019",
+                proofPurpose: "assertionMethod",
+                proofValue: "zLdp"
             )
         )
     }

@@ -2,8 +2,9 @@ import Crypto
 import Foundation
 
 enum EcdsaRdfc2019Verifier {
-    // DMV status-list profile verifier. It builds the supported graph
-    // explicitly until replaced by standards-grade JSON-LD/RDF canonicalization.
+    // DMV status-list profile verifier. Document canonicalization flows through
+    // a supported JSON-LD-to-RDF boundary until the final canonicalization
+    // engine replaces the profile implementation.
     static func verify(
         credential: DMVStatusListCredential,
         verificationKey: DIDDocumentKey
@@ -40,79 +41,6 @@ enum EcdsaRdfc2019Verifier {
     }
 
     private static func documentCanonicalNQuads(_ credential: DMVStatusListCredential) throws -> String {
-        var quads: [RDFQuad] = [
-            RDFQuad(
-                subject: .iri(credential.credentialSubject.id),
-                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                object: .iri("https://www.w3.org/ns/credentials/status#\(credential.credentialSubject.type)")
-            ),
-            RDFQuad(
-                subject: .iri(credential.credentialSubject.id),
-                predicate: "https://www.w3.org/ns/credentials/status#encodedList",
-                object: .literal(
-                    value: credential.credentialSubject.encodedList,
-                    datatype: "https://w3id.org/security#multibase"
-                )
-            ),
-            RDFQuad(
-                subject: .iri(credential.credentialSubject.id),
-                predicate: "https://www.w3.org/ns/credentials/status#statusPurpose",
-                object: .literal(value: credential.credentialSubject.statusPurpose, datatype: nil)
-            ),
-            RDFQuad(
-                subject: .iri(credential.id),
-                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                object: .iri("https://www.w3.org/2018/credentials#VerifiableCredential")
-            ),
-            RDFQuad(
-                subject: .iri(credential.id),
-                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                object: .iri("https://www.w3.org/ns/credentials/status#BitstringStatusListCredential")
-            ),
-            RDFQuad(
-                subject: .iri(credential.id),
-                predicate: "https://www.w3.org/2018/credentials#credentialSubject",
-                object: .iri(credential.credentialSubject.id)
-            ),
-            RDFQuad(
-                subject: .iri(credential.id),
-                predicate: "https://www.w3.org/2018/credentials#issuer",
-                object: .iri(credential.issuer)
-            )
-        ]
-
-        if let description = credential.description {
-            quads.append(RDFQuad(
-                subject: .iri(credential.id),
-                predicate: "https://schema.org/description",
-                object: .literal(value: description, datatype: nil)
-            ))
-        }
-
-        if let name = credential.name {
-            quads.append(RDFQuad(
-                subject: .iri(credential.id),
-                predicate: "https://schema.org/name",
-                object: .literal(value: name, datatype: nil)
-            ))
-        }
-
-        if let validFrom = credential.validFrom {
-            quads.append(RDFQuad(
-                subject: .iri(credential.id),
-                predicate: "https://www.w3.org/2018/credentials#validFrom",
-                object: .literal(value: validFrom, datatype: "http://www.w3.org/2001/XMLSchema#dateTime")
-            ))
-        }
-
-        if let validUntil = credential.validUntil {
-            quads.append(RDFQuad(
-                subject: .iri(credential.id),
-                predicate: "https://www.w3.org/2018/credentials#validUntil",
-                object: .literal(value: validUntil, datatype: "http://www.w3.org/2001/XMLSchema#dateTime")
-            ))
-        }
-
-        return try RDFDatasetCanonicalizer.canonicalNQuads(quads)
+        try StatusListJSONLDRDFExpander.canonicalNQuads(credential)
     }
 }
