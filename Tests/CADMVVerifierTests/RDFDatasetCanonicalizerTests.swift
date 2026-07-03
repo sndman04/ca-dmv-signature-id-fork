@@ -421,7 +421,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
     func testW3CRDFC10ConformanceSubset() throws {
         // Subset copied from the W3C RDFC-1.0 test suite. These cover the
         // current native RDF model surface: blank nodes, named graphs, shared
-        // graph names, and duplicate input quads.
+        // graph names, language/datatype literals, and duplicate input quads.
         let cases: [(id: String, input: String, expected: String)] = [
             (
                 "test001c",
@@ -552,6 +552,43 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 <http://example.org/test> <http://example.org/vocab#embed> _:c14n1 .
                 <http://example.org/test> <http://example.org/vocab#embed> _:c14n1 _:c14n0 .
                 <http://example.org/test> <http://example.org/vocab#graph> _:c14n0 .
+
+                """
+            ),
+            (
+                "test043c",
+                """
+                <http://example.org/test> <http://example.org/vocab#test> "test"@en .
+
+                """,
+                """
+                <http://example.org/test> <http://example.org/vocab#test> "test"@en .
+
+                """
+            ),
+            (
+                "test061c",
+                """
+                <http://example.com> <http://example.com/label> "test"@en .
+                <http://example.com> <http://example.com/label> "test"@fr .
+
+                """,
+                """
+                <http://example.com> <http://example.com/label> "test"@en .
+                <http://example.com> <http://example.com/label> "test"@fr .
+
+                """
+            ),
+            (
+                "test062c",
+                """
+                <http://example.com> <http://example.com/label> "test"^^<http://example.com/t1> .
+                <http://example.com> <http://example.com/label> "test"^^<http://example.com/t2> .
+
+                """,
+                """
+                <http://example.com> <http://example.com/label> "test"^^<http://example.com/t1> .
+                <http://example.com> <http://example.com/label> "test"^^<http://example.com/t2> .
 
                 """
             ),
@@ -827,7 +864,16 @@ private struct NQuadsLineParser {
             return .blank(try consumeIdentifier())
         }
         if peek() == "\"" {
-            return .literal(value: try parseLiteral(), datatype: nil)
+            let value = try parseLiteral()
+            if line[index...].hasPrefix("@") {
+                try consume("@")
+                return .languageLiteral(value: value, language: try consumeIdentifier())
+            }
+            if line[index...].hasPrefix("^^") {
+                try consume("^^")
+                return .literal(value: value, datatype: try parseIRI())
+            }
+            return .literal(value: value, datatype: nil)
         }
         throw CADMVInternalError.unsupportedVCB
     }
@@ -870,6 +916,10 @@ private struct NQuadsLineParser {
                     value.append("\r")
                 case "t":
                     value.append("\t")
+                case "b":
+                    value.append("\u{08}")
+                case "f":
+                    value.append("\u{0C}")
                 default:
                     throw CADMVInternalError.unsupportedVCB
                 }

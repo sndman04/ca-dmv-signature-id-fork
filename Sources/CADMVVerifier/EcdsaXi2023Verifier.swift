@@ -53,6 +53,7 @@ enum RDFTerm: Hashable {
     case blank(String)
     case iri(String)
     case literal(value: String, datatype: String?)
+    case languageLiteral(value: String, language: String)
 
     var blankNodeIdentifier: String? {
         guard case .blank(let identifier) = self else {
@@ -393,14 +394,40 @@ enum RDFDatasetCanonicalizer {
         case .iri(let value):
             return "<\(value)>"
         case let .literal(value, datatype):
-            let escaped = value
-                .replacingOccurrences(of: "\\", with: "\\\\")
-                .replacingOccurrences(of: "\"", with: "\\\"")
             if let datatype {
-                return "\"\(escaped)\"^^<\(datatype)>"
+                return "\"\(escapeLiteral(value))\"^^<\(datatype)>"
             }
-            return "\"\(escaped)\""
+            return "\"\(escapeLiteral(value))\""
+        case let .languageLiteral(value, language):
+            return "\"\(escapeLiteral(value))\"@\(language)"
         }
+    }
+
+    private static func escapeLiteral(_ value: String) -> String {
+        var escaped = ""
+        for scalar in value.unicodeScalars {
+            switch scalar.value {
+            case 0x08:
+                escaped += "\\b"
+            case 0x09:
+                escaped += "\\t"
+            case 0x0A:
+                escaped += "\\n"
+            case 0x0C:
+                escaped += "\\f"
+            case 0x0D:
+                escaped += "\\r"
+            case 0x22:
+                escaped += "\\\""
+            case 0x5C:
+                escaped += "\\\\"
+            case 0x00...0x1F, 0x7F:
+                escaped += String(format: "\\u%04X", scalar.value)
+            default:
+                escaped.unicodeScalars.append(scalar)
+            }
+        }
+        return escaped
     }
 }
 
