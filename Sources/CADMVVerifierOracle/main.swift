@@ -5,6 +5,11 @@ import Foundation
 enum CADMVVerifierOracle {
     static func main() async throws {
         let arguments = CommandLine.arguments.dropFirst()
+        if boolOption("--status-list-verify-data", in: arguments) {
+            try runStatusListVerifyDataOracle()
+            return
+        }
+
         let mode = optionValue("--mode", in: arguments) == "uat"
             ? CADMVVerificationMode.uat
             : CADMVVerificationMode.production
@@ -56,6 +61,23 @@ enum CADMVVerifierOracle {
         let normalized = normalize(output)
         let data = try JSONSerialization.data(
             withJSONObject: normalized,
+            options: [.prettyPrinted, .sortedKeys]
+        )
+        FileHandle.standardOutput.write(data)
+        FileHandle.standardOutput.write(Data("\n".utf8))
+    }
+
+    private static func runStatusListVerifyDataOracle() throws {
+        let payload = FileHandle.standardInput.readDataToEndOfFile()
+        let output: [String: Any?] = [
+            "implementation": "swift",
+            "input": "stdin",
+            "result": [
+                "verifyDataHex": try CADMVVerifier.statusListVerifyDataForSelfTest(jsonData: payload)
+            ] as [String: Any?]
+        ]
+        let data = try JSONSerialization.data(
+            withJSONObject: normalize(output),
             options: [.prettyPrinted, .sortedKeys]
         )
         FileHandle.standardOutput.write(data)

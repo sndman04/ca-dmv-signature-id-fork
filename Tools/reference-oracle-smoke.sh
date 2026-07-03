@@ -19,5 +19,6 @@ fi
 "$node_bin" Tools/reference-runner.mjs >/dev/null
 printf 'ANSI' | "$node_bin" Tools/reference-runner.mjs --stdin --mode=prod >/dev/null
 "$node_bin" Tools/parity-compare.mjs >/dev/null
+"$node_bin" Tools/status-list-parity.mjs >/dev/null
 
 echo "Reference oracle smoke: passed."

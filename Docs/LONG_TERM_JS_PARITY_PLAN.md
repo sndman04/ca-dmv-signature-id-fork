@@ -404,9 +404,10 @@ Progress:
 - Blank-node canonicalization now includes the RDFC n-degree path for shared first-degree hashes, covered by the W3C shared-hash example, with a bounded recursion budget for fail-closed behavior on overly complex graphs.
 - The RDF dataset model now supports named graphs and blank nodes in graph names, so canonicalization operates on quads rather than only default-graph triples.
 - The JS oracle and parity comparator now compare VCB verify-data for committed official UAT fixtures, including the invalid-signature fixture.
+- The JS oracle smoke gate now also compares synthetic `ecdsa-rdfc-2019` status-list verify-data against Swift for the base status list and optional live-style VC fields.
 - The observed production mismatch class, where two otherwise valid credentials canonicalized with different subject/status blank-node ordering, is covered by synthetic tests and rechecked locally without storing raw payloads or PII.
 - This is an intermediate milestone. The current implementation is a fail-closed DMV profile graph builder plus RDF term renderer, not a complete JSON-LD/RDF Dataset Canonicalization replacement.
-- Remaining Phase 4 work includes profile-independent JSON-LD/RDF processing, reference-equivalent comparisons for remaining synthetic/status-list fixture classes, and the final standards-grade/native-library-backed engine decision.
+- Remaining Phase 4 work includes profile-independent JSON-LD/RDF processing, reference-equivalent comparisons for remaining non-status synthetic fixture classes, and the final standards-grade/native-library-backed engine decision.
 
 Exit criteria:
 

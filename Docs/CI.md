@@ -9,6 +9,7 @@ Tools/swift-test.sh
 swift run CADMVVerifierSelfTest
 Tools/parity-status.sh
 Tools/reference-oracle-smoke.sh
+Tools/status-list-parity.mjs
 ```
 
 GitHub Actions runs these commands on push and pull request in `.github/workflows/ci.yml`.
@@ -43,6 +44,9 @@ node Tools/reference-runner.mjs --stdin --mode=prod
 
 # Swift/JS parity comparison for committed official fixtures.
 node Tools/parity-compare.mjs
+
+# Swift/JS status-list verify-data parity for synthetic status-list fixtures.
+node Tools/status-list-parity.mjs
 ```
 
 The stdin mode emits JSON with the selected SDK baseline, mode, high-level outcome, first failure stage, VCB byte count, credential profile class, AAMVA optical hash, and VCB verify-data hex when a VCB can be decoded. It must not be used to log raw PDF417 payloads or decoded identity fields.
