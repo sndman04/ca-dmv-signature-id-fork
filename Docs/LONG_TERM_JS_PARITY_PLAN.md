@@ -454,6 +454,11 @@ Exit criteria:
 - `signatureMismatch` is reserved for genuine proof verification failure, not canonicalization drift.
 - The default VCB signature path has no JS runtime dependency.
 
+Progress:
+
+- `Tools/signature-policy-characterization.mjs` records reference Data Integrity behavior for `z` base58btc and `u` base64url proof values, unsupported prefixes, malformed base58btc values, permissive short/malformed `u` handling before the real signature verifier, and P-256 high-S counterpart verification through WebCrypto.
+- Swift proof parsing now preserves reference-supported text `z` and `u` proofValue encodings for the verifier, rejects malformed or non-64-byte raw signatures before Swift Crypto verification, and accepts the high-S/low-S counterpart pair consistently with WebCrypto.
+
 ## Phase 6: Replace Status-List Proof Canonicalization
 
 Goal: remove handwritten status-list N-Quads and verify status credentials through the same standards-grade path.

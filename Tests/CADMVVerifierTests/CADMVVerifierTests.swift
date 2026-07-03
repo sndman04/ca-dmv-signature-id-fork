@@ -367,6 +367,28 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssert(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
     }
 
+    func testDecoderAndValidatorAcceptBase64URLProofValueFromReferenceDataIntegrity() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(
+            textEncoded: true,
+            proofValue: "uAQIDBA"
+        ))
+
+        XCTAssertEqual(credential.proof.proofValue, "uAQIDBA")
+        XCTAssertNoThrow(try DMVCredentialValidator.validate(credential, mode: .uat))
+    }
+
+    func testDecoderPreservesTextProofValuesForSignatureVerifierPolicy() throws {
+        for proofValue in ["z0", "u***"] {
+            let credential = try DMVVCBDecoder.decode(CBORFixture.credential(
+                textEncoded: true,
+                proofValue: proofValue
+            ))
+
+            XCTAssertEqual(credential.proof.proofValue, proofValue)
+            XCTAssertNoThrow(try DMVCredentialValidator.validate(credential, mode: .uat))
+        }
+    }
+
     func testDecoderPreservesCompressedProofCreated() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential(proofCreated: "2026-01-01T00:00:00Z"))
 
@@ -743,6 +765,7 @@ private enum CBORFixture {
         textEncoded: Bool = false,
         statusBaseURLArrayEncoded: Bool = false,
         statusBaseURLOverride: String? = nil,
+        proofValue: String? = nil,
         extraCredentialTypes: [String] = [],
         validFrom: String? = nil,
         validUntil: String? = nil,
@@ -759,6 +782,7 @@ private enum CBORFixture {
             textEncoded: textEncoded,
             statusBaseURLArrayEncoded: statusBaseURLArrayEncoded,
             statusBaseURLOverride: statusBaseURLOverride,
+            proofValue: proofValue,
             extraCredentialTypes: extraCredentialTypes,
             validFrom: validFrom,
             validUntil: validUntil,
@@ -856,6 +880,7 @@ private enum CBORFixture {
         textEncoded: Bool,
         statusBaseURLArrayEncoded: Bool = false,
         statusBaseURLOverride: String? = nil,
+        proofValue: String? = nil,
         extraCredentialTypes: [String] = [],
         validFrom: String? = nil,
         validUntil: String? = nil,
@@ -870,6 +895,7 @@ private enum CBORFixture {
             textEncoded: textEncoded,
             statusBaseURLArrayEncoded: statusBaseURLArrayEncoded,
             statusBaseURLOverride: statusBaseURLOverride,
+            proofValue: proofValue,
             extraCredentialTypes: extraCredentialTypes,
             validFrom: validFrom,
             validUntil: validUntil,
@@ -891,6 +917,7 @@ private enum CBORFixture {
         textEncoded: Bool = false,
         statusBaseURLArrayEncoded: Bool = false,
         statusBaseURLOverride: String? = nil,
+        proofValue: String? = nil,
         extraCredentialTypes: [String] = [],
         validFrom: String? = nil,
         validUntil: String? = nil,
@@ -903,7 +930,7 @@ private enum CBORFixture {
             (unsigned(156), textEncoded ? text("DataIntegrityProof") : unsigned(108)),
             (unsigned(204), textEncoded ? text("ecdsa-xi-2023") : unsigned(1)),
             (unsigned(214), textEncoded ? text("assertionMethod") : unsigned(220)),
-            (unsigned(216), textEncoded ? text("zLdp") : byteString(Data([0x7a, 0x01, 0x02, 0x03]))),
+            (unsigned(216), proofValue.map(text(_:)) ?? (textEncoded ? text("zLdp") : byteString(Data([0x7a, 0x01, 0x02, 0x03])))),
             (unsigned(218), textEncoded ? text("did:web:uat-credentials.dmv.ca.gov#vm-vcb-1") : bytes([22]))
         ]
         if let proofCreated {

@@ -178,7 +178,7 @@ enum DMVVCBDecoder {
             expires: try optionalDateTimeText(map, key: "expires"),
             cryptosuite: try requiredText(map, key: "cryptosuite"),
             proofPurpose: try proofPurpose(from: requiredValue(map, key: "proofPurpose")),
-            proofValue: try multibaseBase58BTCString(from: requiredValue(map, key: "proofValue")),
+            proofValue: try multibaseSignatureString(from: requiredValue(map, key: "proofValue")),
             verificationMethod: try url(from: requiredValue(map, key: "verificationMethod"))
         )
     }
@@ -247,7 +247,7 @@ enum DMVVCBDecoder {
             expires: try optionalDateTimeText(map, key: 208),
             cryptosuite: try cryptosuite(from: requiredValue(map, key: 204)),
             proofPurpose: try proofPurpose(from: requiredValue(map, key: 214)),
-            proofValue: try multibaseBase58BTCString(from: requiredValue(map, key: 216)),
+            proofValue: try multibaseSignatureString(from: requiredValue(map, key: 216)),
             verificationMethod: try url(from: requiredValue(map, key: 218))
         )
     }
@@ -416,19 +416,32 @@ enum DMVVCBDecoder {
         }
     }
 
-    private static func multibaseBase58BTCString(from value: CBORValue) throws -> String {
+    private static func multibaseSignatureString(from value: CBORValue) throws -> String {
         switch value {
         case let .byteString(data):
-            guard data.first == 0x7a else {
+            guard let prefix = data.first else {
                 throw CADMVInternalError.unsupportedVCB
             }
-            return "z" + Base58BTC.encode(data.dropFirst())
+            switch prefix {
+            case UInt8(ascii: "z"):
+                return "z" + Base58BTC.encode(data.dropFirst())
+            case UInt8(ascii: "u"):
+                return "u" + Base64URL.encode(data.dropFirst())
+            default:
+                throw CADMVInternalError.unsupportedVCB
+            }
         case let .textString(text):
-            guard text.first == "z",
-                  Base58BTC.decode(String(text.dropFirst())) != nil else {
+            guard let prefix = text.first else {
                 throw CADMVInternalError.unsupportedVCB
             }
-            return text
+            switch prefix {
+            case "z":
+                return text
+            case "u":
+                return text
+            default:
+                throw CADMVInternalError.unsupportedVCB
+            }
         default:
             throw CADMVInternalError.unsupportedVCB
         }

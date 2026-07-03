@@ -60,7 +60,7 @@ This audit covers the DMV VCB CBOR-LD registry values needed to decode the suppo
 | `TerseBitstringStatusListEntry` | Supported |
 | `DataIntegrityProof` | Supported |
 | `assertionMethod` | Supported |
-| `proofValue` multibase/base58btc | Supported |
+| `proofValue` multibase `z` base58btc and `u` base64url | Supported |
 | `protectedComponentIndex` as multibase bytes or reference numeric form | Supported |
 
 ## Model Preservation Policy
@@ -104,6 +104,7 @@ Current parity checks:
 - `Tools/parity-compare.mjs` compares JS and Swift official UAT fixture summaries.
 - The comparison includes final validity, first failure stage, AAMVA optical hash, VCB proof canonical N-Quads, VCB document canonical N-Quads, VCB verify-data, VCB byte length, and privacy-safe credential profile flags.
 - `Tools/cborld-unknown-field-characterization.mjs` records JS CBOR-LD behavior for text-encoded unknown fields and unknown compressed numeric term ids.
+- `Tools/signature-policy-characterization.mjs` records JS Data Integrity proofValue decoding for `z` base58btc and `u` base64url, permissive short/malformed `u` handling before the real signature verifier, malformed `z` handling, and P-256 high-S counterpart verification.
 - `FixtureManifestTests` verifies Phase 2 fixture category coverage and privacy constraints.
 
 Current known gap:

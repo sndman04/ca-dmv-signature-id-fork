@@ -10,9 +10,10 @@ swift run CADMVVerifierSelfTest
 Tools/parity-status.sh
 Tools/reference-oracle-smoke.sh
 Tools/status-list-parity.mjs
+Tools/signature-policy-characterization.mjs
 ```
 
-GitHub Actions runs these commands on push and pull request in `.github/workflows/ci.yml`.
+GitHub Actions runs the Swift gates, parity status check, and `Tools/reference-oracle-smoke.sh` on push and pull request in `.github/workflows/ci.yml`. The smoke wrapper runs the JS reference parity tools when Node and the reference SDK dependencies are available.
 
 Reference SDK parity command:
 
@@ -47,6 +48,9 @@ node Tools/parity-compare.mjs
 
 # Swift/JS status-list verify-data parity for synthetic status-list fixtures.
 node Tools/status-list-parity.mjs
+
+# JS reference Data Integrity signature encoding and high-S policy.
+node Tools/signature-policy-characterization.mjs
 ```
 
 The stdin mode emits JSON with the selected SDK baseline, mode, high-level outcome, first failure stage, VCB byte count, credential profile class, AAMVA optical hash, and VCB verify-data hex when a VCB can be decoded. It must not be used to log raw PDF417 payloads or decoded identity fields.
@@ -67,6 +71,7 @@ The stdin mode emits JSON with the selected SDK baseline, mode, high-level outco
 - Malformed AAMVA header/subfile descriptor offsets and lengths fail closed.
 - Base64/Base64URL malformed length, alphabet, and padding rejection.
 - Base58 malformed alphabet rejection.
+- Data Integrity proofValue `z` base58btc and `u` base64url acceptance, text proofValue preservation before signature extraction, malformed/unsupported raw-signature rejection, and P-256 high-S counterpart behavior against the JS reference.
 - Status-list gzip output limit enforcement.
 - Malformed status-list multibase/gzip corpus rejection.
 - Official valid DMV UAT fixture verification.

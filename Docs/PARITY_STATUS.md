@@ -66,6 +66,8 @@ Phase 3 is complete.
 
 Phase 4 is in progress.
 
+Phase 5 is in progress.
+
 Completed:
 
 - Long-term one-to-one JS parity plan created.
@@ -131,8 +133,19 @@ Completed Phase 4 work:
 - Characterized `unknown-ignorable-cborld-values`: JS preserves text-encoded unknown credential/proof fields but rejects unknown compressed numeric term ids; Swift continues to fail closed until the replacement canonicalizer can preserve those fields safely.
 - Documented the canonicalization engine decision and external bridge acceptance criteria in `Docs/CANONICALIZATION_ENGINE_DECISION.md`.
 
+Completed Phase 5 work:
+
+- Added `Tools/signature-policy-characterization.mjs` to record reference Data Integrity proofValue decoding, permissive short/malformed `u` handling before the real signature verifier, and WebCrypto high-S counterpart behavior.
+- Matched JS proofValue multibase policy for text `z` base58btc and `u` base64url encodings while continuing to require exactly 64 raw P-256 signature bytes before Swift Crypto verification.
+- Added Swift tests for proofValue prefix/length rejection and high-S counterpart acceptance through `ECDSAProofVerifier`.
+
 Remaining Phase 4 gates:
 
 - Replace the remaining profile-specific graph construction with the selected standards-grade or native-library-backed JSON-LD/RDF canonicalization engine.
 - Add reference-equivalent canonical N-Quads or verify-data comparisons for remaining synthetic fixture classes beyond the committed official UAT and status-list parity cases.
 - Apply the documented memory-safety, license, build, and platform criteria if a native-library bridge is selected later.
+
+Remaining Phase 5 gates:
+
+- Add end-to-end JS/Swift parity fixtures for generated signatures beyond the committed official UAT valid/invalid signature pair.
+- Keep `signatureMismatch` reserved for genuine proof verification failures after canonical N-Quads and verify-data parity are established.

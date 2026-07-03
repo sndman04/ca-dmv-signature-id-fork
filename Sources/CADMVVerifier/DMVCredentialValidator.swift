@@ -31,7 +31,7 @@ enum DMVCredentialValidator {
         guard credential.proof.type == "DataIntegrityProof",
               credential.proof.cryptosuite == "ecdsa-xi-2023",
               credential.proof.proofPurpose == "assertionMethod",
-              credential.proof.proofValue.first == "z" else {
+              ["z", "u"].contains(credential.proof.proofValue.first) else {
             throw CADMVInternalError.unsupportedVCB
         }
 

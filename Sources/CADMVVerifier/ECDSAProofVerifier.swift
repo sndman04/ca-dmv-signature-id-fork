@@ -17,9 +17,20 @@ enum ECDSAProofVerifier {
     }
 
     static func rawSignature(from proofValue: String, error: CADMVInternalError) throws -> Data {
-        guard proofValue.first == "z",
-              let signature = Base58BTC.decode(String(proofValue.dropFirst())),
-              signature.count == 64 else {
+        guard let multibasePrefix = proofValue.first else {
+            throw error
+        }
+        let encoded = String(proofValue.dropFirst())
+        let signature: Data?
+        switch multibasePrefix {
+        case "z":
+            signature = Base58BTC.decode(encoded)
+        case "u":
+            signature = Base64URL.decode(encoded)
+        default:
+            signature = nil
+        }
+        guard let signature, signature.count == 64 else {
             throw error
         }
         return signature
