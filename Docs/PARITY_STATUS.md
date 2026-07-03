@@ -123,6 +123,7 @@ Completed Phase 4 work:
 - Added RDFC-style n-degree hashing for shared first-degree blank-node hashes, with an explicit recursion budget to fail closed on overly complex inputs.
 - Added RDF dataset graph-name support, including blank nodes used as graph names, so the canonicalizer handles quads rather than default-graph triples only.
 - Added JS oracle VCB verify-data output and made `Tools/parity-compare.mjs` fail on official-fixture verify-data mismatches.
+- Added JS/Swift VCB proof and document canonical N-Quads comparisons for committed official UAT fixtures.
 - Added `Tools/status-list-parity.mjs` to compare JS and Swift `ecdsa-rdfc-2019` verify-data for synthetic status-list fixtures, including optional live-style VC fields.
 - Added synthetic regression coverage for the observed production class where status-list and subject blank nodes can swap canonical order based on credential content.
 - Added exact-output proof canonicalization tests for optional `created` and `expires` handling, plus W3C shared-hash canonicalization coverage.
@@ -132,5 +133,5 @@ Completed Phase 4 work:
 Remaining Phase 4 gates:
 
 - Replace the remaining profile-specific graph construction with the selected standards-grade or native-library-backed JSON-LD/RDF canonicalization engine.
-- Add reference-equivalent canonical N-Quads or verify-data comparisons for remaining non-status synthetic fixture classes.
+- Add reference-equivalent canonical N-Quads or verify-data comparisons for remaining synthetic fixture classes beyond the committed official UAT and status-list parity cases.
 - Document memory-safety, license, build, and platform implications if the final engine uses a native-library bridge.

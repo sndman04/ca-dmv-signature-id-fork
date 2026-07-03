@@ -52,6 +52,10 @@ for(const fixture of fixtures) {
     swiftAamvaHashHex: swiftResult.aamvaHashHex,
     jsVerifyDataHex: jsResult.verifyDataHex,
     swiftVerifyDataHex: swiftResult.verifyDataHex,
+    jsVCBProofCanonicalNQuads: jsResult.vcbProofCanonicalNQuads,
+    swiftVCBProofCanonicalNQuads: swiftResult.vcbProofCanonicalNQuads,
+    jsVCBDocumentCanonicalNQuads: jsResult.vcbDocumentCanonicalNQuads,
+    swiftVCBDocumentCanonicalNQuads: swiftResult.vcbDocumentCanonicalNQuads,
     jsVCBByteLength: jsResult.vcbByteLength,
     swiftVCBByteLength: swiftResult.vcbByteLength,
     jsCredentialProfile: jsProfile,
@@ -75,6 +79,16 @@ for(const fixture of fixtures) {
   if(jsResult.verifyDataHex !== swiftResult.verifyDataHex) {
     parity.passed = false;
     parity.failures.push('VCB verify-data mismatch');
+  }
+  if(jsResult.vcbProofCanonicalNQuads !==
+    swiftResult.vcbProofCanonicalNQuads) {
+    parity.passed = false;
+    parity.failures.push('VCB proof canonical N-Quads mismatch');
+  }
+  if(jsResult.vcbDocumentCanonicalNQuads !==
+    swiftResult.vcbDocumentCanonicalNQuads) {
+    parity.passed = false;
+    parity.failures.push('VCB document canonical N-Quads mismatch');
   }
   if(jsResult.vcbByteLength !== swiftResult.vcbByteLength) {
     parity.passed = false;

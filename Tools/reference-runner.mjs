@@ -5,6 +5,8 @@ import {verify} from '../References/cadmv-dlid-verifier-sdk/lib/index.js';
 import {
   createCryptosuite as createEcdsaXi2023Cryptosuite
 } from '../References/cadmv-dlid-verifier-sdk/node_modules/@digitalbazaar/ecdsa-xi-2023-cryptosuite/lib/index.js';
+import {canonize as canonizeEcdsaXi2023}
+  from '../References/cadmv-dlid-verifier-sdk/node_modules/@digitalbazaar/ecdsa-xi-2023-cryptosuite/lib/canonize.js';
 import {JsonLdDocumentLoader}
   from '../References/cadmv-dlid-verifier-sdk/node_modules/jsonld-document-loader/lib/index.js';
 import {contexts as vcbContexts}
@@ -126,11 +128,43 @@ async function summarizeResult(result) {
     aamvaHashHex: debug?.aamvaHash ?
       Buffer.from(debug.aamvaHash).toString('hex') : null,
     verifyDataHex: await vcbVerifyDataHex(debug),
+    vcbProofCanonicalNQuads: await vcbProofCanonicalNQuads(debug),
+    vcbDocumentCanonicalNQuads: await vcbDocumentCanonicalNQuads(debug),
     status: statusResult ? {
       verified: statusResult.verified ?? null,
       error: statusResult.error?.message ?? null
     } : null
   };
+}
+
+async function vcbProofCanonicalNQuads(debug) {
+  const credential = debug?.credential;
+  const proof = credential?.proof;
+  if(!credential || !proof) {
+    return null;
+  }
+
+  const proofConfig = {
+    '@context': credential['@context'],
+    ...proof
+  };
+  delete proofConfig.proofValue;
+  return canonizeEcdsaXi2023(proofConfig, {
+    documentLoader: buildContextOnlyLoader()
+  });
+}
+
+async function vcbDocumentCanonicalNQuads(debug) {
+  const credential = debug?.credential;
+  if(!credential) {
+    return null;
+  }
+
+  const document = structuredClone(credential);
+  delete document.proof;
+  return canonizeEcdsaXi2023(document, {
+    documentLoader: buildContextOnlyLoader()
+  });
 }
 
 async function vcbVerifyDataHex(debug) {

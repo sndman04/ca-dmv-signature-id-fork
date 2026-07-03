@@ -102,7 +102,7 @@ Swift intentionally still fails closed for unknown credential and proof keys unt
 Current parity checks:
 
 - `Tools/parity-compare.mjs` compares JS and Swift official UAT fixture summaries.
-- The comparison includes final validity, first failure stage, AAMVA optical hash, VCB verify-data, VCB byte length, and privacy-safe credential profile flags.
+- The comparison includes final validity, first failure stage, AAMVA optical hash, VCB proof canonical N-Quads, VCB document canonical N-Quads, VCB verify-data, VCB byte length, and privacy-safe credential profile flags.
 - `Tools/cborld-unknown-field-characterization.mjs` records JS CBOR-LD behavior for text-encoded unknown fields and unknown compressed numeric term ids.
 - `FixtureManifestTests` verifies Phase 2 fixture category coverage and privacy constraints.
 

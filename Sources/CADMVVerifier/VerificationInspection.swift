@@ -32,6 +32,8 @@ public struct CADMVVerificationInspection: Equatable, Sendable {
     public let productionCredentialShapeValid: Bool
     public let opticalDataHashHex: String?
     public let verifyDataHex: String?
+    public let vcbProofCanonicalNQuads: String?
+    public let vcbDocumentCanonicalNQuads: String?
     public let statusListURL: String?
     public let statusListIndex: UInt64?
 
@@ -46,6 +48,8 @@ public struct CADMVVerificationInspection: Equatable, Sendable {
         productionCredentialShapeValid: Bool,
         opticalDataHashHex: String?,
         verifyDataHex: String?,
+        vcbProofCanonicalNQuads: String?,
+        vcbDocumentCanonicalNQuads: String?,
         statusListURL: String?,
         statusListIndex: UInt64?
     ) {
@@ -59,6 +63,8 @@ public struct CADMVVerificationInspection: Equatable, Sendable {
         self.productionCredentialShapeValid = productionCredentialShapeValid
         self.opticalDataHashHex = opticalDataHashHex
         self.verifyDataHex = verifyDataHex
+        self.vcbProofCanonicalNQuads = vcbProofCanonicalNQuads
+        self.vcbDocumentCanonicalNQuads = vcbDocumentCanonicalNQuads
         self.statusListURL = statusListURL
         self.statusListIndex = statusListIndex
     }
@@ -99,6 +105,19 @@ extension CADMVVerifier {
                         opticalDataHash: $0
                     ).cadmvHexString
                 }
+            },
+            vcbProofCanonicalNQuads: try credential.map {
+                try DataIntegrityProofCanonicalizer.canonicalNQuads(
+                    type: $0.proof.type,
+                    created: $0.proof.created,
+                    expires: $0.proof.expires,
+                    cryptosuite: $0.proof.cryptosuite,
+                    proofPurpose: $0.proof.proofPurpose,
+                    verificationMethod: $0.proof.verificationMethod
+                )
+            },
+            vcbDocumentCanonicalNQuads: try credential.map {
+                try VCBJSONLDRDFExpander.canonicalNQuads($0)
             },
             statusListURL: credential?.credentialStatus
                 .flatMap(StatusListChecker.statusListLocation(for:))?
