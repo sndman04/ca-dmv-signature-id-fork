@@ -72,8 +72,8 @@ Completed:
 
 - Long-term one-to-one JS parity plan created.
 - Main planning document links to the long-term parity plan.
-- Current handbuilt VCB and status-list proof verification paths are isolated behind `LegacyHandbuiltDataIntegrityEngine`.
-- Legacy handbuilt N-Quads paths are labeled as replacement targets.
+- Current supported-profile VCB and status-list proof verification paths are isolated behind `SupportedProfileDataIntegrityEngine`.
+- Supported proof and document canonicalization paths pass through JSON-LD-to-RDF conversion boundaries, but remain replacement targets for the final standards-grade/native canonicalization engine.
 - Privacy-safe parity dashboard format created.
 - Known production parity mismatch recorded as a redacted vector without raw barcode or PII.
 

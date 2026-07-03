@@ -6,7 +6,7 @@ struct VerificationPipeline {
 
     init(
         options: CADMVVerificationOptions,
-        dataIntegrityEngine: any DataIntegrityVerificationEngine = LegacyHandbuiltDataIntegrityEngine.shared
+        dataIntegrityEngine: any DataIntegrityVerificationEngine = SupportedProfileDataIntegrityEngine.shared
     ) {
         self.options = options
         self.dataIntegrityEngine = dataIntegrityEngine

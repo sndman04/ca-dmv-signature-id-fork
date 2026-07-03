@@ -13,8 +13,8 @@ protocol DataIntegrityVerificationEngine: Sendable {
     ) throws -> Bool
 }
 
-struct LegacyHandbuiltDataIntegrityEngine: DataIntegrityVerificationEngine {
-    static let shared = LegacyHandbuiltDataIntegrityEngine()
+struct SupportedProfileDataIntegrityEngine: DataIntegrityVerificationEngine {
+    static let shared = SupportedProfileDataIntegrityEngine()
 
     func verifyVCB(
         credential: DMVVerifiableCredential,

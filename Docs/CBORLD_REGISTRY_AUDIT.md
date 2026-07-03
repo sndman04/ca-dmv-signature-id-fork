@@ -85,7 +85,7 @@ The current Swift decoder preserves every field currently used by the supported 
 - `proof.proofValue`
 - `proof.verificationMethod`
 
-Unknown signed fields fail closed today because the legacy handbuilt canonicalization path would otherwise drop signature-relevant data. Phase 4 must replace this with standards-grade JSON-LD/RDF canonicalization that can include standards-valid signed fields without hand-editing N-Quads.
+Unknown signed fields fail closed today because the supported-profile canonicalization path only accepts terms it can feed into the JSON-LD-to-RDF boundary without dropping signature-relevant data. Phase 4 must replace this with standards-grade JSON-LD/RDF canonicalization that can include standards-valid signed fields without profile-specific converter changes.
 
 ## Unknown Field Characterization
 

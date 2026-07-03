@@ -86,7 +86,7 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
         ))
     }
 
-    func testLegacyVCBEngineRejectsVerificationMethodMismatchBeforeSignatureWork() throws {
+    func testSupportedProfileVCBEngineRejectsVerificationMethodMismatchBeforeSignatureWork() throws {
         let credential = DMVVerifiableCredential(
             context: [
                 "https://www.w3.org/ns/credentials/v2",
@@ -112,7 +112,7 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
             )
         )
 
-        XCTAssertThrowsError(try LegacyHandbuiltDataIntegrityEngine.shared.verifyVCB(
+        XCTAssertThrowsError(try SupportedProfileDataIntegrityEngine.shared.verifyVCB(
             credential: credential,
             opticalDataHash: Data(repeating: 0, count: 32),
             verificationKey: mismatchedKey()
@@ -121,7 +121,7 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
         }
     }
 
-    func testLegacyStatusListEngineRejectsVerificationMethodMismatchBeforeSignatureWork() throws {
+    func testSupportedProfileStatusListEngineRejectsVerificationMethodMismatchBeforeSignatureWork() throws {
         let credential = DMVStatusListCredential(
             id: "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0",
             type: ["VerifiableCredential", "BitstringStatusListCredential"],
@@ -146,7 +146,7 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
             )
         )
 
-        XCTAssertThrowsError(try LegacyHandbuiltDataIntegrityEngine.shared.verifyStatusListCredential(
+        XCTAssertThrowsError(try SupportedProfileDataIntegrityEngine.shared.verifyStatusListCredential(
             credential,
             verificationKey: mismatchedKey()
         )) { error in

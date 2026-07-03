@@ -10,7 +10,7 @@ enum StatusListChecker {
         credential: DMVVerifiableCredential,
         mode: CADMVVerificationMode,
         timeoutSeconds: Double,
-        dataIntegrityEngine: any DataIntegrityVerificationEngine = LegacyHandbuiltDataIntegrityEngine.shared
+        dataIntegrityEngine: any DataIntegrityVerificationEngine = SupportedProfileDataIntegrityEngine.shared
     ) async -> CADMVStatusCheckResult {
         guard let status = credential.credentialStatus,
               status.type == "TerseBitstringStatusListEntry",
@@ -58,7 +58,7 @@ enum StatusListChecker {
         statusListIndex: UInt64,
         credentialIssuer: String,
         verificationKey: DIDDocumentKey,
-        dataIntegrityEngine: any DataIntegrityVerificationEngine = LegacyHandbuiltDataIntegrityEngine.shared
+        dataIntegrityEngine: any DataIntegrityVerificationEngine = SupportedProfileDataIntegrityEngine.shared
     ) throws -> CADMVStatusCheckResult {
         guard statusListCredential.id == expectedURL.absoluteString,
               statusListCredential.issuer == credentialIssuer,
