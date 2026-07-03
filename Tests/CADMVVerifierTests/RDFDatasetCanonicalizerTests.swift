@@ -2,6 +2,39 @@
 import XCTest
 
 final class RDFDatasetCanonicalizerTests: XCTestCase {
+    func testVCBJSONLDExpanderBuildsDocumentQuadsFromCredentialModel() throws {
+        let nquads = try VCBJSONLDRDFExpander.canonicalNQuads(vcbCredential(
+            validFrom: "2026-01-01T00:00:00Z",
+            validUntil: "2030-01-01T00:00:00Z"
+        ))
+
+        XCTAssert(nquads.contains("<https://www.w3.org/2018/credentials#VerifiableCredential>"))
+        XCTAssert(nquads.contains("<https://w3id.org/vc-barcodes#OpticalBarcodeCredential>"))
+        XCTAssert(nquads.contains("<did:web:uat-credentials.dmv.ca.gov>"))
+        XCTAssert(nquads.contains("\"uAQID\"^^<https://w3id.org/security#multibase>"))
+        XCTAssert(nquads.contains("<https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists>"))
+        XCTAssert(nquads.contains("\"1\"^^<http://www.w3.org/2001/XMLSchema#integer>"))
+        XCTAssert(nquads.contains("\"2026-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime>"))
+        XCTAssert(nquads.contains("\"2030-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime>"))
+    }
+
+    func testVCBJSONLDExpanderOmitsAbsentStatusAndValidityDates() {
+        let quads = VCBJSONLDRDFExpander.documentQuads(vcbCredential(
+            credentialStatus: nil
+        ))
+
+        XCTAssertEqual(quads.count, 6)
+        XCTAssertFalse(quads.contains {
+            $0.predicate == "https://www.w3.org/2018/credentials#credentialStatus"
+        })
+        XCTAssertFalse(quads.contains {
+            $0.predicate == "https://www.w3.org/2018/credentials#validFrom"
+        })
+        XCTAssertFalse(quads.contains {
+            $0.predicate == "https://www.w3.org/2018/credentials#validUntil"
+        })
+    }
+
     func testDataIntegrityProofCanonicalizerIncludesOptionalCreatedAndExpires() throws {
         let nquads = try DataIntegrityProofCanonicalizer.canonicalNQuads(
             type: "DataIntegrityProof",
@@ -198,5 +231,43 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 )
             )
         ]
+    }
+
+    private func vcbCredential(
+        credentialStatus: DMVVerifiableCredential.CredentialStatus? = DMVVerifiableCredential.CredentialStatus(
+            type: "TerseBitstringStatusListEntry",
+            terseStatusListBaseURL: "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists",
+            terseStatusListIndex: 1
+        ),
+        validFrom: String? = nil,
+        validUntil: String? = nil
+    ) -> DMVVerifiableCredential {
+        DMVVerifiableCredential(
+            context: [
+                "https://www.w3.org/ns/credentials/v2",
+                "https://w3id.org/vc-barcodes/v1"
+            ],
+            type: [
+                "VerifiableCredential",
+                "OpticalBarcodeCredential"
+            ],
+            issuer: "did:web:uat-credentials.dmv.ca.gov",
+            validFrom: validFrom,
+            validUntil: validUntil,
+            credentialSubject: DMVVerifiableCredential.CredentialSubject(
+                type: "AamvaDriversLicenseScannableInformation",
+                protectedComponentIndex: "uAQID"
+            ),
+            credentialStatus: credentialStatus,
+            proof: DMVVerifiableCredential.Proof(
+                type: "DataIntegrityProof",
+                created: nil,
+                expires: nil,
+                cryptosuite: "ecdsa-xi-2023",
+                proofPurpose: "assertionMethod",
+                proofValue: "zLdp",
+                verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"
+            )
+        )
     }
 }

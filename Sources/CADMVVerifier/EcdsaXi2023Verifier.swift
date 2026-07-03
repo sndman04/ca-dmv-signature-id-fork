@@ -37,7 +37,7 @@ enum EcdsaXi2023Verifier {
             proofPurpose: credential.proof.proofPurpose,
             verificationMethod: credential.proof.verificationMethod
         ).utf8)))
-        let documentHash = Data(SHA256.hash(data: Data(try documentCanonicalNQuads(credential).utf8)))
+        let documentHash = Data(SHA256.hash(data: Data(try VCBJSONLDRDFExpander.canonicalNQuads(credential).utf8)))
         let externalHash = Data(SHA256.hash(data: opticalDataHash))
 
         var data = Data()
@@ -45,99 +45,6 @@ enum EcdsaXi2023Verifier {
         data.append(documentHash)
         data.append(externalHash)
         return data
-    }
-
-    private static func documentCanonicalNQuads(_ credential: DMVVerifiableCredential) throws -> String {
-        let status = credential.credentialStatus
-        var quads: [RDFQuad] = [
-            RDFQuad(
-                subject: .blank("root"),
-                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                object: .iri("https://w3id.org/vc-barcodes#OpticalBarcodeCredential")
-            ),
-            RDFQuad(
-                subject: .blank("root"),
-                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                object: .iri("https://www.w3.org/2018/credentials#VerifiableCredential")
-            ),
-            RDFQuad(
-                subject: .blank("root"),
-                predicate: "https://www.w3.org/2018/credentials#credentialSubject",
-                object: .blank("subject")
-            ),
-            RDFQuad(
-                subject: .blank("root"),
-                predicate: "https://www.w3.org/2018/credentials#issuer",
-                object: .iri(credential.issuer)
-            ),
-            RDFQuad(
-                subject: .blank("subject"),
-                predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                object: .iri("https://w3id.org/vc-barcodes#\(credential.credentialSubject.type)")
-            ),
-            RDFQuad(
-                subject: .blank("subject"),
-                predicate: "https://w3id.org/vc-barcodes#protectedComponentIndex",
-                object: .literal(
-                    value: credential.credentialSubject.protectedComponentIndex,
-                    datatype: "https://w3id.org/security#multibase"
-                )
-            )
-        ]
-
-        if status != nil {
-            quads.append(RDFQuad(
-                subject: .blank("root"),
-                predicate: "https://www.w3.org/2018/credentials#credentialStatus",
-                object: .blank("status")
-            ))
-        }
-
-        if let validFrom = credential.validFrom {
-            quads.append(RDFQuad(
-                subject: .blank("root"),
-                predicate: "https://www.w3.org/2018/credentials#validFrom",
-                object: .literal(
-                    value: validFrom,
-                    datatype: "http://www.w3.org/2001/XMLSchema#dateTime"
-                )
-            ))
-        }
-        if let validUntil = credential.validUntil {
-            quads.append(RDFQuad(
-                subject: .blank("root"),
-                predicate: "https://www.w3.org/2018/credentials#validUntil",
-                object: .literal(
-                    value: validUntil,
-                    datatype: "http://www.w3.org/2001/XMLSchema#dateTime"
-                )
-            ))
-        }
-
-        if let status {
-            quads.append(contentsOf: [
-                RDFQuad(
-                    subject: .blank("status"),
-                    predicate: "http://www.w3.org/1999/02/22-rdf-syntax-ns#type",
-                    object: .iri("https://w3id.org/vc-barcodes#\(status.type)")
-                ),
-                RDFQuad(
-                    subject: .blank("status"),
-                    predicate: "https://w3id.org/vc-barcodes#terseStatusListBaseUrl",
-                    object: .iri(status.terseStatusListBaseURL)
-                ),
-                RDFQuad(
-                    subject: .blank("status"),
-                    predicate: "https://w3id.org/vc-barcodes#terseStatusListIndex",
-                    object: .literal(
-                        value: String(status.terseStatusListIndex),
-                        datatype: "http://www.w3.org/2001/XMLSchema#integer"
-                    )
-                )
-            ])
-        }
-
-        return try RDFDatasetCanonicalizer.canonicalNQuads(quads)
     }
 }
 

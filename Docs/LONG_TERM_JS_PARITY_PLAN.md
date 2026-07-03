@@ -402,6 +402,7 @@ Native implementation milestones:
 Progress:
 
 - The VCB document graph now uses derived blank-node labels for the supported DMV credential graph instead of hardcoded `_:c14n` assumptions.
+- Supported VCB document JSON-LD-to-RDF expansion is isolated in `VCBJSONLDRDFExpander`; the verifier now consumes canonical N-Quads from that boundary instead of assembling the document graph inline.
 - VCB proof, status-list proof, and status-list document canonicalization now use structured RDF terms and a shared N-Quads renderer rather than independent raw string emitters.
 - Blank-node canonicalization now includes the RDFC n-degree path for shared first-degree hashes, covered by the W3C shared-hash example, with a bounded recursion budget for fail-closed behavior on overly complex graphs.
 - The RDF dataset model now supports named graphs and blank nodes in graph names, so canonicalization operates on quads rather than only default-graph triples.
