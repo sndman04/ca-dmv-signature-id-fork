@@ -17,6 +17,18 @@ Apple frameworks used:
 - `UIKit` in the optional iOS scanner target
 - `zlib`, linked as a system library for gzip decoding of Bitstring Status List `encodedList` values
 
+## Canonicalization Engine
+
+No external canonicalization engine is currently linked into the default Swift verifier. The current Phase 4 decision is to continue native Swift hardening and use the official JavaScript SDK only as a development oracle.
+
+See:
+
+```text
+Docs/CANONICALIZATION_ENGINE_DECISION.md
+```
+
+Any future Node, C, C++, Rust, Java, or JavaScript bridge must pass the documented parity, license, memory-safety, build, and platform criteria before it can become part of the default verifier.
+
 ## Reference SDK
 
 The official JavaScript SDK is kept under `References/cadmv-dlid-verifier-sdk/` for parity and attribution tracking.

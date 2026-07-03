@@ -38,11 +38,13 @@ References/cadmv-dlid-verifier-sdk/
 
 ## Future Cleanup
 
-Replace the native hand-built N-Quads emitters with a maintained Swift JSON-LD
-expansion plus RDFC-1.0 canonicalization implementation when one is available
-and can pass the official DMV JS parity fixtures. Until then, keep this package
-documented and tested as a narrow California DMV DL/ID VCB profile verifier,
-not a general Data Integrity, JSON-LD, or RDF canonicalization library.
+Replace the remaining profile-specific canonicalization code only after the
+candidate engine satisfies `Docs/CANONICALIZATION_ENGINE_DECISION.md`.
+
+Until then, keep this package documented and tested as a narrow California DMV
+DL/ID VCB profile verifier, not a general Data Integrity, JSON-LD, or RDF
+canonicalization library. The official JavaScript SDK remains a development
+oracle, not a runtime dependency for the default verifier.
 
 ## Known Upstream Harness Notes
 

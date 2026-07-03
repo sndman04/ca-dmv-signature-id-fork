@@ -378,6 +378,12 @@ Candidate implementation paths:
 - Swift wrapper around a C or Rust canonicalization library with a narrow C ABI.
 - Temporary Node/JavaScript bridge to the official SDK for development parity only.
 
+Current engine decision:
+
+- See `Docs/CANONICALIZATION_ENGINE_DECISION.md`.
+- The default verifier remains native Swift with no runtime bridge while Phase 4 hardening continues.
+- External canonicalization dependencies must satisfy the documented parity, license, memory-safety, build, and platform criteria before adoption.
+
 Native implementation milestones:
 
 - JSON-LD context loading policy:
@@ -409,6 +415,7 @@ Progress:
 - The JS oracle and parity comparator now compare VCB verify-data for committed official UAT fixtures, including the invalid-signature fixture.
 - The JS oracle smoke gate now also compares synthetic `ecdsa-rdfc-2019` status-list verify-data against Swift for the base status list and optional live-style VC fields.
 - The observed production mismatch class, where two otherwise valid credentials canonicalized with different subject/status blank-node ordering, is covered by synthetic tests and rechecked locally without storing raw payloads or PII.
+- Canonicalization engine selection is documented in `Docs/CANONICALIZATION_ENGINE_DECISION.md`: continue native Swift hardening now, use JS only as a development oracle, and require explicit bridge/dependency acceptance criteria before adding an external engine.
 - This is an intermediate milestone. The current implementation is a fail-closed DMV profile graph builder plus RDF term renderer, not a complete JSON-LD/RDF Dataset Canonicalization replacement.
 - Remaining Phase 4 work includes profile-independent JSON-LD/RDF processing, reference-equivalent comparisons for remaining non-status synthetic fixture classes, and the final standards-grade/native-library-backed engine decision.
 

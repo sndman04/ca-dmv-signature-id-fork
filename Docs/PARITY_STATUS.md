@@ -129,9 +129,10 @@ Completed Phase 4 work:
 - Added exact-output proof canonicalization tests for optional `created` and `expires` handling, plus W3C shared-hash canonicalization coverage.
 - Rechecked the prohibited-storage production vector locally in memory; the previous `data-integrity-vcb` divergence is resolved without committing raw payloads or PII.
 - Characterized `unknown-ignorable-cborld-values`: JS preserves text-encoded unknown credential/proof fields but rejects unknown compressed numeric term ids; Swift continues to fail closed until the replacement canonicalizer can preserve those fields safely.
+- Documented the canonicalization engine decision and external bridge acceptance criteria in `Docs/CANONICALIZATION_ENGINE_DECISION.md`.
 
 Remaining Phase 4 gates:
 
 - Replace the remaining profile-specific graph construction with the selected standards-grade or native-library-backed JSON-LD/RDF canonicalization engine.
 - Add reference-equivalent canonical N-Quads or verify-data comparisons for remaining synthetic fixture classes beyond the committed official UAT and status-list parity cases.
-- Document memory-safety, license, build, and platform implications if the final engine uses a native-library bridge.
+- Apply the documented memory-safety, license, build, and platform criteria if a native-library bridge is selected later.
