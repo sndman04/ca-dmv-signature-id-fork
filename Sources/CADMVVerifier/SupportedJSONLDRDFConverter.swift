@@ -9,7 +9,7 @@ enum SupportedJSONLDRDFConverter {
     static func quads(
         from document: [String: SupportedJSONLDValue]
     ) throws -> [RDFQuad] {
-        try requireSupportedContexts(document["@context"])
+        try PinnedJSONLDTermRegistry.requireVCBDocumentContexts(document["@context"])
         return try nodeQuads(
             document,
             subject: .blank("root"),
@@ -139,24 +139,6 @@ enum SupportedJSONLDRDFConverter {
             predicate: predicate,
             object: .literal(value: value, datatype: PinnedJSONLDTermRegistry.xsdDateTime)
         )
-    }
-
-    private static func requireSupportedContexts(_ value: SupportedJSONLDValue?) throws {
-        guard case .array(let contexts) = value else {
-            throw CADMVInternalError.unsupportedVCB
-        }
-        let strings = try contexts.map { value in
-            guard case .string(let context) = value else {
-                throw CADMVInternalError.unsupportedVCB
-            }
-            return context
-        }
-        guard strings == [
-            "https://www.w3.org/ns/credentials/v2",
-            "https://w3id.org/vc-barcodes/v1"
-        ] else {
-            throw CADMVInternalError.unsupportedVCB
-        }
     }
 
 }

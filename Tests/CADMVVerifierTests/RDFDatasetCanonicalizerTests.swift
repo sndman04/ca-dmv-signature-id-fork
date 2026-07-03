@@ -58,6 +58,51 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         }
     }
 
+    func testPinnedJSONLDTermRegistryAcceptsSupportedContextSets() throws {
+        try PinnedJSONLDTermRegistry.requireVCBDocumentContexts(.array([
+            .string(PinnedJSONLDTermRegistry.credentialsV2Context),
+            .string(PinnedJSONLDTermRegistry.vcBarcodesV1Context)
+        ]))
+        try PinnedJSONLDTermRegistry.requireStatusListDocumentContexts(.array([
+            .string(PinnedJSONLDTermRegistry.credentialsV2Context)
+        ]))
+        try PinnedJSONLDTermRegistry.requireProofContexts(.array([
+            .string(PinnedJSONLDTermRegistry.credentialsV2Context)
+        ]))
+        try PinnedJSONLDTermRegistry.requireProofContexts(.array([
+            .string(PinnedJSONLDTermRegistry.credentialsV2Context),
+            .string(PinnedJSONLDTermRegistry.vcBarcodesV1Context)
+        ]))
+    }
+
+    func testPinnedJSONLDTermRegistryRejectsUnsupportedContextSetsWithProfileErrors() {
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.requireVCBDocumentContexts(.array([
+            .string(PinnedJSONLDTermRegistry.credentialsV2Context)
+        ]))) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.requireStatusListDocumentContexts(.array([
+            .string(PinnedJSONLDTermRegistry.credentialsV2Context),
+            .string(PinnedJSONLDTermRegistry.vcBarcodesV1Context)
+        ]))) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.requireProofContexts(.array([
+            .string(PinnedJSONLDTermRegistry.vcBarcodesV1Context),
+            .string(PinnedJSONLDTermRegistry.credentialsV2Context)
+        ]))) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.requireVCBDocumentContexts(.array([
+            .unsigned(1)
+        ]))) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+        XCTAssertThrowsError(try PinnedJSONLDTermRegistry.requireStatusListDocumentContexts(nil)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+    }
+
     func testVCBJSONLDExpanderBuildsDocumentQuadsFromCredentialModel() throws {
         let nquads = try VCBJSONLDRDFExpander.canonicalNQuads(vcbCredential(
             validFrom: "2026-01-01T00:00:00Z",

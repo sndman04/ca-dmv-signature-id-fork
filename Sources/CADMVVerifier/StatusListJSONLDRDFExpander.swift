@@ -57,7 +57,7 @@ enum SupportedStatusListJSONLDRDFConverter {
     static func quads(
         from document: [String: SupportedJSONLDValue]
     ) throws -> [RDFQuad] {
-        try requireSupportedContexts(document["@context"])
+        try PinnedJSONLDTermRegistry.requireStatusListDocumentContexts(document["@context"])
         guard case .string(let id) = document["id"] else {
             throw CADMVInternalError.statusListDecodeFailed
         }
@@ -187,21 +187,6 @@ enum SupportedStatusListJSONLDRDFConverter {
             predicate: predicate,
             object: .literal(value: value, datatype: PinnedJSONLDTermRegistry.xsdDateTime)
         )
-    }
-
-    private static func requireSupportedContexts(_ value: SupportedJSONLDValue?) throws {
-        guard case .array(let contexts) = value else {
-            throw CADMVInternalError.statusListDecodeFailed
-        }
-        let strings = try contexts.map { value in
-            guard case .string(let context) = value else {
-                throw CADMVInternalError.statusListDecodeFailed
-            }
-            return context
-        }
-        guard strings == ["https://www.w3.org/ns/credentials/v2"] else {
-            throw CADMVInternalError.statusListDecodeFailed
-        }
     }
 
 }

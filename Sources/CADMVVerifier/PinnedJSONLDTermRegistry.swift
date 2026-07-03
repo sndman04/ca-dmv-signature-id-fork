@@ -1,4 +1,7 @@
 enum PinnedJSONLDTermRegistry {
+    static let credentialsV2Context = "https://www.w3.org/ns/credentials/v2"
+    static let vcBarcodesV1Context = "https://w3id.org/vc-barcodes/v1"
+
     static let rdfType = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
     static let xsdDateTime = "http://www.w3.org/2001/XMLSchema#dateTime"
     static let xsdInteger = "http://www.w3.org/2001/XMLSchema#integer"
@@ -18,6 +21,33 @@ enum PinnedJSONLDTermRegistry {
              "AamvaDriversLicenseScannableInformation",
              "TerseBitstringStatusListEntry":
             return vcb + value
+        default:
+            throw CADMVInternalError.unsupportedVCB
+        }
+    }
+
+    static func requireVCBDocumentContexts(_ value: SupportedJSONLDValue?) throws {
+        guard try contextStrings(from: value, error: .unsupportedVCB) == [
+            credentialsV2Context,
+            vcBarcodesV1Context
+        ] else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+    }
+
+    static func requireStatusListDocumentContexts(_ value: SupportedJSONLDValue?) throws {
+        guard try contextStrings(from: value, error: .statusListDecodeFailed) == [
+            credentialsV2Context
+        ] else {
+            throw CADMVInternalError.statusListDecodeFailed
+        }
+    }
+
+    static func requireProofContexts(_ value: SupportedJSONLDValue?) throws {
+        switch try contextStrings(from: value, error: .unsupportedVCB) {
+        case [credentialsV2Context],
+             [credentialsV2Context, vcBarcodesV1Context]:
+            return
         default:
             throw CADMVInternalError.unsupportedVCB
         }
@@ -115,5 +145,20 @@ enum PinnedJSONLDTermRegistry {
 
     static var cryptosuiteStringDatatype: String {
         security + "cryptosuiteString"
+    }
+
+    private static func contextStrings(
+        from value: SupportedJSONLDValue?,
+        error: CADMVInternalError
+    ) throws -> [String] {
+        guard case .array(let contexts) = value else {
+            throw error
+        }
+        return try contexts.map { value in
+            guard case .string(let context) = value else {
+                throw error
+            }
+            return context
+        }
     }
 }

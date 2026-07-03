@@ -140,6 +140,7 @@ Completed Phase 4 work:
 - Added W3C RDFC-1.0 subset coverage for empty datasets, blank nodes, graph names, shared graph names, language/datatype literals, Unicode and control-character escaping, duplicate input quads, and the negative clique graph; the native canonicalizer now de-duplicates RDF datasets before canonical labeling/rendering.
 - Added an internal RDFC issued-identifier map API and W3C map-test subset coverage, so canonical blank-node labeling can be asserted directly instead of only through rendered N-Quads.
 - Added a pinned JSON-LD term registry for the DMV, VC, status-list, schema.org, and security terms currently accepted by VCB, status-list, and proof converters; converters now use that registry while continuing to fail closed for unsupported signed terms.
+- Moved supported JSON-LD context-set policy for VCB documents, status-list documents, and proof documents into the pinned registry with profile-specific rejection coverage.
 
 Completed Phase 5 work:
 

@@ -535,7 +535,7 @@ enum SupportedProofJSONLDRDFConverter {
     static func quads(
         from document: [String: SupportedJSONLDValue]
     ) throws -> [RDFQuad] {
-        try requireSupportedContexts(document["@context"])
+        try PinnedJSONLDTermRegistry.requireProofContexts(document["@context"])
         var quads: [RDFQuad] = []
         for key in document.keys.sorted() {
             guard key != "@context" else {
@@ -602,25 +602,6 @@ enum SupportedProofJSONLDRDFConverter {
             predicate: predicate,
             object: .literal(value: value, datatype: PinnedJSONLDTermRegistry.xsdDateTime)
         )
-    }
-
-    private static func requireSupportedContexts(_ value: SupportedJSONLDValue?) throws {
-        guard case .array(let contexts) = value else {
-            throw CADMVInternalError.unsupportedVCB
-        }
-        let strings = try contexts.map { value in
-            guard case .string(let context) = value else {
-                throw CADMVInternalError.unsupportedVCB
-            }
-            return context
-        }
-        switch strings {
-        case ["https://www.w3.org/ns/credentials/v2"],
-             ["https://www.w3.org/ns/credentials/v2", "https://w3id.org/vc-barcodes/v1"]:
-            return
-        default:
-            throw CADMVInternalError.unsupportedVCB
-        }
     }
 
 }
