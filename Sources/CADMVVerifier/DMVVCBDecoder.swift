@@ -581,7 +581,7 @@ enum DMVVCBDecoder {
     private static func dateTimeText(from value: CBORValue) throws -> String {
         switch value {
         case let .textString(text):
-            guard isSafeDateTimeText(text) else {
+            guard isSafeDateTimeTextForRDF(text) else {
                 throw CADMVInternalError.unsupportedVCB
             }
             return text
@@ -666,7 +666,7 @@ enum DMVVCBDecoder {
             text.hasPrefix("https://api.uat-credentials.dmv.ca.gov/status/dlid/")
     }
 
-    private static func isSafeDateTimeText(_ text: String) -> Bool {
+    static func isSafeDateTimeTextForRDF(_ text: String) -> Bool {
         guard !text.isEmpty, text.count <= 64 else {
             return false
         }

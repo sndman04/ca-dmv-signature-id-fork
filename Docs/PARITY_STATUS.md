@@ -132,6 +132,7 @@ Completed Phase 4 work:
 - Rechecked the prohibited-storage production vector locally in memory; the previous `data-integrity-vcb` divergence is resolved without committing raw payloads or PII.
 - Characterized `unknown-ignorable-cborld-values`: JS preserves text-encoded unknown credential/proof fields but rejects unknown compressed numeric term ids; Swift continues to fail closed until the replacement canonicalizer can preserve those fields safely.
 - Documented the canonicalization engine decision and external bridge acceptance criteria in `Docs/CANONICALIZATION_ENGINE_DECISION.md`.
+- Added `SupportedJSONLDRDFConverter` so VCB document canonicalization now flows through a supported-context JSON-LD-to-RDF conversion boundary instead of directly assembling RDF quads from the credential model; unsupported contexts and unknown signed terms fail closed at that boundary.
 
 Completed Phase 5 work:
 
@@ -143,7 +144,7 @@ Completed Phase 5 work:
 
 Remaining Phase 4 gates:
 
-- Replace the remaining profile-specific graph construction with the selected standards-grade or native-library-backed JSON-LD/RDF canonicalization engine.
+- Replace the remaining supported-context JSON-LD/RDF converter with the selected standards-grade or native-library-backed canonicalization engine.
 - Add reference-equivalent canonical N-Quads or verify-data comparisons for remaining synthetic fixture classes beyond the committed official UAT and status-list parity cases.
 - Apply the documented memory-safety, license, build, and platform criteria if a native-library bridge is selected later.
 

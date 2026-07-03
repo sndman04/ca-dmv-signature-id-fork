@@ -95,7 +95,7 @@ Unknown signed fields fail closed today because the legacy handbuilt canonicaliz
 - Text-encoded unknown proof keys decode successfully and are preserved in `proof`.
 - Unknown compressed numeric term ids fail during CBOR-LD decode.
 
-Swift intentionally still fails closed for unknown credential and proof keys until the replacement canonicalization engine can preserve those decoded fields and feed them into the same RDF canonicalization path as the JS verifier. Accepting and then dropping unknown signed fields would create a false-positive verification risk.
+Swift intentionally still fails closed for unknown credential and proof keys until the replacement canonicalization engine can preserve those decoded fields and feed them into the same RDF canonicalization path as the JS verifier. The supported-context JSON-LD-to-RDF boundary also rejects unknown signed terms rather than silently dropping them. Accepting and then dropping unknown signed fields would create a false-positive verification risk.
 
 ## Parity Evidence
 

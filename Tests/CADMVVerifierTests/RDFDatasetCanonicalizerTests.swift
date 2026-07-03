@@ -18,8 +18,8 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssert(nquads.contains("\"2030-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime>"))
     }
 
-    func testVCBJSONLDExpanderOmitsAbsentStatusAndValidityDates() {
-        let quads = VCBJSONLDRDFExpander.documentQuads(vcbCredential(
+    func testVCBJSONLDExpanderOmitsAbsentStatusAndValidityDates() throws {
+        let quads = try VCBJSONLDRDFExpander.documentQuads(vcbCredential(
             credentialStatus: nil
         ))
 
@@ -33,6 +33,42 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssertFalse(quads.contains {
             $0.predicate == "https://www.w3.org/2018/credentials#validUntil"
         })
+    }
+
+    func testVCBJSONLDExpanderBuildsJSONLDDocumentBeforeRDFConversion() {
+        let document = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
+            validFrom: "2026-01-01T00:00:00Z"
+        ))
+
+        XCTAssertEqual(document["@context"], .array([
+            .string("https://www.w3.org/ns/credentials/v2"),
+            .string("https://w3id.org/vc-barcodes/v1")
+        ]))
+        XCTAssertEqual(document["issuer"], .string("did:web:uat-credentials.dmv.ca.gov"))
+        XCTAssertEqual(document["validFrom"], .string("2026-01-01T00:00:00Z"))
+    }
+
+    func testSupportedJSONLDConverterRejectsUnsupportedContextAndTerms() throws {
+        var document = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential())
+        document["@context"] = .array([.string("https://example.invalid/context")])
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: document)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        var unknownTermDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential())
+        unknownTermDocument["unknownSignedField"] = .string("must-not-drop")
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: unknownTermDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        var unknownTypeDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential())
+        unknownTypeDocument["type"] = .array([.string("VerifiableCredential"), .string("UnknownCredential")])
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: unknownTypeDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
     }
 
     func testDataIntegrityProofCanonicalizerIncludesOptionalCreatedAndExpires() throws {
