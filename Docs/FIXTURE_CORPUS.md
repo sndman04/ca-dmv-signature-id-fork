@@ -31,7 +31,7 @@ Current committed/generated coverage includes:
 
 Documented gaps:
 
-- `unknown-ignorable-cborld-values`: requires official SDK characterization. Current Swift policy fails closed on unknown signed credential fields.
+- `unknown-ignorable-cborld-values`: JS behavior is characterized, but the final Swift replacement still needs a canonicalization engine that preserves JS-accepted text-encoded unknown signed fields instead of dropping them.
 
 These documented gaps satisfy Phase 2 inventory requirements, but they do not satisfy the final project requirement that nothing remain skipped or deferred. They must be converted into generated or committed test coverage before the long-term replacement is complete.
 

@@ -170,7 +170,7 @@
       "expectedPublicResult": "varies",
       "expectedFirstFailureStage": "varies",
       "categories": ["unknown-ignorable-cborld-values"],
-      "gapReason": "Needs official SDK characterization; current Swift policy fails closed on unknown signed credential fields."
+      "gapReason": "JS characterization is recorded in Tools/cborld-unknown-field-characterization.mjs. Final Swift replacement must preserve and canonicalize JS-accepted text-encoded unknown signed fields before this can move out of documented-gap status."
     }
   ]
 }

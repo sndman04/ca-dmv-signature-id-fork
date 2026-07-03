@@ -279,7 +279,9 @@ Required corpus coverage:
 - Base64 with scanner whitespace.
 - CBOR-LD valid minimal DMV credential.
 - Unsupported CBOR-LD registry entries.
-- Unknown but safely ignorable CBOR-LD values, if the official SDK ignores them.
+- Unknown CBOR-LD values characterized against the official SDK:
+  - text-encoded unknown signed credential/proof fields that JS preserves;
+  - unknown compressed numeric term ids that JS rejects.
 - Duplicate CBOR map keys.
 - Oversized CBOR map/array declarations.
 - Deeply nested CBOR.
@@ -347,7 +349,7 @@ Tasks:
   - unsafe strings rejected where applicable
 - Confirm decoded Swift credential models preserve all fields that affect signatures.
 - Add oracle comparisons for decoded credential shape without exposing PII.
-- Decide whether credential models should preserve unknown fields for standards-grade canonicalization rather than dropping them.
+- Preserve JS-accepted text-encoded unknown signed fields for standards-grade canonicalization rather than dropping them; continue rejecting unknown compressed numeric term ids to match JS decode behavior.
 
 Exit criteria:
 

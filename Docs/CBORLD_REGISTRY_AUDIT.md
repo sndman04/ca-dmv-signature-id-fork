@@ -87,14 +87,25 @@ The current Swift decoder preserves every field currently used by the supported 
 
 Unknown signed fields fail closed today because the legacy handbuilt canonicalization path would otherwise drop signature-relevant data. Phase 4 must replace this with standards-grade JSON-LD/RDF canonicalization that can include standards-valid signed fields without hand-editing N-Quads.
 
+## Unknown Field Characterization
+
+`Tools/cborld-unknown-field-characterization.mjs` characterizes the reference JS CBOR-LD decoder with synthetic, non-PII credentials:
+
+- Text-encoded unknown top-level credential keys decode successfully and are preserved in the JSON-LD object.
+- Text-encoded unknown proof keys decode successfully and are preserved in `proof`.
+- Unknown compressed numeric term ids fail during CBOR-LD decode.
+
+Swift intentionally still fails closed for unknown credential and proof keys until the replacement canonicalization engine can preserve those decoded fields and feed them into the same RDF canonicalization path as the JS verifier. Accepting and then dropping unknown signed fields would create a false-positive verification risk.
+
 ## Parity Evidence
 
 Current parity checks:
 
 - `Tools/parity-compare.mjs` compares JS and Swift official UAT fixture summaries.
 - The comparison includes final validity, first failure stage, AAMVA optical hash, VCB verify-data, VCB byte length, and privacy-safe credential profile flags.
+- `Tools/cborld-unknown-field-characterization.mjs` records JS CBOR-LD behavior for text-encoded unknown fields and unknown compressed numeric term ids.
 - `FixtureManifestTests` verifies Phase 2 fixture category coverage and privacy constraints.
 
 Current known gap:
 
-- `unknown-ignorable-cborld-values` requires official SDK characterization before Swift can decide whether to preserve and canonicalize or fail closed.
+- `unknown-ignorable-cborld-values` is characterized, but the final Swift replacement still needs standards-grade JSON-LD/RDF canonicalization before it can safely match JS acceptance of text-encoded unknown signed fields.

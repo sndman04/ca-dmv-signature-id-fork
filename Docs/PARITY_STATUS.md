@@ -108,6 +108,7 @@ Completed Phase 3 work:
 
 - Added `Docs/CBORLD_REGISTRY_AUDIT.md`.
 - Expanded `Tools/parity-compare.mjs` to compare VCB byte length and privacy-safe credential profile fields.
+- Added `Tools/cborld-unknown-field-characterization.mjs` to record reference JS behavior for text-encoded unknown signed fields and unknown compressed numeric term ids.
 
 Completed Phase 3 gates:
 
@@ -125,6 +126,7 @@ Completed Phase 4 work:
 - Added synthetic regression coverage for the observed production class where status-list and subject blank nodes can swap canonical order based on credential content.
 - Added exact-output proof canonicalization tests for optional `created` and `expires` handling, plus W3C shared-hash canonicalization coverage.
 - Rechecked the prohibited-storage production vector locally in memory; the previous `data-integrity-vcb` divergence is resolved without committing raw payloads or PII.
+- Characterized `unknown-ignorable-cborld-values`: JS preserves text-encoded unknown credential/proof fields but rejects unknown compressed numeric term ids; Swift continues to fail closed until the replacement canonicalizer can preserve those fields safely.
 
 Remaining Phase 4 gates:
 
