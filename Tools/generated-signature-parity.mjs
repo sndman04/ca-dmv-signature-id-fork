@@ -148,6 +148,10 @@ const signedCredentialWithStatusAndValidityDates = await issueCredential(
     validUntil: '2030-01-01T00:00:00Z'
   })
 );
+const signedExpiredCredential = await issueCredential(baseCredential({
+  validFrom: '2026-01-01T00:00:00Z',
+  validUntil: '2026-01-02T00:00:00Z'
+}));
 const validZVCB = await encodeVCB(signedCredential);
 const validUCredential = withProofValue(
   signedCredential,
@@ -193,6 +197,14 @@ const fixtures = [
       encodedVCB: await encodeVCB(signedCredentialWithStatusAndValidityDates)
     }),
     expectVerified: true
+  },
+  {
+    id: 'generated-expired-valid-signature',
+    payload: makeAAMVABarcode({
+      encodedVCB: await encodeVCB(signedExpiredCredential)
+    }),
+    expectVerified: false,
+    expectedStage: 'expiration'
   },
   {
     id: 'generated-tampered-proof-signature',
@@ -470,6 +482,12 @@ function firstFailureStage(result) {
     error?.cause?.message ??
     null;
   const message = error?.message ?? '';
+  if(message.includes('validUntil') ||
+    cause?.includes?.('validUntil') ||
+    message.includes('expired') ||
+    cause?.includes?.('expired')) {
+    return 'expiration';
+  }
   if(message.includes('Verify') || cause === 'Invalid signature.') {
     return 'data-integrity-vcb';
   }
