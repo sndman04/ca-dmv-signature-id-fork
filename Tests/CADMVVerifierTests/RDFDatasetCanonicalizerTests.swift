@@ -103,6 +103,45 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         """)
     }
 
+    func testCanonicalizerRendersNamedGraphIRI() throws {
+        let nquads = try RDFDatasetCanonicalizer.canonicalNQuads([
+            RDFQuad(
+                subject: .iri("https://example.com/subject"),
+                predicate: "https://example.com/predicate",
+                object: .literal(value: "value", datatype: nil),
+                graph: .iri("https://example.com/graph")
+            )
+        ])
+
+        XCTAssertEqual(nquads, """
+        <https://example.com/subject> <https://example.com/predicate> "value" <https://example.com/graph> .
+
+        """)
+    }
+
+    func testCanonicalizerIncludesBlankGraphNamesInCanonicalLabels() throws {
+        let nquads = try RDFDatasetCanonicalizer.canonicalNQuads([
+            RDFQuad(
+                subject: .iri("https://example.com/subject"),
+                predicate: "https://example.com/predicate",
+                object: .literal(value: "first", datatype: nil),
+                graph: .blank("graphA")
+            ),
+            RDFQuad(
+                subject: .blank("subject"),
+                predicate: "https://example.com/predicate",
+                object: .literal(value: "second", datatype: nil),
+                graph: .blank("graphA")
+            )
+        ])
+
+        XCTAssertEqual(nquads, """
+        <https://example.com/subject> <https://example.com/predicate> "first" _:c14n1 .
+        _:c14n0 <https://example.com/predicate> "second" _:c14n1 .
+
+        """)
+    }
+
     private func productionCredentialQuads(statusListIndex: UInt64) -> [RDFQuad] {
         [
             RDFQuad(

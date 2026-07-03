@@ -158,6 +158,19 @@ struct RDFQuad: Equatable {
     let subject: RDFTerm
     let predicate: String
     let object: RDFTerm
+    let graph: RDFTerm?
+
+    init(
+        subject: RDFTerm,
+        predicate: String,
+        object: RDFTerm,
+        graph: RDFTerm? = nil
+    ) {
+        self.subject = subject
+        self.predicate = predicate
+        self.object = object
+        self.graph = graph
+    }
 }
 
 enum RDFDatasetCanonicalizer {
@@ -246,7 +259,8 @@ enum RDFDatasetCanonicalizer {
         let lines = quads
             .filter {
                 $0.subject.blankNodeIdentifier == identifier ||
-                    $0.object.blankNodeIdentifier == identifier
+                    $0.object.blankNodeIdentifier == identifier ||
+                    $0.graph?.blankNodeIdentifier == identifier
             }
             .map { quad in
                 render(quad) { blankIdentifier in
@@ -320,6 +334,19 @@ enum RDFDatasetCanonicalizer {
                     position: "o"
                 )
                 hashToRelatedIdentifiers[relatedHash, default: []].insert(objectIdentifier)
+            }
+
+            if let graphIdentifier = quad.graph?.blankNodeIdentifier,
+               graphIdentifier != identifier {
+                let relatedHash = try hashRelatedBlankNode(
+                    related: graphIdentifier,
+                    quad: quad,
+                    firstDegreeHashes: firstDegreeHashes,
+                    canonicalIssuer: canonicalIssuer,
+                    issuer: issuer,
+                    position: "g"
+                )
+                hashToRelatedIdentifiers[relatedHash, default: []].insert(graphIdentifier)
             }
         }
 
@@ -395,7 +422,8 @@ enum RDFDatasetCanonicalizer {
     private static func quadsMentioning(identifier: String, quads: [RDFQuad]) -> [RDFQuad] {
         quads.filter {
             $0.subject.blankNodeIdentifier == identifier ||
-                $0.object.blankNodeIdentifier == identifier
+                $0.object.blankNodeIdentifier == identifier ||
+                $0.graph?.blankNodeIdentifier == identifier
         }
     }
 
@@ -417,7 +445,8 @@ enum RDFDatasetCanonicalizer {
         Array(Set(quads.flatMap { quad -> [String] in
             [
                 quad.subject.blankNodeIdentifier,
-                quad.object.blankNodeIdentifier
+                quad.object.blankNodeIdentifier,
+                quad.graph?.blankNodeIdentifier
             ].compactMap { $0 }
         })).sorted()
     }
@@ -438,7 +467,8 @@ enum RDFDatasetCanonicalizer {
         _ quad: RDFQuad,
         blankLabel: (String) -> String
     ) -> String {
-        "\(render(quad.subject, blankLabel: blankLabel)) <\(quad.predicate)> \(render(quad.object, blankLabel: blankLabel)) ."
+        let graph = quad.graph.map { " \(render($0, blankLabel: blankLabel))" } ?? ""
+        return "\(render(quad.subject, blankLabel: blankLabel)) <\(quad.predicate)> \(render(quad.object, blankLabel: blankLabel))\(graph) ."
     }
 
     private static func render(
