@@ -215,10 +215,10 @@ Tasks:
 
 Exit criteria:
 
-- `Tools/reference-runner.mjs` or a successor can run arbitrary stdin payloads.
-- CI can run reference parity tests when Node dependencies are available.
-- Missing Node/reference dependencies produce a clear skipped-parity result, not a false pass.
-- The oracle can identify the first divergence stage for supported test vectors.
+- [x] `Tools/reference-runner.mjs` or a successor can run arbitrary stdin payloads.
+- [x] CI can run reference parity checks when Node dependencies are available.
+- [x] Missing Node/reference dependencies produce a clear skipped-parity result, not a false pass.
+- [x] The oracle can identify the first divergence stage for supported test vectors.
 
 ## Phase 2: Fixture And Corpus Strategy
 

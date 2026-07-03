@@ -30,3 +30,6 @@ jobs:
 
       - name: Report parity status
         run: Tools/parity-status.sh
+
+      - name: Reference oracle smoke
+        run: Tools/reference-oracle-smoke.sh

@@ -14,7 +14,8 @@ let package = Package(
     products: [
         .library(name: "CADMVVerifier", targets: ["CADMVVerifier"]),
         .library(name: "CADMVScanner", targets: ["CADMVScanner"]),
-        .executable(name: "CADMVVerifierSelfTest", targets: ["CADMVVerifierSelfTest"])
+        .executable(name: "CADMVVerifierSelfTest", targets: ["CADMVVerifierSelfTest"]),
+        .executable(name: "CADMVVerifierOracle", targets: ["CADMVVerifierOracle"])
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-crypto.git", "4.0.0" ..< "5.0.0")
@@ -42,6 +43,13 @@ let package = Package(
         .executableTarget(
             name: "CADMVVerifierSelfTest",
             dependencies: ["CADMVVerifier", "CADMVScanner"],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency")
+            ]
+        ),
+        .executableTarget(
+            name: "CADMVVerifierOracle",
+            dependencies: ["CADMVVerifier"],
             swiftSettings: [
                 .enableExperimentalFeature("StrictConcurrency")
             ]

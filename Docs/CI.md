@@ -8,6 +8,7 @@ swift build -c release
 Tools/swift-test.sh
 swift run CADMVVerifierSelfTest
 Tools/parity-status.sh
+Tools/reference-oracle-smoke.sh
 ```
 
 GitHub Actions runs these commands on push and pull request in `.github/workflows/ci.yml`.
@@ -28,6 +29,23 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift run CADMVVerifier
 The SwiftPM tests cover focused regression cases. The self-test contains the official valid/invalid UAT fixture parity checks and uses fixture-backed DID Web and status endpoint responses. CI must run both `Tools/swift-test.sh` and `swift run CADMVVerifierSelfTest`.
 
 `Tools/parity-status.sh` reports known JS/Swift parity gaps from `Docs/PARITY_STATUS.md` separately from Swift unit-test failures. During Phase 0 it is informational because the migration plan intentionally records known blocking parity work before the JS oracle harness is complete.
+
+`Tools/reference-oracle-smoke.sh` runs the JavaScript reference oracle when Node and the reference SDK dependencies are available. If either is missing, it prints an explicit skip message instead of silently passing as though JS parity was checked.
+
+The reference oracle supports two modes:
+
+```sh
+# Built-in official fixture summary.
+node Tools/reference-runner.mjs
+
+# Privacy-minimized stdin oracle for a scanner payload kept in process memory.
+node Tools/reference-runner.mjs --stdin --mode=prod
+
+# Swift/JS parity comparison for committed official fixtures.
+node Tools/parity-compare.mjs
+```
+
+The stdin mode emits JSON with the selected SDK baseline, mode, high-level outcome, first failure stage, VCB byte count, credential profile class, and AAMVA optical hash. It must not be used to log raw PDF417 payloads or decoded identity fields.
 
 ## Expected Self-Test Coverage
 

@@ -56,7 +56,11 @@ Notes: Raw payload and decoded identity data are not stored. The observed AAMVA 
 
 ## Phase Status
 
-Phase 0 is in progress.
+Phase 0 is complete.
+
+Phase 1 is complete.
+
+Phase 2 is next.
 
 Completed:
 
@@ -67,7 +71,19 @@ Completed:
 - Privacy-safe parity dashboard format created.
 - Known production parity mismatch recorded as a redacted vector without raw barcode or PII.
 
-Remaining Phase 0 gates:
+Completed Phase 0 gates:
 
 - Build and tests pass with no warnings.
 - Phase 0 changes committed and pushed.
+
+Completed Phase 1 work:
+
+- `Tools/reference-runner.mjs` supports existing official fixture summary mode.
+- `Tools/reference-runner.mjs --stdin` accepts raw payloads from stdin and emits privacy-minimized JSON.
+- `Tools/reference-oracle-smoke.sh` can run oracle smoke checks when Node and reference SDK dependencies are installed, or explicitly report a skip when they are unavailable.
+- `CADMVVerifierOracle` emits privacy-minimized Swift verifier summaries for stdin payloads.
+- `Tools/parity-compare.mjs` compares Swift and JS summaries for committed official UAT fixtures.
+
+Completed Phase 1 gates:
+
+- Commit and push completed Phase 1.
