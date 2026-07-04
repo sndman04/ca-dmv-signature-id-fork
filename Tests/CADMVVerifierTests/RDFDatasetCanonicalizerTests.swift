@@ -330,6 +330,13 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                             "https://example.invalid/terms/graphName": .string("In graph")
                         ])
                     ]),
+                    "@included": .array([
+                        .object([
+                            "@id": .string("https://example.invalid/resources/included"),
+                            "@type": .string("https://example.invalid/types/Included"),
+                            "https://example.invalid/terms/includedName": .string("Included")
+                        ])
+                    ]),
                     "https://example.invalid/terms/name": .string("Typed node")
                 ]),
                 "https://example.invalid/terms/typedBlankNode": .object([
@@ -352,6 +359,12 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(typedNodeNQuads.contains(
             "<https://example.invalid/resources/in-graph> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/InGraph> <https://example.invalid/resources/typed-node>"
+        ))
+        XCTAssert(typedNodeNQuads.contains(
+            "<https://example.invalid/resources/included> <https://example.invalid/terms/includedName> \"Included\""
+        ))
+        XCTAssert(typedNodeNQuads.contains(
+            "<https://example.invalid/resources/included> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/Included>"
         ))
         XCTAssert(typedNodeNQuads.contains(
             "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/BlankNode>"
@@ -418,6 +431,20 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@graph": .object([
                         "@id": .string("https://example.invalid/resources/in-graph"),
                         "compactGraphTerm": .string("unsupported")
+                    ])
+                ])
+            ]
+        ), mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(vcbCredential(
+            additionalProperties: [
+                "https://example.invalid/terms/includedNode": .object([
+                    "@id": .string("https://example.invalid/resources/one"),
+                    "@included": .object([
+                        "@id": .string("https://example.invalid/resources/included"),
+                        "compactIncludedTerm": .string("unsupported")
                     ])
                 ])
             ]
@@ -615,6 +642,10 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@graph": .object([
                         "@id": .string("https://example.invalid/resources/status-in-graph"),
                         "https://example.invalid/terms/statusGraphName": .string("Status graph")
+                    ]),
+                    "@included": .object([
+                        "@id": .string("https://example.invalid/resources/status-included"),
+                        "https://example.invalid/terms/statusIncludedName": .string("Status included")
                     ])
                 ])
             ]
@@ -637,6 +668,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/resources/status-in-graph> <https://example.invalid/terms/statusGraphName> \"Status graph\" <https://example.invalid/resources/status-subject-node>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/resources/status-included> <https://example.invalid/terms/statusIncludedName> \"Status included\""
         ))
     }
 
@@ -748,6 +782,10 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@graph": .object([
                         "@id": .string("https://example.invalid/resources/proof-in-graph"),
                         "https://example.invalid/terms/proofGraphName": .string("Proof graph")
+                    ]),
+                    "@included": .object([
+                        "@id": .string("https://example.invalid/resources/proof-included"),
+                        "https://example.invalid/terms/proofIncludedName": .string("Proof included")
                     ])
                 ])
             ]
@@ -764,6 +802,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/resources/proof-in-graph> <https://example.invalid/terms/proofGraphName> \"Proof graph\" <https://example.invalid/resources/proof-node>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/resources/proof-included> <https://example.invalid/terms/proofIncludedName> \"Proof included\""
         ))
     }
 

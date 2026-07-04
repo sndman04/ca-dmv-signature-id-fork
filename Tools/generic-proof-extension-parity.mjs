@@ -39,6 +39,11 @@ const proofConfig = {
       '@type': 'https://example.invalid/types/ProofInGraph',
       'https://example.invalid/proof/graphName': 'Proof graph'
     },
+    '@included': {
+      '@id': 'https://example.invalid/resources/proof-included',
+      '@type': 'https://example.invalid/types/ProofIncluded',
+      'https://example.invalid/proof/includedName': 'Proof included'
+    },
     'https://example.invalid/proof/referenceName': 'Proof Reference'
   },
   'https://example.invalid/proof/typedBlankNode': {

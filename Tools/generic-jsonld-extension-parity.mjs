@@ -42,6 +42,13 @@ const extensionDocument = {
         'https://example.invalid/terms/graphName': 'In graph'
       }
     ],
+    '@included': [
+      {
+        '@id': 'https://example.invalid/resources/included',
+        '@type': 'https://example.invalid/types/Included',
+        'https://example.invalid/terms/includedName': 'Included'
+      }
+    ],
     'https://example.invalid/terms/referenceName': 'Reference'
   },
   'https://example.invalid/terms/typedBlankNode': {

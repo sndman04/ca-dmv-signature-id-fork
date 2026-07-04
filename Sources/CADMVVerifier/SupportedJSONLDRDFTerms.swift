@@ -259,6 +259,14 @@ enum SupportedJSONLDRDFTerms {
                     ))
                     continue
                 }
+                if key == "@included" {
+                    quads.append(contentsOf: try genericIncludedQuads(
+                        value,
+                        error: error,
+                        blankNodeCounter: &blankNodeCounter
+                    ))
+                    continue
+                }
                 guard let nestedQuads = try genericAbsoluteIRIQuads(
                     key: key,
                     value: value,
@@ -440,6 +448,17 @@ enum SupportedJSONLDRDFTerms {
                 ))
                 continue
             }
+            if key == "@included" {
+                guard let value = object[key] else {
+                    continue
+                }
+                quads.append(contentsOf: try genericIncludedQuads(
+                    value,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                ))
+                continue
+            }
             guard let value = object[key],
                   let nestedQuads = try genericAbsoluteIRIQuads(
                     key: key,
@@ -558,6 +577,17 @@ enum SupportedJSONLDRDFTerms {
                     ))
                     continue
                 }
+                if key == "@included" {
+                    guard let value = object[key] else {
+                        continue
+                    }
+                    quads.append(contentsOf: try genericIncludedQuads(
+                        value,
+                        error: error,
+                        blankNodeCounter: &blankNodeCounter
+                    ))
+                    continue
+                }
                 guard let value = object[key],
                       let nestedQuads = try genericAbsoluteIRIQuads(
                         key: key,
@@ -619,6 +649,17 @@ enum SupportedJSONLDRDFTerms {
                 quads.append(contentsOf: try genericGraphQuads(
                     value,
                     graph: nestedSubject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                ))
+                continue
+            }
+            if key == "@included" {
+                guard let value = object[key] else {
+                    continue
+                }
+                quads.append(contentsOf: try genericIncludedQuads(
+                    value,
                     error: error,
                     blankNodeCounter: &blankNodeCounter
                 ))
@@ -802,6 +843,14 @@ enum SupportedJSONLDRDFTerms {
                 ))
                 continue
             }
+            if key == "@included" {
+                quads.append(contentsOf: try genericIncludedQuads(
+                    value,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                ))
+                continue
+            }
             guard let nestedQuads = try genericAbsoluteIRIQuads(
                 key: key,
                 value: value,
@@ -873,6 +922,17 @@ enum SupportedJSONLDRDFTerms {
                     ))
                     continue
                 }
+                if key == "@included" {
+                    quads.append(contentsOf: try withGraph(
+                        genericIncludedQuads(
+                            value,
+                            error: error,
+                            blankNodeCounter: &blankNodeCounter
+                        ),
+                        graph: graph
+                    ))
+                    continue
+                }
                 guard let nestedQuads = try genericAbsoluteIRIQuads(
                     key: key,
                     value: value,
@@ -884,6 +944,31 @@ enum SupportedJSONLDRDFTerms {
                 }
                 quads.append(contentsOf: withGraph(nestedQuads, graph: graph))
             }
+        }
+        return quads
+    }
+
+    private static func genericIncludedQuads(
+        _ value: SupportedJSONLDValue,
+        error: CADMVInternalError,
+        blankNodeCounter: inout Int
+    ) throws -> [RDFQuad] {
+        let includedNodes: [SupportedJSONLDValue]
+        switch value {
+        case .array(let array):
+            includedNodes = array
+        default:
+            includedNodes = [value]
+        }
+
+        var quads: [RDFQuad] = []
+        for includedNode in includedNodes {
+            let included = try genericNodeSubjectTerm(
+                includedNode,
+                error: error,
+                blankNodeCounter: &blankNodeCounter
+            )
+            quads.append(contentsOf: included.quads)
         }
         return quads
     }
