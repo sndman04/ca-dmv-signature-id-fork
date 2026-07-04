@@ -10,6 +10,23 @@ run() {
     "$@"
 }
 
+run_required_reference_oracle_smoke() {
+    output_file="$(mktemp)"
+    printf '\n==> Tools/reference-oracle-smoke.sh\n'
+    if ! Tools/reference-oracle-smoke.sh >"$output_file" 2>&1; then
+        cat "$output_file"
+        rm -f "$output_file"
+        exit 1
+    fi
+    cat "$output_file"
+    if grep -q 'Reference oracle smoke: skipped' "$output_file"; then
+        printf 'Reference oracle smoke is required for final release audit.\n' >&2
+        rm -f "$output_file"
+        exit 1
+    fi
+    rm -f "$output_file"
+}
+
 check_security_exceptions() {
     exception_count=$(
         awk '
@@ -51,7 +68,7 @@ run swift build -c release
 run Tools/swift-test.sh
 run swift run CADMVVerifierSelfTest
 run Tools/parity-status.sh
-run Tools/reference-oracle-smoke.sh
+run_required_reference_oracle_smoke
 run Tools/replacement-readiness.sh
 run node Tools/generate-conformance-report.mjs --check
 check_security_exceptions

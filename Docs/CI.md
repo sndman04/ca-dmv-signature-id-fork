@@ -29,7 +29,7 @@ Tools/final-release-audit.sh
 
 `Tools/replacement-readiness.sh` fails if public verification no longer routes through the production native engine selector or if release-blocking replacement caveats return to docs/generated reports.
 
-`Tools/final-release-audit.sh` is the release-level aggregate gate. It runs debug and release builds, SwiftPM tests, fixture self-test, parity status, reference oracle smoke checks, replacement readiness, conformance report freshness checks, the security-exception inventory check, and the no-documented-fixture-gaps check in sequence.
+`Tools/final-release-audit.sh` is the release-level aggregate gate. It runs debug and release builds, SwiftPM tests, fixture self-test, parity status, reference oracle smoke checks, replacement readiness, conformance report freshness checks, the security-exception inventory check, and the no-documented-fixture-gaps check in sequence. Unlike the standalone smoke script, the final audit fails if the JavaScript reference oracle is skipped because Node or reference SDK dependencies are unavailable.
 
 GitHub Actions runs the Swift gates, parity status check, `Tools/reference-oracle-smoke.sh`, and `Tools/final-release-audit.sh` on push and pull request in `.github/workflows/ci.yml`. The smoke wrapper runs the JS reference parity tools when Node and the reference SDK dependencies are available.
 
@@ -50,9 +50,9 @@ The SwiftPM tests cover focused regression cases. The self-test contains the off
 
 `FuzzRegressionTests` runs deterministic generated crash/regression seeds through the AAMVA parser, CBOR reader, VCB decoder, and public malformed-result mapping. These are not randomized CI fuzzers; they are stable seeds that make parser hardening regressions reproducible in the standard SwiftPM test gate.
 
-`Tools/parity-status.sh` reports known JS/Swift parity gaps from `Docs/PARITY_STATUS.md` separately from Swift unit-test failures. During Phase 0 it is informational because the migration plan intentionally records known blocking parity work before the JS oracle harness is complete.
+`Tools/parity-status.sh` reports known JS/Swift parity gaps from `Docs/PARITY_STATUS.md` separately from Swift unit-test failures. The final release audit also checks that no blocking parity records, unapproved security exceptions, or documented fixture gaps remain.
 
-`Tools/reference-oracle-smoke.sh` runs the JavaScript reference oracle when Node and the reference SDK dependencies are available. If either is missing, it prints an explicit skip message instead of silently passing as though JS parity was checked.
+`Tools/reference-oracle-smoke.sh` runs the JavaScript reference oracle when Node and the reference SDK dependencies are available. If either is missing, it prints an explicit skip message for local development. The final release audit treats that skip as a failure.
 
 The reference oracle supports two modes:
 

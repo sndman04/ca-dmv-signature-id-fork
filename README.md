@@ -88,7 +88,7 @@ Before release, run the aggregate audit gate:
 Tools/final-release-audit.sh
 ```
 
-It runs debug/release builds, Swift tests, fixture self-test, JavaScript reference smoke checks when available, replacement readiness, conformance report freshness, and security-exception inventory checks.
+It runs debug/release builds, Swift tests, fixture self-test, required JavaScript reference smoke checks, replacement readiness, conformance report freshness, security-exception inventory checks, and no-documented-fixture-gaps checks. The audit fails if the JavaScript reference oracle is skipped because Node or reference SDK dependencies are unavailable.
 
 `Tools/swift-test.sh` automatically points SwiftPM at the full Xcode toolchain when `xcode-select` is using Command Line Tools, because Command Line Tools may not expose XCTest. The equivalent manual command is:
 

@@ -70,11 +70,11 @@ Phase 5 is complete.
 
 Phase 6 is complete.
 
-Phase 7 is in progress.
+Phase 7 is complete.
 
-Phase 8 is in progress.
+Phase 8 is complete.
 
-Phase 9 is in progress.
+Phase 9 is complete for the supported DMV replacement scope.
 
 Completed:
 
@@ -94,7 +94,7 @@ Completed Phase 1 work:
 
 - `Tools/reference-runner.mjs` supports existing official fixture summary mode.
 - `Tools/reference-runner.mjs --stdin` accepts raw payloads from stdin and emits privacy-minimized JSON.
-- `Tools/reference-oracle-smoke.sh` can run oracle smoke checks when Node and reference SDK dependencies are installed, or explicitly report a skip when they are unavailable.
+- `Tools/reference-oracle-smoke.sh` can run oracle smoke checks when Node and reference SDK dependencies are installed, or explicitly report a skip when they are unavailable. The final release audit treats that skip as a failure.
 - `CADMVVerifierOracle` emits privacy-minimized Swift verifier summaries for stdin payloads.
 - `Tools/parity-compare.mjs` compares Swift and JS summaries for committed official UAT fixtures, including VCB verify-data.
 
@@ -194,7 +194,7 @@ Completed Phase 6 work:
 
 Completed Phase 7/8/9 readiness work:
 
-- Added `Tools/final-release-audit.sh` as the aggregate release gate for debug/release builds, Swift tests, fixture self-test, parity status, JS reference smoke, replacement readiness, conformance report freshness, and security-exception inventory.
+- Added `Tools/final-release-audit.sh` as the aggregate release gate for debug/release builds, Swift tests, fixture self-test, parity status, required JS reference smoke, replacement readiness, conformance report freshness, security-exception inventory, and no-documented-fixture-gaps checks.
 - Added `node Tools/generate-conformance-report.mjs --check` so release audits can prove the committed conformance report is current without rewriting timestamps.
 - Added deterministic fuzz regression seeds under `FuzzRegressionTests` for AAMVA parser boundaries, CBOR byte streams, VCB decoder fail-closed behavior, and privacy-safe public malformed-result mapping.
 

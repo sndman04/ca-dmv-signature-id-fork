@@ -46,7 +46,7 @@ Added or updated:
 
 ## Release Audit
 
-`Tools/final-release-audit.sh` is the aggregate pre-release gate. It runs debug and release builds, SwiftPM tests, fixture self-test, parity status, JavaScript reference oracle smoke checks, replacement readiness, conformance report freshness, and security-exception inventory checks.
+`Tools/final-release-audit.sh` is the aggregate pre-release gate. It runs debug and release builds, SwiftPM tests, fixture self-test, parity status, JavaScript reference oracle smoke checks, replacement readiness, conformance report freshness, and security-exception inventory checks. The audit fails if the JavaScript reference oracle is skipped because Node or reference SDK dependencies are unavailable.
 
 ## Supported-Scope Limitation
 

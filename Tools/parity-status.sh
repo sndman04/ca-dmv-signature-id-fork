@@ -23,6 +23,7 @@ if [ "$blocking_count" -gt 0 ]; then
             print "  " divergence
         }
     ' "$status_file"
+    exit 1
 fi
 
 echo "See $status_file for details."

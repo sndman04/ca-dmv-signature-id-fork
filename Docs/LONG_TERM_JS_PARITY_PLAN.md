@@ -219,7 +219,7 @@ Exit criteria:
 
 - [x] `Tools/reference-runner.mjs` or a successor can run arbitrary stdin payloads.
 - [x] CI can run reference parity checks when Node dependencies are available.
-- [x] Missing Node/reference dependencies produce a clear skipped-parity result, not a false pass.
+- [x] Missing Node/reference dependencies produce a clear skipped-parity result for standalone local smoke checks, and the final release audit fails that skip instead of treating it as release parity evidence.
 - [x] The oracle can identify the first divergence stage for supported test vectors.
 
 ## Phase 2: Fixture And Corpus Strategy
@@ -651,7 +651,7 @@ Tasks:
 
 Progress:
 
-- `Tools/final-release-audit.sh` runs the release-level gate sequence: debug build, release build, Swift tests, fixture self-test, parity status, reference oracle smoke, replacement readiness, conformance report freshness, and security-exception inventory.
+- `Tools/final-release-audit.sh` runs the release-level gate sequence: debug build, release build, Swift tests, fixture self-test, parity status, required reference oracle smoke, replacement readiness, conformance report freshness, security-exception inventory, and no-documented-fixture-gaps checks.
 - `node Tools/generate-conformance-report.mjs --check` verifies the committed conformance report content is current without rewriting report timestamps.
 - `FuzzRegressionTests` adds deterministic, privacy-safe crash/regression seeds for AAMVA scanner payload parsing, CBOR byte-stream decoding, VCB decoder fail-closed handling, and public malformed-result mapping. These seeds run under the normal SwiftPM test gate and are listed in the fixture manifest as generated coverage.
 
@@ -685,22 +685,21 @@ The long-term project is complete only when all of these are true:
 - A conformance report exists and can be regenerated from committed non-PII fixtures plus documented local-only optional inputs.
 - Any behavior that differs from the selected JS baseline has an approved security-exception record.
 
-## Immediate Next Build Tasks
+## Sustainment Policy
 
-1. Continue expanding JSON-LD 1.1 behavior characterization against the selected JS SDK baseline as new unsupported shapes are found, classifying each case as:
-   - implemented in the native replacement
-   - intentionally fail-closed because it cannot appear in the supported DMV profile
-   - approved security exception
+These items are ongoing maintenance requirements, not incomplete replacement work:
+
+1. Expand JSON-LD 1.1 behavior characterization when a new DMV-supported credential shape or JS-accepted edge case is discovered. Each new case must be implemented with byte-identical parity, classified as out-of-profile fail-closed behavior, or recorded as an approved security exception.
 2. Keep the production native engine and supported-profile regression baseline running side by side in the engine differential gate for every committed/generated non-PII canonicalization fixture.
-3. Move the supported-profile regression baseline behind test-only SPI after one release cycle if no parity regressions appear.
-4. Generate and review dependency/license/threat-model updates if a future DMV profile expansion requires an external native library or bridge.
-5. Publish the final conformance report with the selected official SDK baseline version, supported cases, skipped cases, local-only private test policy, and any approved security exceptions.
-6. Keep `Tools/replacement-readiness.sh` passing before any release notes or public docs claim full JavaScript SDK replacement parity.
+3. Move the supported-profile regression baseline behind test-only SPI only after a post-release stability window with no parity regressions. Until then it remains an internal regression oracle and is not part of the public runtime dependency surface.
+4. Reopen dependency, license, and threat-model review if a future DMV profile expansion requires an external native library or bridge.
+5. Regenerate and review the conformance report whenever parity fixtures, behavior-characterization cases, or the selected official SDK baseline change.
+6. Keep `Tools/replacement-readiness.sh` and `Tools/final-release-audit.sh` passing before any release notes or public docs claim full JavaScript SDK replacement parity.
 
-## Open Questions
+## Resolved Release Questions
 
-- Which package platforms must support the fully native canonicalization engine at launch if an external native dependency is selected beyond the current Swift-only target matrix?
-- What is the policy for local opt-in testing with real scans that cannot be committed?
-- Which canonicalization implementation path has the best license, maintenance, and platform profile?
-- What exact upstream SDK version becomes the first long-term parity baseline?
-- Who approves security exceptions when Swift behavior intentionally differs from the JS SDK?
+- Launch platform support is the current Swift package platform matrix in `Package.swift`; no external native bridge is selected for this release.
+- Real scans remain local-only and must not be committed. Privacy-safe redacted vectors may be documented when needed, and committed/generated tests must avoid raw barcode payloads, decoded identity fields, proof values, and parsed PII.
+- The selected canonicalization path is the native Swift DMV-profile JSON-LD/RDF engine documented in `Docs/CANONICALIZATION_ENGINE_DECISION.md`.
+- The first long-term parity baseline is the official SDK reference recorded in `Docs/UPSTREAM_TRACKING.md`.
+- There are no current approved security exceptions. Future intentional JS/Swift divergences require an explicit `Docs/PARITY_STATUS.md` record, owner approval, and release-audit review before shipping.
