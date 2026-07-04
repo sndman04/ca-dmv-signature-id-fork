@@ -6,6 +6,15 @@ This package verifies the supported California DMV DL/ID VCB profile. It is not 
 
 ## `CADMVVerifier`
 
+Endpoint-style summary:
+
+- Call: `CADMVVerifier.verify(rawPDF417:options:)`
+- Input payload: one scanner-produced PDF417 string plus optional verification controls.
+- Output payload: one `CADMVVerificationResult`.
+- Throws: never. All verifier-owned failures are returned as result values.
+- Network: DID Web key lookup always runs for signed VCB verification. Status-list network checks run only when `options.checkStatus == true`.
+- Privacy: the API does not log, persist, or return parsed identity data, raw barcode data, decoded credentials, proof values, DID documents, or status-list contents.
+
 ```swift
 public enum CADMVVerifier {
     public static func verify(
@@ -23,6 +32,38 @@ directly, without parsing and reconstructing the barcode, normalizing AAMVA
 separator characters, or extracting only selected fields. Leading/trailing
 whitespace and newline trimming is tolerated. Separator bytes such as `\r`,
 `\u{001d}`, `\u{001e}`, and `\u{001f}` should otherwise be preserved.
+
+Expected request shape:
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `rawPDF417` | Yes | Full raw PDF417 payload from the scanner. This may contain PII and must be treated as sensitive. |
+| `options.requireVCB` | No | Whether app policy requires VCB data on every California DL/ID, including older documents. |
+| `options.checkStatus` | No | Whether to perform online revocation/status-list verification after signature verification. |
+| `options.mode` | No | DMV environment to accept: `.production` or `.uat`. |
+| `options.networkTimeoutSeconds` | No | Timeout for DID/status network requests. Invalid values normalize to the default. |
+
+Expected response shape:
+
+| Field | Meaning |
+| --- | --- |
+| `status` | High-level verification outcome. Treat only `.verified` as verified. |
+| `message` | Privacy-safe user/developer message for verifier-created results. |
+| `failureReason` | Privacy-safe diagnostic enum for non-verified verifier results. `nil` for `.verified`. |
+
+Example:
+
+```swift
+let result = await CADMVVerifier.verify(
+    rawPDF417: scannerPayload,
+    options: CADMVVerificationOptions(
+        requireVCB: false,
+        checkStatus: true,
+        mode: .production,
+        networkTimeoutSeconds: 10
+    )
+)
+```
 
 ## `CADMVVerificationOptions`
 
@@ -101,6 +142,17 @@ results or tests.
 contains raw barcode data, decoded AAMVA fields, proof values, DID documents, or
 status-list contents. It is `nil` for `.verified` results from the verifier.
 
+Verifier-created messages:
+
+| Status | Message |
+| --- | --- |
+| `.verified` | `DMV digital-signature verification passed.` |
+| `.failed` | `DMV digital-signature verification failed.` |
+| `.notPresent` | `California DMV digital signature is not present.` |
+| `.revoked` | `This DMV digital credential has been revoked.` |
+| `.expired` | `This DMV digital credential is expired.` |
+| `.unavailable` | `DMV digital-signature verification is temporarily unavailable.` |
+
 ## `CADMVVerificationMode`
 
 ```swift
@@ -138,6 +190,17 @@ Current behavior:
 - `.revoked`: a cryptographically verified status-list credential marks the revocation bit as set.
 - `.expired`: signature verification passed and required status checking, if enabled, completed as not revoked, but credential `validUntil` is at or before the verification time.
 
+Status/failure relationship:
+
+| Status | Typical `failureReason` | App meaning |
+| --- | --- | --- |
+| `.verified` | `nil` | The supported DMV signature checks passed. |
+| `.notPresent` | `.notCaliforniaDMV`, `.vcbMissing(required: false)` | No applicable California DMV digital signature was available. |
+| `.failed` | Malformed, unsupported, mismatch, environment, DID, or signature failure reasons | Verification failed closed. Do not treat as verified. |
+| `.unavailable` | `.statusUnavailable` | Signature verification passed, but required status infrastructure could not be verified. Retry or handle separately from verified. |
+| `.revoked` | `.revoked` | Signature and status-list proof verified, and the status bit is revoked. |
+| `.expired` | `.expired` | Signature passed and the credential `validUntil` value is expired. |
+
 ## `CADMVVerificationFailureReason`
 
 ```swift
@@ -160,11 +223,40 @@ public enum CADMVVerificationFailureReason: Equatable, Sendable {
 
 Use this field to route app behavior without logging sensitive document data. For example, `environmentMismatch` can identify UAT/test credentials being checked in production mode, while `didResolutionFailed` separates DMV DID host resolution, timeout, response, and DID-document parsing failures from `signatureMismatch`.
 
+Failure definitions:
+
+| Failure reason | Returned status | Definition |
+| --- | --- | --- |
+| `.malformedBarcode` | `.failed` | The input could not be parsed as an AAMVA PDF417 payload with a usable header, subfile table, field separators, and fields. This can also happen when a barcode decoder returns display text instead of the raw scanner payload with separator bytes preserved. |
+| `.notCaliforniaDMV` | `.notPresent` | The payload parsed, but it is not a California DMV DL/ID document accepted by this verifier. The issuer/state/subfile checks did not match the supported CA DMV profile. |
+| `.vcbMissing(required: false)` | `.notPresent` | The document is California DMV, but no VCB field is present and VCB data was not required for this document/app policy. |
+| `.vcbMissing(required: true)` | `.failed` | A VCB field is required because `requireVCB == true` or the document issue date is on/after the DMV requirement date, but no VCB field was present. |
+| `.vcbBase64Invalid` | `.failed` | The VCB field was present but was not valid Base64URL/Base64 payload data. |
+| `.vcbCBORUnsupported` | `.failed` | The decoded VCB bytes were malformed CBOR/CBOR-LD or used unsupported encodings, duplicate keys, unsafe aliases, oversized declarations, or unknown compressed term IDs. |
+| `.unsupportedCredentialProfile` | `.failed` | The decoded credential, proof, JSON-LD shape, extension fields, context set, status-list shape, expiration value, or canonicalization input is outside the supported DMV profile and parity-tested safe extension subset. |
+| `.environmentMismatch(expected:)` | `.failed` | The credential belongs to the other DMV environment. For example, a UAT credential was checked in `.production` mode, or a production credential was checked in `.uat` mode. The associated value tells the environment expected by that credential. |
+| `.protectedAAMVADataUnavailable` | `.failed` | The credential requested protected AAMVA components that could not be selected and hashed from the parsed barcode data. |
+| `.didResolutionFailed` | `.failed` | The required DID Web verification key could not be resolved or validated. Causes include offline/DNS failure, timeout, non-direct/non-2xx HTTP response, malformed DID document, unsupported key material, or missing authorized assertion method. |
+| `.signatureMismatch` | `.failed` | The VCB signature did not verify against the decoded credential, protected AAMVA hash, canonicalized proof/document data, and resolved verification key, or signature bytes were malformed/unsupported. |
+| `.statusUnavailable` | `.unavailable` | `checkStatus == true`, the VCB signature passed, but the DMV status-list check could not complete as cryptographically verified not-revoked. Causes include status URL policy failure, network/HTTP failure, malformed or unsupported status-list credential, status-list DID/key failure, status-list proof failure, or invalid encoded bitstring data. |
+| `.revoked` | `.revoked` | `checkStatus == true`, the status-list credential proof verified, and the credential's status bit is set to revoked. |
+| `.expired` | `.expired` | The VCB signature passed and the credential `validUntil` value is at or before verification time. If status checking is required and unavailable, `.statusUnavailable` takes precedence; if revoked, `.revoked` takes precedence. |
+
+The failure enum is intentionally not a raw exception surface. Multiple low-level parser, network, cryptographic, and JSON-LD errors map to the closest privacy-safe public reason.
+
 ## `CADMVScanner`
 
 `CADMVScanner` is optional. It provides an app-facing camera boundary around raw
 PDF417 payload capture. It does not parse identity data or persist camera
 frames.
+
+Endpoint-style summary:
+
+- Call: `CADMVScannedBarcode.verify(options:)`
+- Input payload: an existing `CADMVScannedBarcode` containing one raw PDF417 string.
+- Output payload: the same `CADMVVerificationResult` returned by `CADMVVerifier.verify(rawPDF417:options:)`.
+- Throws: never.
+- Privacy: forwards the raw payload in memory without parsing public PII.
 
 ```swift
 public struct CADMVScannedBarcode: Equatable, Sendable {
@@ -183,6 +275,21 @@ is the same sensitive value accepted by `CADMVVerifier.verify(rawPDF417:)`.
 `CADMVScannedBarcode.verify(options:)` sends `rawPDF417` and `options` directly
 to `CADMVVerifier.verify(rawPDF417:options:)` and returns that verifier result.
 
+Expected request shape:
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `rawPDF417` | Yes | Full scanner-produced PDF417 payload. Preserve separator bytes. |
+| `options` | No | Same options accepted by `CADMVVerifier.verify(rawPDF417:options:)`. |
+
+Expected response shape:
+
+| Field | Meaning |
+| --- | --- |
+| `CADMVVerificationResult.status` | Same status contract as the core verifier. |
+| `CADMVVerificationResult.message` | Same message contract as the core verifier. |
+| `CADMVVerificationResult.failureReason` | Same privacy-safe failure contract as the core verifier. |
+
 ```swift
 public enum CADMVScannerAvailability: Equatable, Sendable {
     case available
@@ -198,6 +305,13 @@ public enum CADMVScanner {
 scanning is available. On supported iOS devices it can return `.available`; on
 unsupported platforms, older iOS versions, unavailable camera hardware, or when
 VisionKit reports scanning unavailable, it returns `.unavailable(String)`.
+
+Availability response definitions:
+
+| Response | Meaning |
+| --- | --- |
+| `.available` | The optional scanner target can present VisionKit PDF417 scanning on this device. |
+| `.unavailable(String)` | Native camera scanning is not available. The associated string is a privacy-safe reason suitable for developer diagnostics or fallback UI. Current reasons include unsupported platform/device or unavailable VisionKit scanning. |
 
 On iOS 16 and later where VisionKit and UIKit are available, the scanner target
 also exposes:
@@ -221,6 +335,18 @@ The `onScan` handler receives a `CADMVScannedBarcode` when VisionKit recognizes
 a non-empty PDF417 payload. `viewController` is the underlying VisionKit scanner
 view controller for app presentation. `startScanning()` forwards VisionKit
 startup errors to the app; `stopScanning()` stops active scanning.
+
+VisionKit scanner request/response contract:
+
+| API | Input | Response | Errors |
+| --- | --- | --- | --- |
+| `init(onScan:)` | Closure receiving `CADMVScannedBarcode` | Scanner wrapper instance | None from the initializer. |
+| `viewController` | None | `UIViewController` to present | None. |
+| `startScanning()` | None | Starts VisionKit scanning | Throws VisionKit startup errors, such as unavailable camera permission/hardware/session conditions. These are not `CADMVVerificationFailureReason` values because no barcode verification has happened yet. |
+| `stopScanning()` | None | Stops active scanning | Does not throw. |
+| `onScan` callback | VisionKit-recognized non-empty PDF417 payload | `CADMVScannedBarcode` preserving the payload string | Empty/non-PDF417 recognized items are ignored. |
+
+Scanner errors are separate from verifier results. A scanner startup error means capture failed; a `CADMVVerificationResult` means capture produced a payload and verification ran.
 
 ## Non-Public Internals
 
