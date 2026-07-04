@@ -11,6 +11,7 @@ enum PinnedJSONLDTermRegistry {
     static let xsdBoolean = "http://www.w3.org/2001/XMLSchema#boolean"
     static let xsdDouble = "http://www.w3.org/2001/XMLSchema#double"
     static let dctermsCreated = "http://purl.org/dc/terms/created"
+    static let i18nNamespace = "https://www.w3.org/ns/i18n#"
 
     private static let vc = "https://www.w3.org/2018/credentials#"
     private static let vcb = "https://w3id.org/vc-barcodes#"

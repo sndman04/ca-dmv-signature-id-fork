@@ -66,6 +66,10 @@ const proofConfig = {
     '@value': 'Proof Hello',
     '@language': 'en-US'
   },
+  'https://example.invalid/proof/directedValue': {
+    '@value': 'Proof direction',
+    '@direction': 'rtl'
+  },
   'https://example.invalid/proof/setValue': {
     '@index': 'proof-set-index',
     '@set': [

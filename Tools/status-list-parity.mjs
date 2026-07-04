@@ -78,6 +78,10 @@ const extensionFixture = {
     ...optionalFieldsFixture.credentialSubject,
     'https://example.test/status/subjectInteger': 86400,
     'https://example.test/status/subjectBoolean': true,
+    'https://example.test/status/statusDirectedValue': {
+      '@value': 'Status direction',
+      '@direction': 'ltr'
+    },
     'https://example.test/status/subjectNode': {
       '@id': 'https://example.test/status/subject-node',
       '@index': 'subject-node-index',
@@ -137,6 +141,10 @@ const extensionFixture = {
       '@value': '7',
       '@index': 'proof-typed-value-index',
       '@type': 'http://www.w3.org/2001/XMLSchema#integer'
+    },
+    'https://example.test/status/proofDirectedValue': {
+      '@value': 'Proof direction',
+      '@direction': 'rtl'
     }
   }
 };

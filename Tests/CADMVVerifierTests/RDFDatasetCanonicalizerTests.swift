@@ -238,6 +238,19 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@value": .string("Hello"),
                     "@language": .string("EN-US")
                 ]),
+                "https://example.invalid/terms/directedLanguageValue": .object([
+                    "@value": .string("مرحبا"),
+                    "@language": .string("AR"),
+                    "@direction": .string("rtl")
+                ]),
+                "https://example.invalid/terms/directedValue": .object([
+                    "@value": .string("plain direction"),
+                    "@direction": .string("ltr")
+                ]),
+                "https://example.invalid/terms/directedNumber": .object([
+                    "@value": .unsigned(7),
+                    "@direction": .string("rtl")
+                ]),
                 "https://example.invalid/terms/numericValue": .object([
                     "@value": .number("7.5")
                 ]),
@@ -282,6 +295,15 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/languageValue> \"Hello\"@en-us"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/directedLanguageValue> \"مرحبا\"^^<https://www.w3.org/ns/i18n#ar_rtl>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/directedValue> \"plain direction\"^^<https://www.w3.org/ns/i18n#_ltr>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/directedNumber> \"7\"^^<http://www.w3.org/2001/XMLSchema#integer>"
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/numericValue> \"7.5E0\"^^<http://www.w3.org/2001/XMLSchema#double>"
@@ -494,6 +516,17 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ), mode: .uat)) { error in
             XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
         }
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(vcbCredential(
+            additionalProperties: [
+                "https://example.invalid/terms/directedValue": .object([
+                    "@value": .string("bad direction"),
+                    "@direction": .string("up")
+                ])
+            ]
+        ), mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
     }
 
     func testVCBJSONLDConverterRejectsCompactAndUnsafeExtensionTerms() throws {
@@ -674,6 +707,10 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             ],
             credentialSubjectAdditionalProperties: [
                 "https://example.invalid/terms/subject": .bool(false),
+                "https://example.invalid/terms/statusDirectedValue": .object([
+                    "@value": .string("Status direction"),
+                    "@direction": .string("ltr")
+                ]),
                 "https://example.invalid/terms/subjectNode": .object([
                     "@id": .string("https://example.invalid/resources/status-subject-node"),
                     "@index": .string("status-subject-index"),
@@ -704,6 +741,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssert(nquads.contains("<https://example.invalid/terms/root> \"root\""))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/subject> \"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/statusDirectedValue> \"Status direction\"^^<https://www.w3.org/ns/i18n#_ltr>"
         ))
         XCTAssert(nquads.contains(
             "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/StatusRootNode>"
@@ -820,6 +860,10 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
             additionalProperties: [
                 "https://example.invalid/terms/proof": .unsigned(42),
+                "https://example.invalid/terms/proofDirectedValue": .object([
+                    "@value": .string("Proof direction"),
+                    "@direction": .string("rtl")
+                ]),
                 "https://example.invalid/terms/proofNode": .object([
                     "@id": .string("https://example.invalid/resources/proof-node"),
                     "@index": .string("proof-node-index"),
@@ -849,6 +893,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
 
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/proof> \"42\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/proofDirectedValue> \"Proof direction\"^^<https://www.w3.org/ns/i18n#_rtl>"
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/resources/proof-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/ProofNode>"

@@ -790,7 +790,7 @@ enum SupportedJSONLDRDFTerms {
     ) throws -> RDFTerm? {
         guard object["@id"] == nil,
               try object.keys.allSatisfy({ key in
-                if key == "@value" || key == "@type" || key == "@language" {
+                if key == "@value" || key == "@type" || key == "@language" || key == "@direction" {
                     return true
                 }
                 if key == "@index" {
@@ -804,9 +804,10 @@ enum SupportedJSONLDRDFTerms {
         if case .null = value {
             return nil
         }
-        guard !(object["@type"] != nil && object["@language"] != nil) else {
+        guard !(object["@type"] != nil && (object["@language"] != nil || object["@direction"] != nil)) else {
             throw error
         }
+        let direction = try genericDirection(object["@direction"], error: error)
 
         if let language = object["@language"] {
             guard case .string(let languageValue) = language,
@@ -814,7 +815,21 @@ enum SupportedJSONLDRDFTerms {
                   isSafeLanguageTag(languageValue) else {
                 throw error
             }
+            if let direction {
+                return .literal(
+                    value: text,
+                    datatype: "\(PinnedJSONLDTermRegistry.i18nNamespace)\(languageValue.lowercased())_\(direction)"
+                )
+            }
             return .languageLiteral(value: text, language: languageValue.lowercased())
+        }
+
+        if let direction,
+           case .string(let text) = value {
+            return .literal(
+                value: text,
+                datatype: "\(PinnedJSONLDTermRegistry.i18nNamespace)_\(direction)"
+            )
         }
 
         let literal = try genericLiteral(value, error: error)
@@ -826,6 +841,20 @@ enum SupportedJSONLDRDFTerms {
             return .literal(value: literal.value, datatype: datatype)
         }
         return .literal(value: literal.value, datatype: literal.datatype)
+    }
+
+    private static func genericDirection(
+        _ value: SupportedJSONLDValue?,
+        error: CADMVInternalError
+    ) throws -> String? {
+        guard let value else {
+            return nil
+        }
+        guard case .string(let direction) = value,
+              direction == "ltr" || direction == "rtl" else {
+            throw error
+        }
+        return direction
     }
 
     private static func genericLiteral(

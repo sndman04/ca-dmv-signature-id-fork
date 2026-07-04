@@ -71,6 +71,19 @@ const extensionDocument = {
     '@value': 'Hello',
     '@language': 'en-US'
   },
+  'https://example.invalid/terms/directedLanguageValue': {
+    '@value': 'مرحبا',
+    '@language': 'AR',
+    '@direction': 'rtl'
+  },
+  'https://example.invalid/terms/directedValue': {
+    '@value': 'plain direction',
+    '@direction': 'ltr'
+  },
+  'https://example.invalid/terms/directedNumber': {
+    '@value': 7,
+    '@direction': 'rtl'
+  },
   'https://example.invalid/terms/numericValue': {
     '@value': 7.5
   },
