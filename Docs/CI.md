@@ -89,7 +89,8 @@ The stdin mode emits JSON with the selected SDK baseline, mode, high-level outco
 - Impossible issue date fails closed when a required VCB cannot be established from a real calendar date.
 - Malformed base64 VCB.
 - Malformed CBOR-LD VCB.
-- Oversized CBOR array/map length declarations fail closed before allocation.
+- Oversized CBOR byte/text length and array/map count declarations fail closed before allocation.
+- Unsupported CBOR indefinite-length, simple-value, float, break-code, negative-overflow, and trailing-byte encodings fail closed.
 - Current, uncompressed, legacy uncompressed, and legacy compressed CBOR-LD DMV-profile decode forms.
 - Malformed AAMVA header/subfile descriptor offsets and lengths fail closed.
 - Base64/Base64URL malformed length, alphabet, and padding rejection.

@@ -160,6 +160,7 @@ Completed Phase 4 work:
 - Added a shape-by-shape status-list extension matrix parity gate for root, credentialSubject, and proof extensions, covering 24 generated JS/Swift verify-data and canonical N-Quads comparisons.
 - Expanded JS/Swift JSON-LD behavior characterization to cover scalar `@set`/`@list` values, generated blank-node reverse subjects, generated blank-node `@included` nodes, and invalid explicit blank-node label rejection.
 - Added status-list network failure coverage for status transport errors, redirect/404/500 responses, malformed status-list credential JSON, malformed DID documents, and unsupported DID keys during status-list proof-key resolution, all mapping to `.unavailable`.
+- Added Swift CBOR parser hardening coverage for oversized byte/text lengths, oversized array/map counts, unsupported indefinite-length/simple/float encodings, negative integer overflow, and trailing top-level bytes.
 
 Completed Phase 5 work:
 

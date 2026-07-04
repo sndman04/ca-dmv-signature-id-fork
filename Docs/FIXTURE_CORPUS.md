@@ -35,6 +35,7 @@ Current committed/generated coverage includes:
 - Runtime-generated shape-by-shape JSON-LD extension matrix parity cases for VCB document and Data Integrity proof canonical N-Quads, covering literals, arrays, node references, explicit and generated blank nodes, reverse properties, named graphs, included nodes, nested properties, value objects, sets, and lists.
 - Runtime-generated canonicalization engine differential cases for VCB document, VCB proof, status-list document, status-list proof, and official valid/invalid UAT VCB document/proof canonicalization, including a compact unknown field rejection check so the replacement engine contract covers both byte-identical accepted output and fail-closed behavior.
 - Generated unknown CBOR-LD behavior coverage: JS-accepted text-key unknowns are preserved, unknown compressed numeric term ids are rejected, safe absolute-IRI extensions canonicalize generically, and compact unknown terms fail closed in parity with reference safe-mode canonicalization.
+- Synthetic CBOR parser hardening coverage for duplicate map keys, oversized byte/text lengths, oversized array/map counts, unsupported indefinite-length encodings, unsupported simple/float values, negative integer overflow, and trailing top-level bytes.
 - Redacted production parity mismatch tracking without private payload data.
 
 Documented gaps:

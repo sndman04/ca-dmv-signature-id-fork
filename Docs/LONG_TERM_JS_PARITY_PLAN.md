@@ -116,6 +116,8 @@ Parity is not limited to final boolean validity. The Swift implementation must m
   - context/type/url expansion
   - deterministic credential model construction
   - duplicate-key and malformed-data rejection
+  - fail-closed bounds checks for byte/text lengths and array/map counts
+  - unsupported indefinite-length, simple/float, break-code, negative-overflow, and trailing-byte rejection
 - Credential validation:
   - context and type requirements
   - issuer and verification-method mode policy

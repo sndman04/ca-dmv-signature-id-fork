@@ -641,6 +641,28 @@ final class CADMVVerifierTests: XCTestCase {
         }
     }
 
+    func testCBORRejectsByteStringLengthLargerThanRepresentablePayload() throws {
+        let oversizedByteString = Data([
+            0x5b,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+        ])
+
+        XCTAssertThrowsError(try CBORReader.decode(oversizedByteString)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .malformedCBOR)
+        }
+    }
+
+    func testCBORRejectsTextStringLengthLargerThanRepresentablePayload() throws {
+        let oversizedTextString = Data([
+            0x7b,
+            0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+        ])
+
+        XCTAssertThrowsError(try CBORReader.decode(oversizedTextString)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .malformedCBOR)
+        }
+    }
+
     func testCBORRejectsMapCountLargerThanRemainingPayload() throws {
         let oversizedMap = Data([
             0xbb,
@@ -648,6 +670,56 @@ final class CADMVVerifierTests: XCTestCase {
         ])
 
         XCTAssertThrowsError(try CBORReader.decode(oversizedMap)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .malformedCBOR)
+        }
+    }
+
+    func testCBORRejectsUnsupportedIndefiniteLengthItems() throws {
+        let unsupportedIndefiniteValues: [Data] = [
+            Data([0x5f]), // byte string
+            Data([0x7f]), // text string
+            Data([0x9f]), // array
+            Data([0xbf]), // map
+            Data([0xff])  // break code
+        ]
+
+        for value in unsupportedIndefiniteValues {
+            XCTAssertThrowsError(try CBORReader.decode(value)) { error in
+                XCTAssertEqual(error as? CADMVInternalError, .unsupportedCBOR)
+            }
+        }
+    }
+
+    func testCBORRejectsUnsupportedSimpleAndFloatValues() throws {
+        let unsupportedValues: [Data] = [
+            Data([0xf8, 0x00]),
+            Data([0xf9, 0x00, 0x00]),
+            Data([0xfa, 0x00, 0x00, 0x00, 0x00]),
+            Data([0xfb, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+        ]
+
+        for value in unsupportedValues {
+            XCTAssertThrowsError(try CBORReader.decode(value)) { error in
+                XCTAssertEqual(error as? CADMVInternalError, .unsupportedCBOR)
+            }
+        }
+    }
+
+    func testCBORRejectsNegativeIntegerBelowInt64Range() throws {
+        let negativeBelowInt64Range = Data([
+            0x3b,
+            0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+        ])
+
+        XCTAssertThrowsError(try CBORReader.decode(negativeBelowInt64Range)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .malformedCBOR)
+        }
+    }
+
+    func testCBORRejectsTrailingBytesAfterTopLevelValue() throws {
+        let topLevelValueWithTrailingBytes = Data([0x00, 0x00])
+
+        XCTAssertThrowsError(try CBORReader.decode(topLevelValueWithTrailingBytes)) { error in
             XCTAssertEqual(error as? CADMVInternalError, .malformedCBOR)
         }
     }
