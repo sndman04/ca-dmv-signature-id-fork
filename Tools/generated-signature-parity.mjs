@@ -165,6 +165,13 @@ const tamperedSignatureCredential = withProofValue(
   signedCredential,
   'z' + base58btc.encode(tamperedSignatureBytes)
 );
+const tamperedProofCreatedCredential = {
+  ...structuredClone(signedCredential),
+  proof: {
+    ...signedCredential.proof,
+    created: '2026-01-01T00:00:01Z'
+  }
+};
 
 const fixtures = [
   {
@@ -210,6 +217,14 @@ const fixtures = [
     id: 'generated-tampered-proof-signature',
     payload: makeAAMVABarcode({
       encodedVCB: await encodeVCB(tamperedSignatureCredential)
+    }),
+    expectVerified: false,
+    expectedStage: 'data-integrity-vcb'
+  },
+  {
+    id: 'generated-tampered-proof-created',
+    payload: makeAAMVABarcode({
+      encodedVCB: await encodeVCB(tamperedProofCreatedCredential)
     }),
     expectVerified: false,
     expectedStage: 'data-integrity-vcb'

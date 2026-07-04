@@ -107,7 +107,7 @@ The stdin mode emits JSON with the selected SDK baseline, mode, high-level outco
 - Generic JSON-LD extension number parsing rejects non-finite values, and number normalization is bounded so oversized coefficients and exponents fail closed before large allocation.
 - Production JSON-LD canonicalization defaults route through one selector so the final engine replacement is not scattered across verifier helpers; the differential gate compares that selector with the current supported-profile engine across covered canonicalization fixtures, including official raw-payload fixtures.
 - RDF Dataset Canonicalization validates IRI, predicate, datatype, language, and blank-node term safety before rendering canonical N-Quads.
-- Generated end-to-end VCB signatures covering valid `z`, valid `u`, status-bearing credentials, validity dates, expired valid signatures, tampered proof signature, and tampered protected AAMVA field parity against the JS reference.
+- Generated end-to-end VCB signatures covering valid `z`, valid `u`, status-bearing credentials, validity dates, expired valid signatures, tampered proof signature, tampered proof metadata, and tampered protected AAMVA field parity against the JS reference.
 - Status-list gzip output limit enforcement.
 - Malformed status-list multibase/gzip corpus rejection.
 - Official valid DMV UAT fixture verification.

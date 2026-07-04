@@ -27,7 +27,7 @@ Current committed/generated coverage includes:
 - Synthetic CBOR-LD decode and validation cases.
 - Synthetic DID/network failure cases.
 - Synthetic status-list and expiration cases.
-- Runtime-generated JS/Swift parity cases for signed VCB credentials with no status, `credentialStatus`, `validFrom`/`validUntil`, combined status plus validity dates, alternate `proofValue` encodings, tampered signatures, and tampered protected AAMVA data.
+- Runtime-generated JS/Swift parity cases for signed VCB credentials with no status, `credentialStatus`, `validFrom`/`validUntil`, combined status plus validity dates, alternate `proofValue` encodings, tampered proof signatures, tampered proof metadata, and tampered protected AAMVA data.
 - Deterministic mutation parity cases for malformed VCB base64, truncated VCB CBOR-LD, and corrupted compressed VCB values, comparing JS and Swift failure-stage mapping without storing private payloads.
 - Runtime-generated JS/Swift status-list verify-data parity cases for the base status-list credential, optional live-style VC fields, and safe absolute-IRI extension terms on the status-list root, credentialSubject, and proof.
 - Runtime-generated shape-by-shape status-list extension matrix parity cases for status-list document/proof canonical N-Quads and verify-data, covering safe absolute-IRI extension terms on the root, credentialSubject, and proof.
