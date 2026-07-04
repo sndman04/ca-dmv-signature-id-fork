@@ -1,7 +1,7 @@
 # Conformance Report
 
-Generated: 2026-07-04T03:08:57.528Z
-Repository revision: `5bf7cbb`
+Generated: 2026-07-04T03:15:36.286Z
+Repository revision: `4ae21c8`
 Reference SDK: `cadmv-dlid-verifier-sdk@0.0.1-0`
 
 This report is generated from committed non-PII fixtures and synthetic cases. It does not include raw PDF417 payloads, decoded identity fields, or real private scan data.
@@ -16,6 +16,7 @@ Overall result: PASS
 | Generated Signature Parity | `node Tools/generated-signature-parity.mjs` | 8 | PASS |
 | Deterministic Mutation Parity | `node Tools/mutation-parity.mjs` | 3 | PASS |
 | Status-List Verify-Data And N-Quads Parity | `node Tools/status-list-parity.mjs` | 3 | PASS |
+| Status-List Extension Matrix Verify-Data And N-Quads Parity | `node Tools/status-list-extension-matrix-parity.mjs` | 24 | PASS |
 | Generic VCB JSON-LD Extension N-Quads Parity | `node Tools/generic-jsonld-extension-parity.mjs` | 1 | PASS |
 | Generic Proof JSON-LD Extension N-Quads Parity | `node Tools/generic-proof-extension-parity.mjs` | 1 | PASS |
 | JSON-LD Extension Matrix N-Quads Parity | `node Tools/jsonld-extension-matrix-parity.mjs` | 48 | PASS |
@@ -31,7 +32,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 2
-- Duration: 1753 ms
+- Duration: 1640 ms
 - Case IDs:
   - `official-valid-uat`
   - `official-invalid-uat`
@@ -40,7 +41,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 8
-- Duration: 5781 ms
+- Duration: 5678 ms
 - Case IDs:
   - `generated-valid-z-signature`
   - `generated-valid-u-signature`
@@ -55,7 +56,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 2494 ms
+- Duration: 2496 ms
 - Case IDs:
   - `mutation-invalid-vcb-base64`
   - `mutation-truncated-vcb-cbor`
@@ -65,7 +66,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 4201 ms
+- Duration: 4199 ms
 - Case IDs:
   - `synthetic-status-list-base`
   - `synthetic-status-list-optional-fields`
@@ -75,11 +76,67 @@ Overall result: PASS
   - synthetic-status-list-optional-fields: document N-Quads SHA-256 754ba90533e8d44df66599957c68a3f9f2cccac0f1380c538f17926967783567; proof N-Quads SHA-256 93fa093cba64513885ce626317a174530e4d19527212094b1571d4b8e665a221
   - synthetic-status-list-absolute-iri-extensions: document N-Quads SHA-256 1d15024c7b48d02e11025b4a029596abc10e2a7b2b07b25f4f17c9ade58d0944; proof N-Quads SHA-256 ec9fbce00e29e40b866166154710d56d30addd0b536573065f2a8552ce80a6ed
 
+### Status-List Extension Matrix Verify-Data And N-Quads Parity
+
+- Result: PASS
+- Compared cases: 24
+- Duration: 32840 ms
+- Case IDs:
+  - `status-list-string-literal`
+  - `status-list-integer-literal`
+  - `status-list-double-literal`
+  - `status-list-boolean-literal`
+  - `status-list-null-omission`
+  - `status-list-mixed-array`
+  - `status-list-absolute-id-node`
+  - `status-list-explicit-blank-node`
+  - `status-list-generated-blank-node`
+  - `status-list-reverse-id-node`
+  - `status-list-reverse-blank-node`
+  - `status-list-named-graph`
+  - `status-list-included-node`
+  - `status-list-included-blank-node`
+  - `status-list-nested-properties`
+  - `status-list-typed-value`
+  - `status-list-language-value`
+  - `status-list-directed-language-value`
+  - `status-list-directed-value`
+  - `status-list-json-value`
+  - `status-list-scalar-set`
+  - `status-list-array-set`
+  - `status-list-scalar-list`
+  - `status-list-array-list`
+- Notes:
+  - status-list-string-literal: document N-Quads SHA-256 d96c8a6dfc319e2c03b3ab4e45dfe2f3a3454a2c871ed95089fe65108666ba50; proof N-Quads SHA-256 4be3abc2839305fcb40ac38e366817ec7ac941a9bb7d09d8b73a0acedb08561c
+  - status-list-integer-literal: document N-Quads SHA-256 3228e287fd3268bba67fec006d3cd547572546c3d7c74977636acb0cd68579ba; proof N-Quads SHA-256 5989e3e410d84a71d41ad607321b310e2c0ba772326afff775441aebeff1ae3a
+  - status-list-double-literal: document N-Quads SHA-256 62449b6bfa54db20f8d7d209c0498a9a3bdc7c9874c3d1d7d4e1f654c296a3fd; proof N-Quads SHA-256 6ae0be1dbb59b6e609a81e5cae289c5a5b4a3bfc63b599dd9ab429eef58c1ad6
+  - status-list-boolean-literal: document N-Quads SHA-256 8fc1b3ce108d5a8a05e7160b4c071a464554f44ba24185b5c5814fb8cd45d54f; proof N-Quads SHA-256 f47ef74691c48266ffaaff389daa21703fa5d0df6eb155f727ceb4e8b9a69dc5
+  - status-list-null-omission: document N-Quads SHA-256 32f9e3eb0ef441494d9f35b40deed3703c7730e491db83245714e0a1475100c1; proof N-Quads SHA-256 93fa093cba64513885ce626317a174530e4d19527212094b1571d4b8e665a221
+  - status-list-mixed-array: document N-Quads SHA-256 be288610845583c36d00a7f9356374c9cdb500020f8c8588d0a52cfc95d50206; proof N-Quads SHA-256 8195250cf6e19bbbaa74e9c432a8d16cb4d607eea278748cc1a4ba261d65c8ee
+  - status-list-absolute-id-node: document N-Quads SHA-256 728bb8cb942f1196194fd81b07ada5721edf4429f95cdf6d8ef6328325075cb7; proof N-Quads SHA-256 fc1bc635f4c49f4426d8778440b7afe87df2ea784fa4b309cd493a1966894cb1
+  - status-list-explicit-blank-node: document N-Quads SHA-256 c91b8227564ae47d4f2809e64bbec6ecb242a6c791737ab39799b48b83bf7e3a; proof N-Quads SHA-256 1bbbe93bc3e4f4f8d1322f690b881b739d62dfefab4093abd5ce64b4f372514a
+  - status-list-generated-blank-node: document N-Quads SHA-256 7ecb3c5e765d481f4aeade0bf38866de95faedef0f537cc1be5bfeaded63fea4; proof N-Quads SHA-256 ef89b3d43a4168624e95e8152c240f0e07ea0a48172ca21222b4d63404fc7c53
+  - status-list-reverse-id-node: document N-Quads SHA-256 11bcd4b8421d5d26a508807b4e2ce5c20967992350f2b1c8b0ccf0d050c2eae6; proof N-Quads SHA-256 52151753366e97bed3af26a466840c555aafa3d0aa2dd0939432a7440a03736c
+  - status-list-reverse-blank-node: document N-Quads SHA-256 addefc7461d55b4c636e18563b36c2ed0947774460dc24e6fd0bc3c2c29317cd; proof N-Quads SHA-256 d8d5b9b50db471e655d77a51484b4d12a3b752a4e717684fce6cdcae02666701
+  - status-list-named-graph: document N-Quads SHA-256 bc994c8766faa859077da99eeda8348e0ae07f863e386bc9f206a5ed60ea82ef; proof N-Quads SHA-256 2dbaa6d788d931ca01b40d9a3f36a05c1655c4e1f3baf3f9e5e514b535400b30
+  - status-list-included-node: document N-Quads SHA-256 d17f37618d4ba920d94c6f76b97169ec345d638e21cdcdf33e872351adfc7ccb; proof N-Quads SHA-256 deb3de5723747b81db76cba5978a12bcd2c71c991d0ef071795858fc875d7138
+  - status-list-included-blank-node: document N-Quads SHA-256 68e60fc220156b200df23e7b9ad83b392534c40d8d1436359395cbe1912ee5a7; proof N-Quads SHA-256 4276878fce7a14475dcd3c7ad1527fcef7a51d10beae2ed20aff0e7b2599895c
+  - status-list-nested-properties: document N-Quads SHA-256 8bf7669d6461e039412f363288de7536c2f9e1ee2cee76672633eff236a59e53; proof N-Quads SHA-256 fa595ef94e9358468ea0ff8e4361f283e78ba5c7831a41dc03f0e95227cba474
+  - status-list-typed-value: document N-Quads SHA-256 7e833b4e174eb201a94d703dfaa81baa1a5971f906d23866be7ae3ab60073279; proof N-Quads SHA-256 771c0517fbfbc3c97d6db7e11ab03ab7e7efcf43abc511cac25b1fdf68e4311f
+  - status-list-language-value: document N-Quads SHA-256 5c41f52dfe684027e097d097a5412cf62739cfe9be3597be46ea0d70d8dbe70c; proof N-Quads SHA-256 92df96a3e8af12b71bcf29f5d0ed83a48398824aa7dc48fa8368bba38b4dbe78
+  - status-list-directed-language-value: document N-Quads SHA-256 ba2c562f6672a0a9c3e02dc60702488ba843c165205f4f4a2bcae65b10e1d972; proof N-Quads SHA-256 3df3505479cebcd62a19390f7e171ef46ce788a44b104908d0ce73e719c7b500
+  - status-list-directed-value: document N-Quads SHA-256 d53eacc41d2aafe37518680cc27276fd047c7b3f6ecde5c7af3da35a5536f29a; proof N-Quads SHA-256 5590a481d0dcc3c20ee3ab5498aa258caa86707c0d31338f045c49fdae5e198b
+  - status-list-json-value: document N-Quads SHA-256 7a6829aca445e7bb5dcd44d435c35b2dc64a89b15fc64aa62c4efc1cf91f3f51; proof N-Quads SHA-256 145f30bdcf104ec0dbe57a80933585daa460427b3ea4505d6dd01cd863389c61
+  - status-list-scalar-set: document N-Quads SHA-256 c6b10e17512168c510b45652bc960f994393efa60d084247097ecab28610f08b; proof N-Quads SHA-256 1985adebccbf7b9b1a0959fada085dd6abf5e0e8bd04680f4b1a5599f3a4733e
+  - status-list-array-set: document N-Quads SHA-256 d10a3e406a5a5db069025c5e94da689ac0692ca31493cc6f19c746c46f28d7c6; proof N-Quads SHA-256 b227ea285a841a16ba7f4c0d8c20a11c2ebd418d0d248c5ae80d8ad406583977
+  - status-list-scalar-list: document N-Quads SHA-256 72224d5d4eb83c3162c1de08eda1a9de623aef4a6c44e001321103ae95b81ce2; proof N-Quads SHA-256 912375d598ef6b08bbc416e916a9666fb3e987b7a534982cec3f875b6211405e
+  - status-list-array-list: document N-Quads SHA-256 9a82f62a5d3690eae0ef2ba48d3cedf6a6367e2434d473631717f5d8ba9747bb; proof N-Quads SHA-256 4d378be37a21255d0fa19c76ffe081c5686eb201a651d53a72b82e67a096b6c8
+
 ### Generic VCB JSON-LD Extension N-Quads Parity
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 521 ms
+- Duration: 524 ms
 - Case IDs:
   - `generic-jsonld-extension-values`
 
@@ -87,7 +144,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 520 ms
+- Duration: 524 ms
 - Case IDs:
   - `generic-proof-extension-values`
 
@@ -95,7 +152,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 48
-- Duration: 21981 ms
+- Duration: 22190 ms
 - Case IDs:
   - `vcb-document-string-literal`
   - `proof-string-literal`
@@ -199,7 +256,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 17
-- Duration: 8457 ms
+- Duration: 8465 ms
 - Case IDs:
   - `implemented-absolute-id-node`
   - `implemented-nested-graph`
@@ -241,7 +298,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 9
-- Duration: 4030 ms
+- Duration: 4072 ms
 - Case IDs:
   - `engine-vcb-document`
   - `engine-data-integrity-proof`
@@ -267,7 +324,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 3892 ms
+- Duration: 3778 ms
 - Case IDs:
   - `w3c-rdfc-subset`
 
@@ -275,7 +332,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 524 ms
+- Duration: 523 ms
 - Case IDs:
   - `w3c-rdfc-issued-map-subset`
 
@@ -283,7 +340,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 768 ms
+- Duration: 750 ms
 - Case IDs:
   - `w3c-rdfc-negative-clique`
 

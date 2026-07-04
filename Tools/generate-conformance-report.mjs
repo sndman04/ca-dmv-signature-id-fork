@@ -35,6 +35,12 @@ const jsonGates = [
     args: ['Tools/status-list-parity.mjs']
   },
   {
+    id: 'status-list-extension-matrix',
+    label: 'Status-List Extension Matrix Verify-Data And N-Quads Parity',
+    command: process.execPath,
+    args: ['Tools/status-list-extension-matrix-parity.mjs']
+  },
+  {
     id: 'generic-vcb-jsonld',
     label: 'Generic VCB JSON-LD Extension N-Quads Parity',
     command: process.execPath,
@@ -165,6 +171,16 @@ function collectFailures(results) {
 }
 
 function notesForGate(id, json) {
+  if(id === 'status-list-extension-matrix') {
+    return (json.results ?? []).map(result =>
+      `${result.id}: document ${shortPair(
+        result.jsDocumentCanonicalNQuadsSHA256,
+        result.swiftDocumentCanonicalNQuadsSHA256
+      )}; proof ${shortPair(
+        result.jsProofCanonicalNQuadsSHA256,
+        result.swiftProofCanonicalNQuadsSHA256
+      )}`);
+  }
   if(id === 'jsonld-extension-matrix') {
     return (json.results ?? []).map(result =>
       `${result.id}: ${result.profile}; ${shortPair(

@@ -10,6 +10,7 @@ swift run CADMVVerifierSelfTest
 Tools/parity-status.sh
 Tools/reference-oracle-smoke.sh
 Tools/status-list-parity.mjs
+node Tools/status-list-extension-matrix-parity.mjs
 node Tools/canonicalization-engine-differential.mjs
 node Tools/jsonld-extension-matrix-parity.mjs
 Tools/signature-policy-characterization.mjs
@@ -52,6 +53,9 @@ node Tools/parity-compare.mjs
 
 # Swift/JS status-list verify-data parity for synthetic status-list fixtures.
 node Tools/status-list-parity.mjs
+
+# Shape-by-shape status-list extension canonical N-Quads and verify-data parity.
+node Tools/status-list-extension-matrix-parity.mjs
 
 # Replacement canonicalization engine differential across supported profiles.
 node Tools/canonicalization-engine-differential.mjs
