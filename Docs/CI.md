@@ -55,6 +55,9 @@ node Tools/signature-policy-characterization.mjs
 
 # Generated end-to-end VCB signature parity fixtures.
 node Tools/generated-signature-parity.mjs
+
+# JSON-LD edge behavior classification against JS safe-mode canonicalization.
+node Tools/jsonld-behavior-characterization.mjs
 ```
 
 The stdin mode emits JSON with the selected SDK baseline, mode, high-level outcome, first failure stage, VCB byte count, credential profile class, AAMVA optical hash, and VCB verify-data hex when a VCB can be decoded. It must not be used to log raw PDF417 payloads or decoded identity fields.

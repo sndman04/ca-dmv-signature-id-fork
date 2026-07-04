@@ -426,6 +426,7 @@ Progress:
 - The JS oracle smoke gate now also compares Swift and reference JS canonical Data Integrity proof N-Quads for that generic extension subset, including proof-local `@id`, node-object `@type`, node-object `@reverse`, node-object `@graph`, node-object `@included`, node-object `@nest`, string `@index`, directed `@value`, `@json` value objects, `@set`, and `@list` values.
 - The status-list parity gate now compares Swift and reference JS status-list document/proof canonical N-Quads directly, reporting SHA-256 fingerprints alongside final verify-data hex so document-hash and proof-hash regressions can be localized without exposing raw fixture content in summary output.
 - `Tools/generate-conformance-report.mjs` now regenerates `Docs/CONFORMANCE_REPORT.md` from the committed privacy-safe parity gates, including official UAT fixtures, generated signature cases, status-list parity, generic extension parity, and W3C RDFC subset coverage.
+- `Tools/jsonld-behavior-characterization.mjs` and `Docs/JSONLD_BEHAVIOR_CHARACTERIZATION.md` now classify representative JSON-LD 1.1 edge shapes as implemented, rejected by both JS safe-mode and Swift, or Swift-only fail-closed pending the final engine. The current Swift-only fail-closed case is explicit blank-node `@id` support, which is not required by the supported DMV profile.
 - VCB credential validation now permits only extension fields accepted by that generic absolute-IRI canonicalization path, so public verification can reach the standards-valid extension support without weakening fail-closed behavior for unsupported terms.
 - The native RDFC core now has W3C RDFC-1.0 subset coverage for empty datasets, blank nodes, graph names, shared graph names, language/datatype literals, Unicode and control-character escaping, duplicate input quads, and the negative clique graph; RDF datasets are de-duplicated before canonical labeling/rendering.
 - The native RDFC core exposes an internal issued-identifier map and validates it against a W3C map-test subset, so canonical blank-node labels are checked directly as well as through rendered N-Quads.
@@ -656,7 +657,7 @@ The long-term project is complete only when all of these are true:
 
 ## Immediate Next Build Tasks
 
-1. Characterize remaining JSON-LD 1.1 behavior against the selected JS SDK baseline and classify each case as:
+1. Continue expanding JSON-LD 1.1 behavior characterization against the selected JS SDK baseline as new unsupported shapes are found, classifying each case as:
    - implemented in the native replacement
    - intentionally fail-closed because it cannot appear in the supported DMV profile
    - blocked pending the final standards-grade/native-library engine

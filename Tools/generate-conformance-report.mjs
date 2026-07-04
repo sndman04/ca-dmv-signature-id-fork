@@ -39,6 +39,12 @@ const jsonGates = [
     label: 'Generic Proof JSON-LD Extension N-Quads Parity',
     command: process.execPath,
     args: ['Tools/generic-proof-extension-parity.mjs']
+  },
+  {
+    id: 'jsonld-behavior-characterization',
+    label: 'JSON-LD 1.1 Behavior Characterization',
+    command: process.execPath,
+    args: ['Tools/jsonld-behavior-characterization.mjs']
   }
 ];
 
@@ -73,7 +79,8 @@ for(const gate of jsonGates) {
     command: shellCommand(gate.command, gate.args),
     durationMs: Date.now() - started,
     passed: json.passed === true,
-    comparedFixtureCount: json.comparedFixtureCount ?? json.results?.length ?? 0,
+    comparedFixtureCount: json.comparedFixtureCount ??
+      json.characterizedCaseCount ?? json.results?.length ?? 0,
     fixtureIDs: (json.results ?? []).map(result => result.id),
     failures: collectFailures(json.results ?? []),
     notes: notesForGate(gate.id, json)
@@ -140,6 +147,10 @@ function collectFailures(results) {
 }
 
 function notesForGate(id, json) {
+  if(id === 'jsonld-behavior-characterization') {
+    return (json.results ?? []).map(result =>
+      `${result.id}: ${result.classification}; JS accepted=${result.jsAccepted}; Swift accepted=${result.swiftAccepted}`);
+  }
   if(id !== 'status-list') {
     return [];
   }
@@ -208,7 +219,7 @@ function renderReport({sdkPackage, generatedAt, gitRevision, gates}) {
     lines.push('');
   }
   lines.push('## Remaining Scope', '');
-  lines.push('- This report covers the selected official SDK baseline fixtures, generated non-PII fixtures, supported status-list parity fixtures, generic extension parity fixtures, and the current W3C RDFC subset tests.');
+  lines.push('- This report covers the selected official SDK baseline fixtures, generated non-PII fixtures, supported status-list parity fixtures, generic extension parity fixtures, JSON-LD behavior characterization cases, and the current W3C RDFC subset tests.');
   lines.push('- It is not yet a final proof that handwritten canonical N-Quads have been removed from public verification.');
   lines.push('- Final completion still requires the standards-grade or native-library-backed canonicalization engine described in `Docs/LONG_TERM_JS_PARITY_PLAN.md`.');
   lines.push('');

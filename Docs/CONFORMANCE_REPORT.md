@@ -1,7 +1,7 @@
 # Conformance Report
 
-Generated: 2026-07-04T01:56:31.983Z
-Repository revision: `f1b60bf`
+Generated: 2026-07-04T02:27:23.088Z
+Repository revision: `d23d6cd`
 Reference SDK: `cadmv-dlid-verifier-sdk@0.0.1-0`
 
 This report is generated from committed non-PII fixtures and synthetic cases. It does not include raw PDF417 payloads, decoded identity fields, or real private scan data.
@@ -17,6 +17,7 @@ Overall result: PASS
 | Status-List Verify-Data And N-Quads Parity | `node Tools/status-list-parity.mjs` | 3 | PASS |
 | Generic VCB JSON-LD Extension N-Quads Parity | `node Tools/generic-jsonld-extension-parity.mjs` | 1 | PASS |
 | Generic Proof JSON-LD Extension N-Quads Parity | `node Tools/generic-proof-extension-parity.mjs` | 1 | PASS |
+| JSON-LD 1.1 Behavior Characterization | `node Tools/jsonld-behavior-characterization.mjs` | 12 | PASS |
 | W3C RDFC-1.0 Conformance Subset | `Tools/swift-test.sh --filter RDFDatasetCanonicalizerTests/testW3CRDFC10ConformanceSubset` | 1 | PASS |
 | W3C RDFC-1.0 Issued-Identifier Map Subset | `Tools/swift-test.sh --filter RDFDatasetCanonicalizerTests/testW3CRDFC10IssuedIdentifierMapSubset` | 1 | PASS |
 | W3C RDFC-1.0 Negative Clique Fail-Closed Coverage | `Tools/swift-test.sh --filter RDFDatasetCanonicalizerTests/testW3CRDFC10NegativeCliqueGraphFailsClosed` | 1 | PASS |
@@ -27,7 +28,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 2
-- Duration: 4472 ms
+- Duration: 1762 ms
 - Case IDs:
   - `official-valid-uat`
   - `official-invalid-uat`
@@ -36,7 +37,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 8
-- Duration: 6048 ms
+- Duration: 6206 ms
 - Case IDs:
   - `generated-valid-z-signature`
   - `generated-valid-u-signature`
@@ -51,7 +52,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 5316 ms
+- Duration: 5117 ms
 - Case IDs:
   - `synthetic-status-list-base`
   - `synthetic-status-list-optional-fields`
@@ -65,7 +66,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 573 ms
+- Duration: 551 ms
 - Case IDs:
   - `generic-jsonld-extension-values`
 
@@ -73,15 +74,47 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 547 ms
+- Duration: 542 ms
 - Case IDs:
   - `generic-proof-extension-values`
+
+### JSON-LD 1.1 Behavior Characterization
+
+- Result: PASS
+- Compared cases: 12
+- Duration: 6200 ms
+- Case IDs:
+  - `implemented-absolute-id-node`
+  - `implemented-nested-graph`
+  - `implemented-json-literal`
+  - `fail-closed-relative-id-node`
+  - `fail-closed-blank-node-id`
+  - `fail-closed-nested-context`
+  - `fail-closed-compact-property`
+  - `fail-closed-reverse-literal`
+  - `fail-closed-type-language-conflict`
+  - `fail-closed-invalid-direction`
+  - `fail-closed-typed-json-object-absolute-iri`
+  - `fail-closed-non-string-index`
+- Notes:
+  - implemented-absolute-id-node: implemented; JS accepted=true; Swift accepted=true
+  - implemented-nested-graph: implemented; JS accepted=true; Swift accepted=true
+  - implemented-json-literal: implemented; JS accepted=true; Swift accepted=true
+  - fail-closed-relative-id-node: bothReject; JS accepted=false; Swift accepted=false
+  - fail-closed-blank-node-id: swiftFailClosed; JS accepted=true; Swift accepted=false
+  - fail-closed-nested-context: bothReject; JS accepted=false; Swift accepted=false
+  - fail-closed-compact-property: bothReject; JS accepted=false; Swift accepted=false
+  - fail-closed-reverse-literal: bothReject; JS accepted=false; Swift accepted=false
+  - fail-closed-type-language-conflict: bothReject; JS accepted=false; Swift accepted=false
+  - fail-closed-invalid-direction: bothReject; JS accepted=false; Swift accepted=false
+  - fail-closed-typed-json-object-absolute-iri: bothReject; JS accepted=false; Swift accepted=false
+  - fail-closed-non-string-index: bothReject; JS accepted=false; Swift accepted=false
 
 ### W3C RDFC-1.0 Conformance Subset
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 3505 ms
+- Duration: 4452 ms
 - Case IDs:
   - `w3c-rdfc-subset`
 
@@ -89,7 +122,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 547 ms
+- Duration: 518 ms
 - Case IDs:
   - `w3c-rdfc-issued-map-subset`
 
@@ -97,13 +130,13 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 822 ms
+- Duration: 760 ms
 - Case IDs:
   - `w3c-rdfc-negative-clique`
 
 ## Remaining Scope
 
-- This report covers the selected official SDK baseline fixtures, generated non-PII fixtures, supported status-list parity fixtures, generic extension parity fixtures, and the current W3C RDFC subset tests.
+- This report covers the selected official SDK baseline fixtures, generated non-PII fixtures, supported status-list parity fixtures, generic extension parity fixtures, JSON-LD behavior characterization cases, and the current W3C RDFC subset tests.
 - It is not yet a final proof that handwritten canonical N-Quads have been removed from public verification.
 - Final completion still requires the standards-grade or native-library-backed canonicalization engine described in `Docs/LONG_TERM_JS_PARITY_PLAN.md`.
 
