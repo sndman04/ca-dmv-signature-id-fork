@@ -18,6 +18,14 @@ Tools/generated-signature-parity.mjs
 node Tools/mutation-parity.mjs
 ```
 
+Before a release that claims full JavaScript SDK replacement parity, also run:
+
+```sh
+Tools/replacement-readiness.sh
+```
+
+This gate is intentionally stricter than the normal push gates. It fails while public verification still defaults to the supported-profile canonicalization engine or while release-blocking replacement caveats remain in docs/generated reports.
+
 GitHub Actions runs the Swift gates, parity status check, and `Tools/reference-oracle-smoke.sh` on push and pull request in `.github/workflows/ci.yml`. The smoke wrapper runs the JS reference parity tools when Node and the reference SDK dependencies are available.
 
 Reference SDK parity command:

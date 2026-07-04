@@ -11,7 +11,8 @@ This review records the current implementation state after focused bug, security
 - Missing required VCB returns `.failed`.
 - Optional missing VCB before the requirement date returns `.notPresent`.
 - Malformed base64 and malformed CBOR-LD return `.failed`.
-- Oversized CBOR array/map declarations are rejected before allocating collection storage.
+- Oversized CBOR byte/text length and array/map count declarations are rejected before allocating collection storage.
+- Unsupported CBOR indefinite-length, simple-value, float, break-code, negative-overflow, and trailing-byte encodings fail closed.
 - Status-required official UAT verification returns `.unavailable`, not `.verified`, because the live UAT status endpoint is not currently usable.
 - Synthetic JS-reference Bitstring Status List credentials verify with `ecdsa-rdfc-2019`; verified set bits map to `.revoked`, and verified clear bits map to `.verified`.
 - Credential expiration data is enforced after signature verification and after any required revocation check succeeds as not revoked.
@@ -43,5 +44,7 @@ Added or updated:
 - `NOTICE`
 
 ## Remaining Limitation
+
+The default verifier still uses `SupportedProfileJSONLDCanonicalizationEngine`, a native supported-profile JSON-LD-to-RDF path. It is typed and parity-tested against the current DMV fixture corpus, but it is not yet the final standards-grade or native-library-backed JSON-LD/RDF canonicalization engine required for a full one-to-one JavaScript SDK replacement claim.
 
 The live UAT status URL derived from the official valid fixture currently redirects to a host outside the original SDK allowlist and returns 404 after redirect. The verifier therefore keeps the official status-required UAT sample at `.unavailable` even though the supported status-list credential proof and bit-check path is implemented and covered by synthetic JS-reference data.

@@ -678,6 +678,7 @@ The long-term project is complete only when all of these are true:
 6. Generate and review the dependency/license/threat-model documents required by `Docs/CANONICALIZATION_ENGINE_DECISION.md` if the final engine uses any external native library or bridge.
 7. Publish the final conformance report with the selected official SDK baseline version, supported cases, skipped cases, local-only private test policy, and any approved security exceptions.
 8. Remove release-blocking caveats from public docs only after handwritten canonical N-Quads are no longer reachable from public verification.
+9. Run `Tools/replacement-readiness.sh`; it must pass before any release notes or public docs claim full JavaScript SDK replacement parity.
 
 ## Open Questions
 
