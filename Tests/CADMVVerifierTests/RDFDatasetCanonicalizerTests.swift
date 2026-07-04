@@ -220,6 +220,33 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
     }
 
+    func testValidatorAllowsOnlyCanonicalizableAbsoluteIRIExtensionTerms() throws {
+        XCTAssertNoThrow(try DMVCredentialValidator.validate(vcbCredential(
+            additionalProperties: [
+                "https://example.invalid/terms/root": .string("root")
+            ],
+            proofAdditionalProperties: [
+                "https://example.invalid/terms/proof": .number("7.5")
+            ]
+        ), mode: .uat))
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(vcbCredential(
+            additionalProperties: [
+                "unknownCredentialOption": .string("unsupported")
+            ]
+        ), mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(vcbCredential(
+            proofAdditionalProperties: [
+                "https://example.invalid/terms/unsafe space": .string("unsupported")
+            ]
+        ), mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     func testVCBJSONLDConverterRejectsCompactAndUnsafeExtensionTerms() throws {
         var compactTermDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
             credentialStatus: nil
@@ -1155,7 +1182,8 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ),
         validFrom: String? = nil,
         validUntil: String? = nil,
-        additionalProperties: [String: SupportedJSONLDValue] = [:]
+        additionalProperties: [String: SupportedJSONLDValue] = [:],
+        proofAdditionalProperties: [String: SupportedJSONLDValue] = [:]
     ) -> DMVVerifiableCredential {
         DMVVerifiableCredential(
             context: [
@@ -1181,7 +1209,8 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 cryptosuite: "ecdsa-xi-2023",
                 proofPurpose: "assertionMethod",
                 proofValue: "zLdp",
-                verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"
+                verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+                additionalProperties: proofAdditionalProperties
             ),
             additionalProperties: additionalProperties
         )

@@ -68,6 +68,8 @@ California DL/ID scan, including older documents.
 
 Unsupported status-list credential shapes fail closed. Newly added signed fields are preserved internally for canonicalization work, but the current default verifier returns status unavailable until the canonicalization engine can include those fields in the signature verification input. Development-only SPI diagnostics can identify unknown status-list key names for maintainers, but public results intentionally remain privacy-minimized.
 
+For VCB credentials and Data Integrity proofs, standards-valid extension fields whose property names are safe absolute `http` or `https` IRIs are included in canonicalization when their values can be represented by the supported JSON-LD/RDF path. Compact unknown property names and unsafe IRIs fail closed as unsupported credential profiles rather than being ignored.
+
 When a verified credential includes `validUntil` or proof `expires` data, the verifier returns `.expired` after the signature verifies and after any required revocation check completes as not revoked. If status checking is required but unavailable, `.unavailable` takes precedence over `.expired`; if the status list marks the credential revoked, `.revoked` takes precedence.
 
 DID Web key lookup is required for signature verification regardless of `checkStatus`. If the selected DMV DID host cannot be resolved or reached, the request times out, the response is not a direct 2xx HTTP response, or the DID document is malformed, verification returns `.failed` with `failureReason == .didResolutionFailed`.

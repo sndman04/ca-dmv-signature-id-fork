@@ -96,6 +96,25 @@ enum SupportedJSONLDRDFTerms {
         )
     }
 
+    static func requireGenericAbsoluteIRIProperties(
+        _ properties: [String: SupportedJSONLDValue],
+        error: CADMVInternalError
+    ) throws {
+        var blankNodeCounter = 0
+        for key in properties.keys.sorted() {
+            guard let value = properties[key],
+                  try genericAbsoluteIRIQuads(
+                    key: key,
+                    value: value,
+                    subject: .blank("validation"),
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                  ) != nil else {
+                throw error
+            }
+        }
+    }
+
     private static func genericValueQuads(
         predicate: String,
         value: SupportedJSONLDValue,

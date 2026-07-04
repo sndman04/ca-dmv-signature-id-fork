@@ -10,10 +10,14 @@ enum DMVCredentialValidator {
             throw CADMVInternalError.unsupportedVCB
         }
 
-        guard credential.additionalProperties.isEmpty,
-              credential.proof.additionalProperties.isEmpty else {
-            throw CADMVInternalError.unsupportedVCB
-        }
+        try SupportedJSONLDRDFTerms.requireGenericAbsoluteIRIProperties(
+            credential.additionalProperties,
+            error: .unsupportedVCB
+        )
+        try SupportedJSONLDRDFTerms.requireGenericAbsoluteIRIProperties(
+            credential.proof.additionalProperties,
+            error: .unsupportedVCB
+        )
 
         guard isExactTypeSet(
             credential.type,
