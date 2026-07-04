@@ -103,7 +103,7 @@ enum DMVVCBDecoder {
     }
 
     private static func compressedCredential(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential {
-        try rejectUnknownKeys(map, allowed: compressedCredentialKeys)
+        try rejectUnknownNonTextKeys(map, allowed: compressedCredentialKeys)
         return DMVVerifiableCredential(
             context: try context(from: requiredArray(map, key: 1)),
             type: try credentialTypes(from: requiredArray(map, key: 157)),
@@ -112,7 +112,11 @@ enum DMVVCBDecoder {
             validUntil: try optionalDateTimeText(map, key: 194),
             credentialSubject: try credentialSubject(from: requiredMap(map, key: 176)),
             credentialStatus: try optionalMap(map, key: 174).map(credentialStatus(from:)),
-            proof: try proof(from: requiredMap(map, key: 182))
+            proof: try proof(from: requiredMap(map, key: 182)),
+            additionalProperties: try additionalTextProperties(
+                in: map,
+                excluding: compressedCredentialKeys
+            )
         )
     }
 
@@ -140,7 +144,7 @@ enum DMVVCBDecoder {
     }
 
     private static func expandedCredential(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential {
-        try rejectUnknownKeys(map, allowed: expandedCredentialKeys)
+        try rejectUnknownNonTextKeys(map, allowed: expandedCredentialKeys)
         return DMVVerifiableCredential(
             context: try textArrayOrString(requiredValue(map, key: "@context")),
             type: try textArrayOrString(requiredValue(map, key: "type")),
@@ -149,7 +153,11 @@ enum DMVVCBDecoder {
             validUntil: try optionalDateTimeText(map, key: "validUntil"),
             credentialSubject: try expandedCredentialSubject(from: requiredMap(map, key: "credentialSubject")),
             credentialStatus: try optionalMap(map, key: "credentialStatus").map(expandedCredentialStatus(from:)),
-            proof: try expandedProof(from: requiredMap(map, key: "proof"))
+            proof: try expandedProof(from: requiredMap(map, key: "proof")),
+            additionalProperties: try additionalTextProperties(
+                in: map,
+                excluding: expandedCredentialKeys
+            )
         )
     }
 
@@ -173,7 +181,7 @@ enum DMVVCBDecoder {
     }
 
     private static func expandedProof(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential.Proof {
-        try rejectUnknownKeys(map, allowed: expandedProofKeys)
+        try rejectUnknownNonTextKeys(map, allowed: expandedProofKeys)
         return DMVVerifiableCredential.Proof(
             type: try requiredText(map, key: "type"),
             created: try optionalDateTimeText(map, key: "created"),
@@ -181,7 +189,11 @@ enum DMVVCBDecoder {
             cryptosuite: try requiredText(map, key: "cryptosuite"),
             proofPurpose: try proofPurpose(from: requiredValue(map, key: "proofPurpose")),
             proofValue: try multibaseSignatureString(from: requiredValue(map, key: "proofValue")),
-            verificationMethod: try url(from: requiredValue(map, key: "verificationMethod"))
+            verificationMethod: try url(from: requiredValue(map, key: "verificationMethod")),
+            additionalProperties: try additionalTextProperties(
+                in: map,
+                excluding: expandedProofKeys
+            )
         )
     }
 
@@ -237,7 +249,7 @@ enum DMVVCBDecoder {
     }
 
     private static func proof(from map: [CBORValue: CBORValue]) throws -> DMVVerifiableCredential.Proof {
-        try rejectUnknownKeys(map, allowed: compressedProofKeys)
+        try rejectUnknownNonTextKeys(map, allowed: compressedProofKeys)
         let type = try typeValue(from: requiredValue(map, key: 156))
         guard type == "DataIntegrityProof" else {
             throw CADMVInternalError.unsupportedVCB
@@ -251,7 +263,11 @@ enum DMVVCBDecoder {
             cryptosuite: try cryptosuite(from: requiredValue(map, key: keySet.cryptosuite)),
             proofPurpose: try proofPurpose(from: requiredValue(map, key: keySet.proofPurpose)),
             proofValue: try multibaseSignatureString(from: requiredValue(map, key: keySet.proofValue)),
-            verificationMethod: try url(from: requiredValue(map, key: keySet.verificationMethod))
+            verificationMethod: try url(from: requiredValue(map, key: keySet.verificationMethod)),
+            additionalProperties: try additionalTextProperties(
+                in: map,
+                excluding: compressedProofKeys
+            )
         )
     }
 
@@ -537,8 +553,53 @@ enum DMVVCBDecoder {
         return values
     }
 
-    private static func rejectUnknownKeys(_ map: [CBORValue: CBORValue], allowed: Set<CBORValue>) throws {
+    private static func rejectUnknownNonTextKeys(
+        _ map: [CBORValue: CBORValue],
+        allowed: Set<CBORValue>
+    ) throws {
         for key in map.keys where !allowed.contains(key) {
+            guard case .textString = key else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+        }
+    }
+
+    private static func additionalTextProperties(
+        in map: [CBORValue: CBORValue],
+        excluding allowed: Set<CBORValue>
+    ) throws -> [String: SupportedJSONLDValue] {
+        var properties: [String: SupportedJSONLDValue] = [:]
+        for (key, value) in map where !allowed.contains(key) {
+            guard case .textString(let name) = key else {
+                continue
+            }
+            properties[name] = try supportedJSONLDValue(from: value)
+        }
+        return properties
+    }
+
+    private static func supportedJSONLDValue(from value: CBORValue) throws -> SupportedJSONLDValue {
+        switch value {
+        case .textString(let text):
+            return .string(text)
+        case .unsigned(let number):
+            return .unsigned(number)
+        case .bool(let value):
+            return .bool(value)
+        case .null:
+            return .null
+        case .array(let values):
+            return .array(try values.map(supportedJSONLDValue(from:)))
+        case .map(let map):
+            var object: [String: SupportedJSONLDValue] = [:]
+            for (key, value) in map {
+                guard case .textString(let name) = key else {
+                    throw CADMVInternalError.unsupportedVCB
+                }
+                object[name] = try supportedJSONLDValue(from: value)
+            }
+            return .object(object)
+        default:
             throw CADMVInternalError.unsupportedVCB
         }
     }

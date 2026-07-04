@@ -47,6 +47,9 @@ enum VCBJSONLDRDFExpander {
         if let validUntil = credential.validUntil {
             document["validUntil"] = .string(validUntil)
         }
+        for (key, value) in credential.additionalProperties {
+            document[key] = value
+        }
         return document
     }
 }

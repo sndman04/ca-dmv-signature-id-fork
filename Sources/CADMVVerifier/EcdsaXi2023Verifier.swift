@@ -36,7 +36,8 @@ enum EcdsaXi2023Verifier {
             expires: credential.proof.expires,
             cryptosuite: credential.proof.cryptosuite,
             proofPurpose: credential.proof.proofPurpose,
-            verificationMethod: credential.proof.verificationMethod
+            verificationMethod: credential.proof.verificationMethod,
+            additionalProperties: credential.proof.additionalProperties
         ).utf8)))
         let documentHash = Data(SHA256.hash(data: Data(try VCBJSONLDRDFExpander.canonicalNQuads(credential).utf8)))
         let externalHash = Data(SHA256.hash(data: opticalDataHash))
@@ -489,6 +490,7 @@ enum DataIntegrityProofCanonicalizer {
         cryptosuite: String,
         proofPurpose: String,
         verificationMethod: String,
+        additionalProperties: [String: SupportedJSONLDValue] = [:],
         engine: any JSONLDCanonicalizationEngine = SupportedProfileJSONLDCanonicalizationEngine.shared
     ) throws -> String {
         try engine.canonicalNQuads(
@@ -499,7 +501,8 @@ enum DataIntegrityProofCanonicalizer {
                 expires: expires,
                 cryptosuite: cryptosuite,
                 proofPurpose: proofPurpose,
-                verificationMethod: verificationMethod
+                verificationMethod: verificationMethod,
+                additionalProperties: additionalProperties
             ),
             profile: .dataIntegrityProof
         )
@@ -512,7 +515,8 @@ enum DataIntegrityProofCanonicalizer {
         expires: String?,
         cryptosuite: String,
         proofPurpose: String,
-        verificationMethod: String
+        verificationMethod: String,
+        additionalProperties: [String: SupportedJSONLDValue] = [:]
     ) -> [String: SupportedJSONLDValue] {
         var document: [String: SupportedJSONLDValue] = [
             "@context": .array(contexts.map { .string($0) }),
@@ -526,6 +530,9 @@ enum DataIntegrityProofCanonicalizer {
         }
         if let expires {
             document["expires"] = .string(expires)
+        }
+        for (key, value) in additionalProperties {
+            document[key] = value
         }
         return document
     }

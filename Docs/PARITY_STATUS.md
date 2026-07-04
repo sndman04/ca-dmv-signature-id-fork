@@ -130,7 +130,7 @@ Completed Phase 4 work:
 - Added synthetic regression coverage for the observed production class where status-list and subject blank nodes can swap canonical order based on credential content.
 - Added exact-output proof canonicalization tests for optional `created` and `expires` handling, plus W3C shared-hash canonicalization coverage.
 - Rechecked the prohibited-storage production vector locally in memory; the previous `data-integrity-vcb` divergence is resolved without committing raw payloads or PII.
-- Characterized `unknown-ignorable-cborld-values`: JS preserves text-encoded unknown credential/proof fields but rejects unknown compressed numeric term ids; Swift continues to fail closed until the replacement canonicalizer can preserve those fields safely.
+- Characterized `unknown-ignorable-cborld-values`: JS preserves text-encoded unknown credential/proof fields but rejects unknown compressed numeric term ids; Swift now preserves JS-accepted text-key unknown fields in decoded JSON-LD state, rejects unknown numeric term ids during decode, and keeps the public verifier fail-closed until the replacement canonicalizer can canonicalize those preserved fields safely.
 - Documented the canonicalization engine decision and external bridge acceptance criteria in `Docs/CANONICALIZATION_ENGINE_DECISION.md`.
 - Added `SupportedJSONLDRDFConverter` so VCB document canonicalization now flows through a supported-context JSON-LD-to-RDF conversion boundary instead of directly assembling RDF quads from the credential model; unsupported contexts and unknown signed terms fail closed at that boundary.
 - Expanded generated VCB signature parity to cover runtime-signed credentials with `credentialStatus`, `validFrom`/`validUntil`, combined status plus validity dates, and an expired valid signature, comparing JS and Swift canonical N-Quads, verify-data, AAMVA hash, byte length, failure stage, and final verification result.
@@ -141,6 +141,7 @@ Completed Phase 4 work:
 - Added an internal RDFC issued-identifier map API and W3C map-test subset coverage, so canonical blank-node labeling can be asserted directly instead of only through rendered N-Quads.
 - Added a pinned JSON-LD term registry for the DMV, VC, status-list, schema.org, and security terms currently accepted by VCB, status-list, and proof converters; converters now use that registry while continuing to fail closed for unsupported signed terms.
 - Moved supported JSON-LD context-set policy for VCB documents, status-list documents, and proof documents into the pinned registry with profile-specific rejection coverage.
+- Added decoded `additionalProperties` storage for JS-accepted text-key unknown VCB credential and proof fields, projected those fields into the internal JSON-LD documents, and kept current public verification fail-closed until a standards-grade engine can canonicalize them instead of dropping them.
 
 Completed Phase 5 work:
 

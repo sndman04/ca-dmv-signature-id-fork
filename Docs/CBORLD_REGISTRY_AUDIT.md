@@ -95,7 +95,7 @@ Unknown signed fields fail closed today because the supported-profile canonicali
 - Text-encoded unknown proof keys decode successfully and are preserved in `proof`.
 - Unknown compressed numeric term ids fail during CBOR-LD decode.
 
-Swift intentionally still fails closed for unknown credential and proof keys until the replacement canonicalization engine can preserve those decoded fields and feed them into the same RDF canonicalization path as the JS verifier. The supported-context JSON-LD-to-RDF boundary also rejects unknown signed terms rather than silently dropping them. Accepting and then dropping unknown signed fields would create a false-positive verification risk.
+Swift now preserves JS-accepted text-encoded unknown credential and proof keys in the decoded credential model and JSON-LD projections, while the public verifier still fails closed with an unsupported profile until the replacement canonicalization engine can feed those fields into the same RDF canonicalization path as the JS verifier. Unknown compressed numeric term ids continue to fail during CBOR-LD decode. The supported-context JSON-LD-to-RDF boundary also rejects unknown signed terms rather than silently dropping them. Accepting and then dropping unknown signed fields would create a false-positive verification risk.
 
 ## Parity Evidence
 
@@ -110,4 +110,4 @@ Current parity checks:
 
 Current known gap:
 
-- `unknown-ignorable-cborld-values` is characterized, but the final Swift replacement still needs standards-grade JSON-LD/RDF canonicalization before it can safely match JS acceptance of text-encoded unknown signed fields.
+- `unknown-ignorable-cborld-values` is decoded into preserved JSON-LD state for JS-accepted text-key fields, but the final Swift replacement still needs standards-grade JSON-LD/RDF canonicalization before it can safely match JS acceptance of those signed fields.

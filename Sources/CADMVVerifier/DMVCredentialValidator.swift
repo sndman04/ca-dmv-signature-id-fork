@@ -10,6 +10,11 @@ enum DMVCredentialValidator {
             throw CADMVInternalError.unsupportedVCB
         }
 
+        guard credential.additionalProperties.isEmpty,
+              credential.proof.additionalProperties.isEmpty else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+
         guard isExactTypeSet(
             credential.type,
             ["VerifiableCredential", "OpticalBarcodeCredential"]

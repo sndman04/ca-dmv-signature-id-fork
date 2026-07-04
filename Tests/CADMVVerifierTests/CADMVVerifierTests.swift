@@ -489,6 +489,53 @@ final class CADMVVerifierTests: XCTestCase {
         }
     }
 
+    func testDecoderPreservesTextEncodedUnknownCredentialKeyForCanonicalization() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(
+            textEncoded: true,
+            includeUnknownCredentialKey: true
+        ))
+
+        XCTAssertEqual(
+            credential.additionalProperties["unknownCredentialOption"],
+            .string("unsupported")
+        )
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(credential, mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+        XCTAssertThrowsError(try VCBJSONLDRDFExpander.canonicalNQuads(credential)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
+    func testDecoderPreservesTextEncodedUnknownProofKeyForCanonicalization() throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential(
+            textEncoded: true,
+            includeUnknownProofKey: true
+        ))
+        let proofDocument = DataIntegrityProofCanonicalizer.jsonLDDocument(
+            contexts: credential.context,
+            type: credential.proof.type,
+            created: credential.proof.created,
+            expires: credential.proof.expires,
+            cryptosuite: credential.proof.cryptosuite,
+            proofPurpose: credential.proof.proofPurpose,
+            verificationMethod: credential.proof.verificationMethod,
+            additionalProperties: credential.proof.additionalProperties
+        )
+
+        XCTAssertEqual(
+            credential.proof.additionalProperties["unknownProofOption"],
+            .string("unsupported")
+        )
+        XCTAssertEqual(proofDocument["unknownProofOption"], .string("unsupported"))
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(credential, mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+        XCTAssertThrowsError(try SupportedProofJSONLDRDFConverter.quads(from: proofDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     func testDecoderAcceptsCompressedHTTPURLArrayValuesFromReferenceCBORLD() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential(statusBaseURLArrayEncoded: true))
 

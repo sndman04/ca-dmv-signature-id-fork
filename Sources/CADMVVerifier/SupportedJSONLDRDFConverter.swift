@@ -1,6 +1,8 @@
-enum SupportedJSONLDValue: Equatable {
+indirect enum SupportedJSONLDValue: Equatable, Sendable {
     case string(String)
     case unsigned(UInt64)
+    case bool(Bool)
+    case null
     case array([SupportedJSONLDValue])
     case object([String: SupportedJSONLDValue])
 }

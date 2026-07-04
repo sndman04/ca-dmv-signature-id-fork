@@ -108,12 +108,14 @@ extension CADMVVerifier {
             },
             vcbProofCanonicalNQuads: try credential.map {
                 try DataIntegrityProofCanonicalizer.canonicalNQuads(
+                    contexts: $0.context,
                     type: $0.proof.type,
                     created: $0.proof.created,
                     expires: $0.proof.expires,
                     cryptosuite: $0.proof.cryptosuite,
                     proofPurpose: $0.proof.proofPurpose,
-                    verificationMethod: $0.proof.verificationMethod
+                    verificationMethod: $0.proof.verificationMethod,
+                    additionalProperties: $0.proof.additionalProperties
                 )
             },
             vcbDocumentCanonicalNQuads: try credential.map {
