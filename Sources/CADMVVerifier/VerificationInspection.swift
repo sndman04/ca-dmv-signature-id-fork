@@ -231,6 +231,17 @@ extension CADMVVerifier {
         ).cadmvHexString
     }
 
+    public static func vcbDocumentCanonicalNQuadsForSelfTest(jsonData: Data) throws -> String {
+        let json = try JSONSerialization.jsonObject(with: jsonData)
+        guard let document = json as? [String: Any] else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return try SupportedProfileJSONLDCanonicalizationEngine.shared.canonicalNQuads(
+            document: document.mapValues(supportedJSONLDValue(from:)),
+            profile: .vcbDocument
+        )
+    }
+
     public static func statusListProfileDiagnosticForSelfTest(
         jsonData: Data
     ) -> CADMVStatusListProfileDiagnostic {
@@ -282,6 +293,33 @@ extension CADMVVerifier {
             return .revoked
         case .unavailable:
             return .unavailable
+        }
+    }
+
+    private static func supportedJSONLDValue(from value: Any) throws -> SupportedJSONLDValue {
+        switch value {
+        case let text as String:
+            return .string(text)
+        case let bool as Bool:
+            return .bool(bool)
+        case let number as NSNumber:
+            if CFGetTypeID(number) == CFBooleanGetTypeID() {
+                return .bool(number.boolValue)
+            }
+            if number.doubleValue.rounded() == number.doubleValue,
+               number.doubleValue >= 0,
+               let unsigned = UInt64(exactly: number) {
+                return .unsigned(unsigned)
+            }
+            return .number(number.stringValue)
+        case let array as [Any]:
+            return .array(try array.map(supportedJSONLDValue(from:)))
+        case let object as [String: Any]:
+            return .object(try object.mapValues(supportedJSONLDValue(from:)))
+        case _ as NSNull:
+            return .null
+        default:
+            throw CADMVInternalError.unsupportedVCB
         }
     }
 

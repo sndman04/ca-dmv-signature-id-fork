@@ -12,6 +12,10 @@ enum CADMVVerifierOracle {
             try runStatusListVerifyDataOracle()
             return
         }
+        if boolOption("--vcb-document-nquads", in: arguments) {
+            try runVCBDocumentNQuadsOracle()
+            return
+        }
 
         let mode = optionValue("--mode", in: arguments) == "uat"
             ? CADMVVerificationMode.uat
@@ -104,6 +108,25 @@ enum CADMVVerifierOracle {
             "input": "stdin",
             "result": [
                 "verifyDataHex": try CADMVVerifier.statusListVerifyDataForSelfTest(jsonData: payload)
+            ] as [String: Any?]
+        ]
+        let data = try JSONSerialization.data(
+            withJSONObject: normalize(output),
+            options: [.prettyPrinted, .sortedKeys]
+        )
+        FileHandle.standardOutput.write(data)
+        FileHandle.standardOutput.write(Data("\n".utf8))
+    }
+
+    private static func runVCBDocumentNQuadsOracle() throws {
+        let payload = FileHandle.standardInput.readDataToEndOfFile()
+        let output: [String: Any?] = [
+            "implementation": "swift",
+            "input": "stdin",
+            "result": [
+                "canonicalNQuads": try CADMVVerifier.vcbDocumentCanonicalNQuadsForSelfTest(
+                    jsonData: payload
+                )
             ] as [String: Any?]
         ]
         let data = try JSONSerialization.data(
