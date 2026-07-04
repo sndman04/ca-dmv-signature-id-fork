@@ -185,29 +185,30 @@ const acceptanceCases = [
     id: 'engine-vcb-document',
     profile: 'vcbDocument',
     jsCanonicalNQuads: () => jsVcbCanonicalNQuads(vcbDocument),
-    swiftCanonicalNQuads: () => swiftCanonicalNQuads('--vcb-document-nquads', vcbDocument)
+    swiftCanonicalNQuads: options => swiftCanonicalNQuads('--vcb-document-nquads', vcbDocument, options)
   },
   {
     id: 'engine-data-integrity-proof',
     profile: 'dataIntegrityProof',
     jsCanonicalNQuads: () => jsVcbCanonicalNQuads(proofConfig),
-    swiftCanonicalNQuads: () => swiftCanonicalNQuads('--proof-nquads', proofConfig)
+    swiftCanonicalNQuads: options => swiftCanonicalNQuads('--proof-nquads', proofConfig, options)
   },
   {
     id: 'engine-status-list-document',
     profile: 'statusListDocument',
     jsCanonicalNQuads: async () => (await jsStatusListCanonicalParts(statusListCredential)).documentCanonicalNQuads,
-    swiftCanonicalNQuads: () => swiftCanonicalNQuads('--status-list-document-nquads', statusListCredential)
+    swiftCanonicalNQuads: options => swiftCanonicalNQuads('--status-list-document-nquads', statusListCredential, options)
   },
   {
     id: 'engine-status-list-proof',
     profile: 'dataIntegrityProof',
     jsCanonicalNQuads: async () => (await jsStatusListCanonicalParts(statusListCredential)).proofCanonicalNQuads,
-    swiftCanonicalNQuads: () => swiftCanonicalNQuads('--status-list-proof-nquads', statusListCredential)
+    swiftCanonicalNQuads: options => swiftCanonicalNQuads('--status-list-proof-nquads', statusListCredential, options)
   },
   {
     id: 'engine-official-valid-uat-vcb-document',
     profile: 'vcbDocument',
+    supportedProfileComparison: false,
     jsCanonicalNQuads: async () =>
       (await officialOracleParts('validUatExample')).js.vcbDocumentCanonicalNQuads,
     swiftCanonicalNQuads: async () =>
@@ -216,6 +217,7 @@ const acceptanceCases = [
   {
     id: 'engine-official-valid-uat-proof',
     profile: 'dataIntegrityProof',
+    supportedProfileComparison: false,
     jsCanonicalNQuads: async () =>
       (await officialOracleParts('validUatExample')).js.vcbProofCanonicalNQuads,
     swiftCanonicalNQuads: async () =>
@@ -224,6 +226,7 @@ const acceptanceCases = [
   {
     id: 'engine-official-invalid-uat-vcb-document',
     profile: 'vcbDocument',
+    supportedProfileComparison: false,
     jsCanonicalNQuads: async () =>
       (await officialOracleParts('invalidUatExample')).js.vcbDocumentCanonicalNQuads,
     swiftCanonicalNQuads: async () =>
@@ -232,6 +235,7 @@ const acceptanceCases = [
   {
     id: 'engine-official-invalid-uat-proof',
     profile: 'dataIntegrityProof',
+    supportedProfileComparison: false,
     jsCanonicalNQuads: async () =>
       (await officialOracleParts('invalidUatExample')).js.vcbProofCanonicalNQuads,
     swiftCanonicalNQuads: async () =>
@@ -244,7 +248,9 @@ const rejectionCases = [
     id: 'engine-rejects-compact-unknown-vcb-field',
     profile: 'vcbDocument',
     jsAccepted: async () => accepted(() => jsVcbCanonicalNQuads(rejectionDocument)),
-    swiftAccepted: async () => accepted(() => swiftCanonicalNQuads('--vcb-document-nquads', rejectionDocument))
+    swiftAccepted: async options => accepted(() =>
+      swiftCanonicalNQuads('--vcb-document-nquads', rejectionDocument, options)
+    )
   }
 ];
 
@@ -253,13 +259,27 @@ const results = [];
 let failed = false;
 
 for(const testCase of acceptanceCases) {
-  const [jsCanonicalNQuads, swiftCanonicalNQuadsValue] = await Promise.all([
+  const [
+    jsCanonicalNQuads,
+    swiftProductionCanonicalNQuads,
+    swiftSupportedProfileCanonicalNQuads
+  ] = await Promise.all([
     testCase.jsCanonicalNQuads(),
-    testCase.swiftCanonicalNQuads()
+    testCase.swiftCanonicalNQuads({engine: 'production'}),
+    testCase.supportedProfileComparison === false ?
+      Promise.resolve(null) :
+      testCase.swiftCanonicalNQuads({engine: 'supported-profile'})
   ]);
-  const failures = jsCanonicalNQuads === swiftCanonicalNQuadsValue ?
-    [] :
-    [`${testCase.profile} canonical N-Quads mismatch`];
+  const failures = [];
+  if(jsCanonicalNQuads !== swiftProductionCanonicalNQuads) {
+    failures.push(`${testCase.profile} production selector canonical N-Quads mismatch`);
+  }
+  if(
+    swiftSupportedProfileCanonicalNQuads !== null &&
+    swiftProductionCanonicalNQuads !== swiftSupportedProfileCanonicalNQuads
+  ) {
+    failures.push(`${testCase.profile} production selector and supported-profile N-Quads differ`);
+  }
   const passed = failures.length === 0;
   failed = failed || !passed;
   results.push({
@@ -267,20 +287,29 @@ for(const testCase of acceptanceCases) {
     profile: testCase.profile,
     kind: 'acceptance',
     jsCanonicalNQuadsSHA256: sha256Hex(jsCanonicalNQuads),
-    swiftCanonicalNQuadsSHA256: sha256Hex(swiftCanonicalNQuadsValue),
+    swiftProductionCanonicalNQuadsSHA256: sha256Hex(swiftProductionCanonicalNQuads),
+    swiftSupportedProfileCanonicalNQuadsSHA256: swiftSupportedProfileCanonicalNQuads === null ?
+      null :
+      sha256Hex(swiftSupportedProfileCanonicalNQuads),
+    supportedProfileComparison: swiftSupportedProfileCanonicalNQuads !== null,
     passed,
     failures
   });
 }
 
 for(const testCase of rejectionCases) {
-  const [jsAccepted, swiftAccepted] = await Promise.all([
+  const [jsAccepted, swiftProductionAccepted, swiftSupportedProfileAccepted] = await Promise.all([
     testCase.jsAccepted(),
-    testCase.swiftAccepted()
+    testCase.swiftAccepted({engine: 'production'}),
+    testCase.swiftAccepted({engine: 'supported-profile'})
   ]);
-  const failures = jsAccepted === swiftAccepted ?
-    [] :
-    [`${testCase.profile} accept/reject behavior mismatch`];
+  const failures = [];
+  if(jsAccepted !== swiftProductionAccepted) {
+    failures.push(`${testCase.profile} production selector accept/reject behavior mismatch`);
+  }
+  if(swiftProductionAccepted !== swiftSupportedProfileAccepted) {
+    failures.push(`${testCase.profile} production selector and supported-profile accept/reject behavior differ`);
+  }
   const passed = failures.length === 0;
   failed = failed || !passed;
   results.push({
@@ -288,7 +317,8 @@ for(const testCase of rejectionCases) {
     profile: testCase.profile,
     kind: 'rejection',
     jsAccepted,
-    swiftAccepted,
+    swiftProductionAccepted,
+    swiftSupportedProfileAccepted,
     passed,
     failures
   });
@@ -383,11 +413,12 @@ function buildVcbContextLoader() {
   return jld.build();
 }
 
-async function swiftCanonicalNQuads(option, document) {
+async function swiftCanonicalNQuads(option, document, {engine = 'production'} = {}) {
   const swift = runJSON('swift', [
     'run',
     'CADMVVerifierOracle',
-    option
+    option,
+    `--engine=${engine}`
   ], JSON.stringify(document));
   return swift.result.canonicalNQuads;
 }

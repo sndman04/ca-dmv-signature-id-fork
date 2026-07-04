@@ -195,12 +195,15 @@ function notesForGate(id, json) {
   if(id === 'canonicalization-engine-differential') {
     return (json.results ?? []).map(result => {
       if(result.kind === 'rejection') {
-        return `${result.id}: ${result.profile}; JS accepted=${result.jsAccepted}; Swift accepted=${result.swiftAccepted}`;
+        return `${result.id}: ${result.profile}; JS accepted=${result.jsAccepted}; Swift production accepted=${result.swiftProductionAccepted}; Swift supported-profile accepted=${result.swiftSupportedProfileAccepted}`;
       }
+      const engineScope = result.supportedProfileComparison ?
+        '; production/supported-profile compared' :
+        '; production only';
       return `${result.id}: ${result.profile}; ${shortPair(
         result.jsCanonicalNQuadsSHA256,
-        result.swiftCanonicalNQuadsSHA256
-      )}`;
+        result.swiftProductionCanonicalNQuadsSHA256
+      )}${engineScope}`;
     });
   }
   if(id !== 'status-list') {

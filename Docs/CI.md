@@ -65,7 +65,7 @@ node Tools/status-list-parity.mjs
 # Shape-by-shape status-list extension canonical N-Quads and verify-data parity.
 node Tools/status-list-extension-matrix-parity.mjs
 
-# Replacement canonicalization engine differential across supported profiles.
+# Replacement canonicalization engine differential.
 node Tools/canonicalization-engine-differential.mjs
 
 # JS reference Data Integrity signature encoding and high-S policy.
@@ -105,7 +105,7 @@ The stdin mode emits JSON with the selected SDK baseline, mode, high-level outco
 - Base58 malformed alphabet rejection.
 - Data Integrity proofValue `z` base58btc and `u` base64url acceptance, text proofValue preservation before signature extraction, malformed/unsupported raw-signature rejection, and P-256 high-S counterpart behavior against the JS reference.
 - Generic JSON-LD extension number parsing rejects non-finite values, and number normalization is bounded so oversized coefficients and exponents fail closed before large allocation.
-- Production JSON-LD canonicalization defaults route through one selector so the final engine replacement is not scattered across verifier helpers.
+- Production JSON-LD canonicalization defaults route through one selector so the final engine replacement is not scattered across verifier helpers; the differential gate compares that selector with the current supported-profile engine on JSON-level non-PII canonicalization fixtures.
 - RDF Dataset Canonicalization validates IRI, predicate, datatype, language, and blank-node term safety before rendering canonical N-Quads.
 - Generated end-to-end VCB signatures covering valid `z`, valid `u`, status-bearing credentials, validity dates, expired valid signatures, tampered proof signature, and tampered protected AAMVA field parity against the JS reference.
 - Status-list gzip output limit enforcement.

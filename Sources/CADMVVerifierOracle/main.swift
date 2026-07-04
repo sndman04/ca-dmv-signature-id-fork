@@ -8,24 +8,33 @@ import FoundationNetworking
 enum CADMVVerifierOracle {
     static func main() async throws {
         let arguments = CommandLine.arguments.dropFirst()
+        let useSupportedProfileEngine = optionValue("--engine", in: arguments) == "supported-profile"
         if boolOption("--status-list-verify-data", in: arguments) {
             try runStatusListVerifyDataOracle()
             return
         }
         if boolOption("--status-list-document-nquads", in: arguments) {
-            try runStatusListDocumentNQuadsOracle()
+            try runStatusListDocumentNQuadsOracle(
+                useSupportedProfileEngine: useSupportedProfileEngine
+            )
             return
         }
         if boolOption("--status-list-proof-nquads", in: arguments) {
-            try runStatusListProofNQuadsOracle()
+            try runStatusListProofNQuadsOracle(
+                useSupportedProfileEngine: useSupportedProfileEngine
+            )
             return
         }
         if boolOption("--vcb-document-nquads", in: arguments) {
-            try runVCBDocumentNQuadsOracle()
+            try runVCBDocumentNQuadsOracle(
+                useSupportedProfileEngine: useSupportedProfileEngine
+            )
             return
         }
         if boolOption("--proof-nquads", in: arguments) {
-            try runProofNQuadsOracle()
+            try runProofNQuadsOracle(
+                useSupportedProfileEngine: useSupportedProfileEngine
+            )
             return
         }
 
@@ -130,14 +139,17 @@ enum CADMVVerifierOracle {
         FileHandle.standardOutput.write(Data("\n".utf8))
     }
 
-    private static func runStatusListDocumentNQuadsOracle() throws {
+    private static func runStatusListDocumentNQuadsOracle(
+        useSupportedProfileEngine: Bool
+    ) throws {
         let payload = FileHandle.standardInput.readDataToEndOfFile()
         let output: [String: Any?] = [
             "implementation": "swift",
             "input": "stdin",
             "result": [
                 "canonicalNQuads": try CADMVVerifier.statusListDocumentCanonicalNQuadsForSelfTest(
-                    jsonData: payload
+                    jsonData: payload,
+                    useSupportedProfileEngine: useSupportedProfileEngine
                 )
             ] as [String: Any?]
         ]
@@ -149,14 +161,17 @@ enum CADMVVerifierOracle {
         FileHandle.standardOutput.write(Data("\n".utf8))
     }
 
-    private static func runStatusListProofNQuadsOracle() throws {
+    private static func runStatusListProofNQuadsOracle(
+        useSupportedProfileEngine: Bool
+    ) throws {
         let payload = FileHandle.standardInput.readDataToEndOfFile()
         let output: [String: Any?] = [
             "implementation": "swift",
             "input": "stdin",
             "result": [
                 "canonicalNQuads": try CADMVVerifier.statusListProofCanonicalNQuadsForSelfTest(
-                    jsonData: payload
+                    jsonData: payload,
+                    useSupportedProfileEngine: useSupportedProfileEngine
                 )
             ] as [String: Any?]
         ]
@@ -168,14 +183,17 @@ enum CADMVVerifierOracle {
         FileHandle.standardOutput.write(Data("\n".utf8))
     }
 
-    private static func runVCBDocumentNQuadsOracle() throws {
+    private static func runVCBDocumentNQuadsOracle(
+        useSupportedProfileEngine: Bool
+    ) throws {
         let payload = FileHandle.standardInput.readDataToEndOfFile()
         let output: [String: Any?] = [
             "implementation": "swift",
             "input": "stdin",
             "result": [
                 "canonicalNQuads": try CADMVVerifier.vcbDocumentCanonicalNQuadsForSelfTest(
-                    jsonData: payload
+                    jsonData: payload,
+                    useSupportedProfileEngine: useSupportedProfileEngine
                 )
             ] as [String: Any?]
         ]
@@ -187,14 +205,17 @@ enum CADMVVerifierOracle {
         FileHandle.standardOutput.write(Data("\n".utf8))
     }
 
-    private static func runProofNQuadsOracle() throws {
+    private static func runProofNQuadsOracle(
+        useSupportedProfileEngine: Bool
+    ) throws {
         let payload = FileHandle.standardInput.readDataToEndOfFile()
         let output: [String: Any?] = [
             "implementation": "swift",
             "input": "stdin",
             "result": [
                 "canonicalNQuads": try CADMVVerifier.proofCanonicalNQuadsForSelfTest(
-                    jsonData: payload
+                    jsonData: payload,
+                    useSupportedProfileEngine: useSupportedProfileEngine
                 )
             ] as [String: Any?]
         ]

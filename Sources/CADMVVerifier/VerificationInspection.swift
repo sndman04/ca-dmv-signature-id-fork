@@ -232,15 +232,20 @@ extension CADMVVerifier {
     }
 
     public static func statusListDocumentCanonicalNQuadsForSelfTest(
-        jsonData: Data
+        jsonData: Data,
+        useSupportedProfileEngine: Bool = false
     ) throws -> String {
         try StatusListJSONLDRDFExpander.canonicalNQuads(
-            DMVStatusListCredentialParser.parse(jsonData)
+            DMVStatusListCredentialParser.parse(jsonData),
+            engine: canonicalizationEngineForSelfTest(
+                useSupportedProfileEngine: useSupportedProfileEngine
+            )
         )
     }
 
     public static func statusListProofCanonicalNQuadsForSelfTest(
-        jsonData: Data
+        jsonData: Data,
+        useSupportedProfileEngine: Bool = false
     ) throws -> String {
         let credential = try DMVStatusListCredentialParser.parse(jsonData)
         return try DataIntegrityProofCanonicalizer.canonicalNQuads(
@@ -251,16 +256,24 @@ extension CADMVVerifier {
             cryptosuite: credential.proof.cryptosuite,
             proofPurpose: credential.proof.proofPurpose,
             verificationMethod: credential.proof.verificationMethod,
-            additionalProperties: credential.proof.additionalProperties
+            additionalProperties: credential.proof.additionalProperties,
+            engine: canonicalizationEngineForSelfTest(
+                useSupportedProfileEngine: useSupportedProfileEngine
+            )
         )
     }
 
-    public static func vcbDocumentCanonicalNQuadsForSelfTest(jsonData: Data) throws -> String {
+    public static func vcbDocumentCanonicalNQuadsForSelfTest(
+        jsonData: Data,
+        useSupportedProfileEngine: Bool = false
+    ) throws -> String {
         let json = try JSONSerialization.jsonObject(with: jsonData)
         guard let document = json as? [String: Any] else {
             throw CADMVInternalError.unsupportedVCB
         }
-        return try ProductionJSONLDCanonicalizationEngine.shared.canonicalNQuads(
+        return try canonicalizationEngineForSelfTest(
+            useSupportedProfileEngine: useSupportedProfileEngine
+        ).canonicalNQuads(
             document: document.mapValues {
                 try SupportedJSONLDValue.fromJSON($0, error: .unsupportedVCB)
             },
@@ -268,12 +281,17 @@ extension CADMVVerifier {
         )
     }
 
-    public static func proofCanonicalNQuadsForSelfTest(jsonData: Data) throws -> String {
+    public static func proofCanonicalNQuadsForSelfTest(
+        jsonData: Data,
+        useSupportedProfileEngine: Bool = false
+    ) throws -> String {
         let json = try JSONSerialization.jsonObject(with: jsonData)
         guard let document = json as? [String: Any] else {
             throw CADMVInternalError.unsupportedVCB
         }
-        return try ProductionJSONLDCanonicalizationEngine.shared.canonicalNQuads(
+        return try canonicalizationEngineForSelfTest(
+            useSupportedProfileEngine: useSupportedProfileEngine
+        ).canonicalNQuads(
             document: document.mapValues {
                 try SupportedJSONLDValue.fromJSON($0, error: .unsupportedVCB)
             },
@@ -354,5 +372,13 @@ extension CADMVVerifier {
             publicKeyMultibase: publicKeyMultibase,
             compressedP256Key: decoded.dropFirst(2)
         )
+    }
+
+    private static func canonicalizationEngineForSelfTest(
+        useSupportedProfileEngine: Bool
+    ) -> any JSONLDCanonicalizationEngine {
+        useSupportedProfileEngine
+            ? SupportedProfileJSONLDCanonicalizationEngine.shared
+            : ProductionJSONLDCanonicalizationEngine.shared
     }
 }
