@@ -43,6 +43,10 @@ Added or updated:
 - `Docs/INTEGRATION.md`
 - `NOTICE`
 
+## Release Audit
+
+`Tools/final-release-audit.sh` is the aggregate pre-release gate. It runs debug and release builds, SwiftPM tests, fixture self-test, parity status, JavaScript reference oracle smoke checks, replacement readiness, conformance report freshness, and security-exception inventory checks.
+
 ## Supported-Scope Limitation
 
 The default verifier uses `NativeSwiftJSONLDCanonicalizationEngine`, a native Swift DMV-profile JSON-LD/RDF canonicalization path. It is typed and parity-tested against the current DMV fixture corpus and the selected JavaScript SDK baseline. It is intentionally not a general JSON-LD/Data Integrity SDK; unsupported signed data outside the DMV profile and parity-tested safe extension subset fails closed.

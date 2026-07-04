@@ -82,6 +82,14 @@ swift run CADMVVerifierSelfTest
 
 CI runs both commands on push and pull request. The self-test contains the official valid/invalid UAT fixture parity checks, so do not treat `swift test` alone as the full verification gate.
 
+Before release, run the aggregate audit gate:
+
+```sh
+Tools/final-release-audit.sh
+```
+
+It runs debug/release builds, Swift tests, fixture self-test, JavaScript reference smoke checks when available, replacement readiness, conformance report freshness, and security-exception inventory checks.
+
 `Tools/swift-test.sh` automatically points SwiftPM at the full Xcode toolchain when `xcode-select` is using Command Line Tools, because Command Line Tools may not expose XCTest. The equivalent manual command is:
 
 ```sh

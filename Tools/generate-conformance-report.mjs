@@ -4,6 +4,7 @@ import {readFileSync, writeFileSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
 
 const outputPath = new URL('../Docs/CONFORMANCE_REPORT.md', import.meta.url);
+const checkOnly = process.argv.includes('--check');
 const sdkPackage = JSON.parse(readFileSync(
   new URL('../References/cadmv-dlid-verifier-sdk/package.json', import.meta.url),
   'utf8'
@@ -133,19 +134,33 @@ for(const gate of testGates) {
   });
 }
 
+const existingReport = checkOnly ? readFileSync(outputPath, 'utf8') : null;
+const existingGeneratedAt = existingReport?.match(/^Generated: (.+)$/m)?.[1];
+const existingGitRevision = existingReport?.match(/^Repository revision: `(.+)`$/m)?.[1];
 const report = renderReport({
   sdkPackage,
-  generatedAt: new Date().toISOString(),
-  gitRevision: repositoryRevision(),
+  generatedAt: existingGeneratedAt ?? new Date().toISOString(),
+  gitRevision: existingGitRevision ?? repositoryRevision(),
   gates: gateResults
 });
-writeFileSync(outputPath, report);
-console.log(`Wrote ${outputPath.pathname}`);
+if(checkOnly) {
+  if(normalizeForCheck(report) !== normalizeForCheck(existingReport)) {
+    throw new Error('Conformance report is stale. Run `node Tools/generate-conformance-report.mjs` and commit the updated report.');
+  }
+  console.log('Conformance report: current');
+} else {
+  writeFileSync(outputPath, report);
+  console.log(`Wrote ${outputPath.pathname}`);
+}
 
 function repositoryRevision() {
   const head = runText('git', ['rev-parse', '--short', 'HEAD']).trim();
   const status = runText('git', ['status', '--short', '--untracked-files=no']).trim();
   return status ? `${head}-dirty` : head;
+}
+
+function normalizeForCheck(report) {
+  return report.replace(/^- Duration: \d+ ms$/gm, '- Duration: <ignored> ms');
 }
 
 function runJSON(command, args) {

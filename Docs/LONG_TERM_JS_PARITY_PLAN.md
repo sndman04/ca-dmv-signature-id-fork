@@ -526,6 +526,14 @@ Exit criteria:
 - Unknown signed status-list fields no longer require hand-editing N-Quads; they are handled by canonicalization or fail closed due to explicit policy.
 - Required status checks never downgrade to `.verified` when the status-list fetch, parse, proof, or bit check is unavailable.
 
+Progress:
+
+- Status-list credentials are projected into JSON-LD and canonicalized through the native Swift engine.
+- `Tools/status-list-parity.mjs` compares JavaScript and Swift status-list document/proof canonical N-Quads and verify-data.
+- `Tools/status-list-extension-matrix-parity.mjs` covers root, credentialSubject, and proof extension drift.
+- Unit and self-test coverage assert `.unavailable` for status transport failures, redirect/404/500 responses, malformed status credentials, malformed DID documents, unsupported DID keys, and unsupported status-list profiles.
+- Phase 6 is complete for the supported DMV status-list profile.
+
 ## Phase 7: End-To-End Result Mapping And API Compatibility
 
 Goal: ensure the fully native verifier remains a drop-in Swift package with privacy-safe public behavior.
@@ -640,6 +648,11 @@ Tasks:
   - conformance report generated
   - known divergences listed and approved
   - security-exception inventory reviewed
+
+Progress:
+
+- `Tools/final-release-audit.sh` runs the release-level gate sequence: debug build, release build, Swift tests, fixture self-test, parity status, reference oracle smoke, replacement readiness, conformance report freshness, and security-exception inventory.
+- `node Tools/generate-conformance-report.mjs --check` verifies the committed conformance report content is current without rewriting report timestamps.
 
 Exit criteria:
 

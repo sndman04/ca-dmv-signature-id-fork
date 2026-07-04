@@ -68,6 +68,14 @@ Phase 4 is complete.
 
 Phase 5 is complete.
 
+Phase 6 is complete.
+
+Phase 7 is in progress.
+
+Phase 8 is in progress.
+
+Phase 9 is in progress.
+
 Completed:
 
 - Long-term one-to-one JS parity plan created.
@@ -176,6 +184,19 @@ Completed Phase 5 work:
 - Added `Tools/generated-signature-parity.mjs` to create runtime synthetic VCB signatures with an injected DID document and compare JS/Swift valid `z`, valid `u`, status-bearing credentials, validity-date credentials, combined status plus validity-date credentials, root/subject/status node-ID credentials, signed proof `expires` credentials including a past proof timestamp that remains JS-verified, expired `validUntil` credentials, tampered proof signature, tampered proof metadata (`created`, `expires`, and `verificationMethod`), and tampered protected AAMVA field outcomes, first failure stages, AAMVA hashes, canonical N-Quads, verify-data, and VCB byte lengths.
 - Added Swift decoder support for reference-emitted no-status compressed proof key ids and numeric epoch-second proof date values.
 
+Completed Phase 6 work:
+
+- Status-list credentials are modeled as JSON-LD inputs to the native canonicalization engine through `StatusListJSONLDRDFExpander` and `SupportedStatusListJSONLDRDFConverter`.
+- `ecdsa-rdfc-2019` status-list proof verification uses the same native JSON-LD/RDF engine selector as VCB proof verification.
+- Status-list network policy remains fail-closed with DMV host allowlists, redirect suppression, bounded timeouts, and `.unavailable` for network, parse, proof, DID, or unsupported-profile failures.
+- Status-list bitstring protections cover gzip output limits, malformed gzip/multibase inputs, byte-boundary indexes, clear/revoked bits, last-bit handling, and out-of-range indexes.
+- Status-list profile drift coverage includes safe absolute-IRI extensions on root, credentialSubject, and proof fields, plus fail-closed behavior for compact unknown fields and unsafe IRIs.
+
+Completed Phase 7/8/9 readiness work:
+
+- Added `Tools/final-release-audit.sh` as the aggregate release gate for debug/release builds, Swift tests, fixture self-test, parity status, JS reference smoke, replacement readiness, conformance report freshness, and security-exception inventory.
+- Added `node Tools/generate-conformance-report.mjs --check` so release audits can prove the committed conformance report is current without rewriting timestamps.
+
 Completed Phase 4 gates:
 
 - Production canonicalization defaults to the native Swift engine, not the supported-profile regression baseline.
@@ -186,3 +207,9 @@ Completed Phase 5 gates:
 
 - Generated end-to-end signature parity fixtures beyond the committed official UAT valid/invalid pair pass through the JS oracle smoke gate.
 - `signatureMismatch` is covered by generated cases where JS and Swift agree on canonical N-Quads and verify-data and only the signature, proof metadata (`created`, `expires`, or `verificationMethod`), or protected AAMVA mutation causes `data-integrity-vcb` failure.
+
+Completed Phase 6 gates:
+
+- Status-list proof verification matches JavaScript reference behavior for synthetic and live-compatible fixtures in `Tools/status-list-parity.mjs` and `Tools/status-list-extension-matrix-parity.mjs`.
+- Unknown signed status-list fields are either canonicalized through the supported safe absolute-IRI extension path or fail closed as `.unavailable` due to explicit profile policy.
+- Required status checks never downgrade infrastructure, parse, proof, DID, or bit-check failures to `.verified`; unit and self-test coverage assert `.unavailable` for those paths.

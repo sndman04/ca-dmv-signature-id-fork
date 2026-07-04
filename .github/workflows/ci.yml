@@ -33,3 +33,6 @@ jobs:
 
       - name: Reference oracle smoke
         run: Tools/reference-oracle-smoke.sh
+
+      - name: Final release audit
+        run: Tools/final-release-audit.sh

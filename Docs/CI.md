@@ -17,17 +17,21 @@ node Tools/jsonld-extension-matrix-parity.mjs
 Tools/signature-policy-characterization.mjs
 Tools/generated-signature-parity.mjs
 node Tools/mutation-parity.mjs
+Tools/final-release-audit.sh
 ```
 
 Before a release that claims full JavaScript SDK replacement parity, also run:
 
 ```sh
 Tools/replacement-readiness.sh
+Tools/final-release-audit.sh
 ```
 
-This gate is intentionally stricter than the normal push gates. It fails while public verification still defaults to the supported-profile canonicalization engine or while release-blocking replacement caveats remain in docs/generated reports.
+`Tools/replacement-readiness.sh` fails if public verification no longer routes through the production native engine selector or if release-blocking replacement caveats return to docs/generated reports.
 
-GitHub Actions runs the Swift gates, parity status check, and `Tools/reference-oracle-smoke.sh` on push and pull request in `.github/workflows/ci.yml`. The smoke wrapper runs the JS reference parity tools when Node and the reference SDK dependencies are available.
+`Tools/final-release-audit.sh` is the release-level aggregate gate. It runs debug and release builds, SwiftPM tests, fixture self-test, parity status, reference oracle smoke checks, replacement readiness, conformance report freshness checks, and the security-exception inventory check in sequence.
+
+GitHub Actions runs the Swift gates, parity status check, `Tools/reference-oracle-smoke.sh`, and `Tools/final-release-audit.sh` on push and pull request in `.github/workflows/ci.yml`. The smoke wrapper runs the JS reference parity tools when Node and the reference SDK dependencies are available.
 
 Reference SDK parity command:
 
@@ -86,6 +90,9 @@ node Tools/jsonld-extension-matrix-parity.mjs
 
 # JSON-LD edge behavior classification against JS safe-mode canonicalization.
 node Tools/jsonld-behavior-characterization.mjs
+
+# Full release-level audit.
+Tools/final-release-audit.sh
 ```
 
 The stdin mode emits JSON with the selected SDK baseline, mode, high-level outcome, first failure stage, VCB byte count, credential profile class, AAMVA optical hash, and VCB verify-data hex when a VCB can be decoded. It must not be used to log raw PDF417 payloads or decoded identity fields.
