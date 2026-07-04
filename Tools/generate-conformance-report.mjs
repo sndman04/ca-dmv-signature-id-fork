@@ -136,11 +136,9 @@ for(const gate of testGates) {
 
 const existingReport = checkOnly ? readFileSync(outputPath, 'utf8') : null;
 const existingGeneratedAt = existingReport?.match(/^Generated: (.+)$/m)?.[1];
-const existingGitRevision = existingReport?.match(/^Repository revision: `(.+)`$/m)?.[1];
 const report = renderReport({
   sdkPackage,
   generatedAt: existingGeneratedAt ?? new Date().toISOString(),
-  gitRevision: existingGitRevision ?? repositoryRevision(),
   gates: gateResults
 });
 if(checkOnly) {
@@ -151,12 +149,6 @@ if(checkOnly) {
 } else {
   writeFileSync(outputPath, report);
   console.log(`Wrote ${outputPath.pathname}`);
-}
-
-function repositoryRevision() {
-  const head = runText('git', ['rev-parse', '--short', 'HEAD']).trim();
-  const status = runText('git', ['status', '--short', '--untracked-files=no']).trim();
-  return status ? `${head}-dirty` : head;
 }
 
 function normalizeForCheck(report) {
@@ -255,13 +247,13 @@ function shortPair(jsHash, swiftHash) {
     `JS ${jsHash}, Swift ${swiftHash}`;
 }
 
-function renderReport({sdkPackage, generatedAt, gitRevision, gates}) {
+function renderReport({sdkPackage, generatedAt, gates}) {
   const allPassed = gates.every(gate => gate.passed);
   const lines = [
     '# Conformance Report',
     '',
     `Generated: ${generatedAt}`,
-    `Repository revision: \`${gitRevision}\``,
+    'Report source: committed non-PII fixtures, generated synthetic cases, and the selected JavaScript reference SDK baseline',
     `Reference SDK: \`${sdkPackage.name}@${sdkPackage.version}\``,
     '',
     'This report is generated from committed non-PII fixtures and synthetic cases. It does not include raw PDF417 payloads, decoded identity fields, or real private scan data.',
