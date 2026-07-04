@@ -29,6 +29,23 @@ check_security_exceptions() {
     fi
 }
 
+check_documented_gaps() {
+    gap_count=$(
+        node -e "
+            const fs = require('fs');
+            const manifest = JSON.parse(fs.readFileSync('Tests/CADMVVerifierTests/Fixtures/fixture-manifest.json', 'utf8'));
+            const gaps = manifest.fixtures.filter(f => f.storageLevel === 'documented-gap');
+            console.log(gaps.length);
+        "
+    )
+
+    if [ "$gap_count" -ne 0 ]; then
+        printf 'Fixture manifest contains %s documented gap(s).\n' "$gap_count" >&2
+        printf 'Documented gaps must be converted to committed, generated, or redacted-vector coverage before final release.\n' >&2
+        exit 1
+    fi
+}
+
 run swift build
 run swift build -c release
 run Tools/swift-test.sh
@@ -38,5 +55,6 @@ run Tools/reference-oracle-smoke.sh
 run Tools/replacement-readiness.sh
 run node Tools/generate-conformance-report.mjs --check
 check_security_exceptions
+check_documented_gaps
 
 printf '\nFinal release audit: PASS\n'

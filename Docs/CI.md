@@ -29,7 +29,7 @@ Tools/final-release-audit.sh
 
 `Tools/replacement-readiness.sh` fails if public verification no longer routes through the production native engine selector or if release-blocking replacement caveats return to docs/generated reports.
 
-`Tools/final-release-audit.sh` is the release-level aggregate gate. It runs debug and release builds, SwiftPM tests, fixture self-test, parity status, reference oracle smoke checks, replacement readiness, conformance report freshness checks, and the security-exception inventory check in sequence.
+`Tools/final-release-audit.sh` is the release-level aggregate gate. It runs debug and release builds, SwiftPM tests, fixture self-test, parity status, reference oracle smoke checks, replacement readiness, conformance report freshness checks, the security-exception inventory check, and the no-documented-fixture-gaps check in sequence.
 
 GitHub Actions runs the Swift gates, parity status check, `Tools/reference-oracle-smoke.sh`, and `Tools/final-release-audit.sh` on push and pull request in `.github/workflows/ci.yml`. The smoke wrapper runs the JS reference parity tools when Node and the reference SDK dependencies are available.
 

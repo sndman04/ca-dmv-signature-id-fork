@@ -42,6 +42,22 @@ final class FixtureManifestTests: XCTestCase {
         }
     }
 
+    func testFinalFixtureManifestHasNoDocumentedGaps() throws {
+        let manifest = try fixtureManifest()
+        let fixtures = try XCTUnwrap(manifest["fixtures"] as? [[String: Any]])
+        let documentedGapIDs = fixtures.compactMap { fixture -> String? in
+            guard fixture["storageLevel"] as? String == "documented-gap" else {
+                return nil
+            }
+            return fixture["id"] as? String
+        }
+
+        XCTAssertTrue(
+            documentedGapIDs.isEmpty,
+            "Documented gaps must be converted to committed, generated, or redacted-vector coverage before final release: \(documentedGapIDs.sorted())"
+        )
+    }
+
     private func fixtureManifest() throws -> [String: Any] {
         let url = try XCTUnwrap(Bundle.module.url(
             forResource: "fixture-manifest",

@@ -110,7 +110,9 @@ Initial parity target:
 03c5485513ff6f2de6b46950a159b8f2cd427859
 ```
 
-See `CADMV_SWIFT_VERIFIER_PLAN.md` for progress, decisions, known SDK harness notes, and remaining milestones.
+See `Docs/LONG_TERM_JS_PARITY_PLAN.md`, `Docs/PARITY_STATUS.md`, and
+`Docs/CONFORMANCE_REPORT.md` for the parity plan, current status, and
+regenerated conformance evidence.
 
 Additional docs:
 

@@ -36,13 +36,14 @@ References/cadmv-dlid-verifier-sdk/
 7. Update this repo's Swift behavior only when parity differences are understood.
 8. Update `NOTICE` if attribution or license text changes.
 
-## Future Cleanup
+## Supported-Scope Policy
 
-Replace the remaining profile-specific canonicalization code only after the
-candidate engine satisfies `Docs/CANONICALIZATION_ENGINE_DECISION.md`.
+The production verifier uses the native Swift DMV-profile JSON-LD/RDF
+canonicalization engine described in
+`Docs/CANONICALIZATION_ENGINE_DECISION.md`.
 
-Until then, keep this package documented and tested as a narrow California DMV
-DL/ID VCB profile verifier, not a general Data Integrity, JSON-LD, or RDF
+Keep this package documented and tested as a narrow California DMV DL/ID VCB
+profile verifier, not a general Data Integrity, JSON-LD, or RDF
 canonicalization library. The official JavaScript SDK remains a development
 oracle, not a runtime dependency for the default verifier.
 

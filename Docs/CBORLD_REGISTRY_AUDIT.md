@@ -110,6 +110,6 @@ Current parity checks:
 - `Tools/generated-signature-parity.mjs` records reference-emitted no-status compressed proof key ids, numeric epoch-second proof date values, and end-to-end generated signature parity for valid and tampered VCB signatures.
 - `FixtureManifestTests` verifies Phase 2 fixture category coverage and privacy constraints.
 
-Current known gap:
+Current supported behavior:
 
 - `unknown-ignorable-cborld-values` is decoded into preserved JSON-LD state for JS-accepted text-key fields. Safe absolute-IRI extensions are canonicalized generically, and compact unknown terms are reference-characterized as fail-closed during safe-mode canonicalization.
