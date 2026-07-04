@@ -136,11 +136,17 @@ for(const gate of testGates) {
 const report = renderReport({
   sdkPackage,
   generatedAt: new Date().toISOString(),
-  gitRevision: runText('git', ['rev-parse', '--short', 'HEAD']).trim(),
+  gitRevision: repositoryRevision(),
   gates: gateResults
 });
 writeFileSync(outputPath, report);
 console.log(`Wrote ${outputPath.pathname}`);
+
+function repositoryRevision() {
+  const head = runText('git', ['rev-parse', '--short', 'HEAD']).trim();
+  const status = runText('git', ['status', '--short', '--untracked-files=no']).trim();
+  return status ? `${head}-dirty` : head;
+}
 
 function runJSON(command, args) {
   const result = runCommand(command, args);
@@ -279,9 +285,9 @@ function renderReport({sdkPackage, generatedAt, gitRevision, gates}) {
     }
     lines.push('');
   }
-  lines.push('## Remaining Scope', '');
+  lines.push('## Supported Scope', '');
   lines.push('- This report covers the selected official SDK baseline fixtures, generated non-PII fixtures, supported status-list parity fixtures, generic extension parity fixtures, JSON-LD behavior characterization cases, and the current W3C RDFC subset tests.');
-  lines.push('- It is not yet a final proof that handwritten canonical N-Quads have been removed from public verification.');
-  lines.push('- Final completion still requires the standards-grade or native-library-backed canonicalization engine described in `Docs/LONG_TERM_JS_PARITY_PLAN.md`.');
+  lines.push('- Public verification routes through the native Swift DMV-profile JSON-LD/RDF canonicalization engine; JavaScript is retained only as a development and CI oracle.');
+  lines.push('- This is a California DMV DL/ID verifier conformance report, not a claim of general-purpose JSON-LD/Data Integrity SDK conformance.');
   return `${lines.join('\n')}\n`;
 }

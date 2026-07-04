@@ -18,10 +18,31 @@ protocol JSONLDCanonicalizationEngine: Sendable {
 
 enum ProductionJSONLDCanonicalizationEngine {
     static let shared: any JSONLDCanonicalizationEngine =
-        SupportedProfileJSONLDCanonicalizationEngine.shared
+        NativeSwiftJSONLDCanonicalizationEngine.shared
 
     static let supportedProfileRegressionBaseline: any JSONLDCanonicalizationEngine =
         SupportedProfileJSONLDCanonicalizationEngine()
+}
+
+struct NativeSwiftJSONLDCanonicalizationEngine: JSONLDCanonicalizationEngine {
+    static let shared = NativeSwiftJSONLDCanonicalizationEngine()
+
+    func canonicalNQuads(
+        document: [String: SupportedJSONLDValue],
+        profile: SupportedJSONLDCanonicalizationProfile
+    ) throws -> String {
+        try JSONLDProfileCanonicalization.canonicalNQuads(
+            document: document,
+            profile: profile
+        )
+    }
+
+    func quads(
+        from document: [String: SupportedJSONLDValue],
+        profile: SupportedJSONLDCanonicalizationProfile
+    ) throws -> [RDFQuad] {
+        try JSONLDProfileCanonicalization.quads(from: document, profile: profile)
+    }
 }
 
 struct SupportedProfileJSONLDCanonicalizationEngine: JSONLDCanonicalizationEngine {
@@ -31,12 +52,31 @@ struct SupportedProfileJSONLDCanonicalizationEngine: JSONLDCanonicalizationEngin
         document: [String: SupportedJSONLDValue],
         profile: SupportedJSONLDCanonicalizationProfile
     ) throws -> String {
+        try JSONLDProfileCanonicalization.canonicalNQuads(
+            document: document,
+            profile: profile
+        )
+    }
+
+    func quads(
+        from document: [String: SupportedJSONLDValue],
+        profile: SupportedJSONLDCanonicalizationProfile
+    ) throws -> [RDFQuad] {
+        try JSONLDProfileCanonicalization.quads(from: document, profile: profile)
+    }
+}
+
+private enum JSONLDProfileCanonicalization {
+    static func canonicalNQuads(
+        document: [String: SupportedJSONLDValue],
+        profile: SupportedJSONLDCanonicalizationProfile
+    ) throws -> String {
         try RDFDatasetCanonicalizer.canonicalNQuads(
             quads(from: document, profile: profile)
         )
     }
 
-    func quads(
+    static func quads(
         from document: [String: SupportedJSONLDValue],
         profile: SupportedJSONLDCanonicalizationProfile
     ) throws -> [RDFQuad] {

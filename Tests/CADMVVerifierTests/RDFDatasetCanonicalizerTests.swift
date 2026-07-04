@@ -794,7 +794,11 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssertEqual(engine.canonicalDocuments.first?["validFrom"], .string("2026-01-01T00:00:00Z"))
     }
 
-    func testProductionJSONLDCanonicalizationEngineMatchesCurrentSupportedProfileEngine() throws {
+    func testProductionJSONLDCanonicalizationEngineUsesNativeSwiftDefault() throws {
+        XCTAssertTrue(ProductionJSONLDCanonicalizationEngine.shared is NativeSwiftJSONLDCanonicalizationEngine)
+    }
+
+    func testProductionJSONLDCanonicalizationEngineMatchesSupportedProfileRegressionBaseline() throws {
         let document = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
             validFrom: "2026-01-01T00:00:00Z"
         ))
@@ -803,7 +807,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             document: document,
             profile: .vcbDocument
         )
-        let supportedProfile = try SupportedProfileJSONLDCanonicalizationEngine.shared.canonicalNQuads(
+        let supportedProfile = try ProductionJSONLDCanonicalizationEngine.supportedProfileRegressionBaseline.canonicalNQuads(
             document: document,
             profile: .vcbDocument
         )

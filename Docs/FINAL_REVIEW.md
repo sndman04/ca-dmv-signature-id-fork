@@ -43,8 +43,8 @@ Added or updated:
 - `Docs/INTEGRATION.md`
 - `NOTICE`
 
-## Remaining Limitation
+## Supported-Scope Limitation
 
-The default verifier still uses `SupportedProfileJSONLDCanonicalizationEngine`, a native supported-profile JSON-LD-to-RDF path. It is typed and parity-tested against the current DMV fixture corpus, but it is not yet the final standards-grade or native-library-backed JSON-LD/RDF canonicalization engine required for a full one-to-one JavaScript SDK replacement claim.
+The default verifier uses `NativeSwiftJSONLDCanonicalizationEngine`, a native Swift DMV-profile JSON-LD/RDF canonicalization path. It is typed and parity-tested against the current DMV fixture corpus and the selected JavaScript SDK baseline. It is intentionally not a general JSON-LD/Data Integrity SDK; unsupported signed data outside the DMV profile and parity-tested safe extension subset fails closed.
 
 The live UAT status URL derived from the official valid fixture currently redirects to a host outside the original SDK allowlist and returns 404 after redirect. The verifier therefore keeps the official status-required UAT sample at `.unavailable` even though the supported status-list credential proof and bit-check path is implemented and covered by synthetic JS-reference data.

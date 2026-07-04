@@ -3,8 +3,8 @@ import Foundation
 
 enum EcdsaRdfc2019Verifier {
     // DMV status-list profile verifier. Document canonicalization flows through
-    // a supported JSON-LD-to-RDF boundary until the final canonicalization
-    // engine replaces the profile implementation.
+    // the native Swift JSON-LD/RDF engine and fails closed for unsupported
+    // signed data outside the DMV status-list profile.
     static func verify(
         credential: DMVStatusListCredential,
         verificationKey: DIDDocumentKey,

@@ -1,19 +1,20 @@
 # Canonicalization Engine Decision
 
 Decision date: 2026-07-03
+Updated: 2026-07-03
 
 ## Decision
 
-The default verifier will remain native Swift and will not add a Node, C, Rust, or Java canonicalization bridge during the current Phase 4 hardening work.
+The default verifier uses the native Swift `NativeSwiftJSONLDCanonicalizationEngine` and will not add a Node, C, Rust, or Java canonicalization bridge for the current replacement release.
 
 The implementation path is:
 
 1. Keep the public verifier dependency surface small: Swift, `swift-crypto`, Foundation, and the existing system `zlib` link.
-2. Continue replacing raw handbuilt N-Quads with typed RDF terms, derived blank-node labels, and explicit JSON-LD-to-RDF expansion boundaries.
+2. Use typed RDF terms, derived blank-node labels, pinned context/term policy, and explicit JSON-LD-to-RDF expansion boundaries in the public verification path.
 3. Use the official JavaScript SDK only as a development and CI oracle.
 4. Adopt an external canonicalization dependency only after it can satisfy the acceptance criteria below.
 
-This is not a declaration that the current native profile implementation is the final one-to-one replacement. The final replacement still needs either a complete native JSON-LD/RDF canonicalization implementation or an audited dependency that passes the parity corpus.
+This is a supported-scope replacement decision, not a claim that the package is a general JSON-LD/Data Integrity SDK. The production engine covers the California DMV DL/ID VCB, proof, and status-list profiles exercised by the selected JavaScript SDK baseline and committed/generated parity corpus. Inputs outside that profile continue to fail closed unless they are safe absolute-IRI JSON-LD extensions covered by the parity matrix.
 
 ## Rationale
 
@@ -68,9 +69,9 @@ If a C, C++, Rust, Java, or JavaScript bridge is proposed later, the implementat
 - Failure mapping from bridge errors to privacy-minimized public verifier results.
 - A fallback policy for platforms where the bridge cannot be built.
 
-## Current Native Guardrails
+## Native Guardrails
 
-Until the final engine lands, the native verifier must continue to fail closed when accepting an input would require canonicalizing unsupported signed data.
+The native verifier continues to fail closed when accepting an input would require canonicalizing unsupported signed data.
 
 Current guardrails:
 
@@ -80,7 +81,7 @@ Current guardrails:
 - Status-list document canonicalization passes through a supported-context JSON-LD-to-RDF conversion boundary before RDF Dataset Canonicalization; unsupported contexts, unknown signed terms, unknown type values, and unsafe date text fail closed there.
 - Data Integrity proof canonicalization passes through a supported-context JSON-LD-to-RDF conversion boundary before RDF Dataset Canonicalization; unsupported contexts, unknown proof terms, unsupported proof config values, and unsafe date text fail closed there.
 - Official UAT VCB proof canonical N-Quads, document canonical N-Quads, AAMVA optical hash, and verify-data are compared against the JavaScript SDK.
-- Synthetic status-list verify-data is compared against the JavaScript SDK.
+- Generated VCB signatures and synthetic status-list verify-data/canonical N-Quads are compared against the JavaScript SDK.
 - RDFC n-degree canonicalization has an explicit recursion/work budget.
 
 ## Revisit Triggers

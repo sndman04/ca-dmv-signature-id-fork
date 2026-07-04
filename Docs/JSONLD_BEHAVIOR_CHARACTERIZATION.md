@@ -5,7 +5,7 @@
 The gate is intentionally classification-based:
 
 - `implemented`: JS accepts the case, Swift accepts it, and canonical N-Quads are byte-identical.
-- `swiftFailClosed`: JS accepts the case, but Swift rejects it by policy until the final standards-grade/native-library-backed engine is default.
+- `swiftFailClosed`: JS accepts the case, but Swift rejects it by supported DMV-profile policy.
 - `bothReject`: JS safe-mode canonicalization and Swift both reject the case.
 
 ## Current Classifications

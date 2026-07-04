@@ -1,7 +1,7 @@
 # Conformance Report
 
-Generated: 2026-07-04T04:59:56.052Z
-Repository revision: `732fd1e`
+Generated: 2026-07-04T05:21:45.473Z
+Repository revision: `2f47708-dirty`
 Reference SDK: `cadmv-dlid-verifier-sdk@0.0.1-0`
 
 This report is generated from committed non-PII fixtures and synthetic cases. It does not include raw PDF417 payloads, decoded identity fields, or real private scan data.
@@ -33,7 +33,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 2
-- Duration: 1693 ms
+- Duration: 2343 ms
 - Case IDs:
   - `official-valid-uat`
   - `official-invalid-uat`
@@ -42,7 +42,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 14
-- Duration: 8617 ms
+- Duration: 8613 ms
 - Case IDs:
   - `generated-valid-z-signature`
   - `generated-valid-u-signature`
@@ -63,7 +63,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 2517 ms
+- Duration: 2446 ms
 - Case IDs:
   - `mutation-invalid-vcb-base64`
   - `mutation-truncated-vcb-cbor`
@@ -73,7 +73,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 4188 ms
+- Duration: 4115 ms
 - Case IDs:
   - `synthetic-status-list-base`
   - `synthetic-status-list-optional-fields`
@@ -87,7 +87,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 11
-- Duration: 5047 ms
+- Duration: 5072 ms
 - Case IDs:
   - `status-bit-0-revoked`
   - `status-bit-7-revoked`
@@ -105,7 +105,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 25
-- Duration: 34184 ms
+- Duration: 34341 ms
 - Case IDs:
   - `status-list-string-literal`
   - `status-list-integer-literal`
@@ -163,7 +163,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 524 ms
+- Duration: 522 ms
 - Case IDs:
   - `generic-jsonld-extension-values`
 
@@ -171,7 +171,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 523 ms
+- Duration: 519 ms
 - Case IDs:
   - `generic-proof-extension-values`
 
@@ -179,7 +179,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 50
-- Duration: 22845 ms
+- Duration: 23318 ms
 - Case IDs:
   - `vcb-document-string-literal`
   - `proof-string-literal`
@@ -287,7 +287,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 19
-- Duration: 9316 ms
+- Duration: 9121 ms
 - Case IDs:
   - `implemented-absolute-id-node`
   - `implemented-nested-graph`
@@ -333,7 +333,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 9
-- Duration: 8056 ms
+- Duration: 7907 ms
 - Case IDs:
   - `engine-vcb-document`
   - `engine-data-integrity-proof`
@@ -359,7 +359,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 3239 ms
+- Duration: 3648 ms
 - Case IDs:
   - `w3c-rdfc-subset`
 
@@ -367,7 +367,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 555 ms
+- Duration: 514 ms
 - Case IDs:
   - `w3c-rdfc-issued-map-subset`
 
@@ -379,8 +379,8 @@ Overall result: PASS
 - Case IDs:
   - `w3c-rdfc-negative-clique`
 
-## Remaining Scope
+## Supported Scope
 
 - This report covers the selected official SDK baseline fixtures, generated non-PII fixtures, supported status-list parity fixtures, generic extension parity fixtures, JSON-LD behavior characterization cases, and the current W3C RDFC subset tests.
-- It is not yet a final proof that handwritten canonical N-Quads have been removed from public verification.
-- Final completion still requires the standards-grade or native-library-backed canonicalization engine described in `Docs/LONG_TERM_JS_PARITY_PLAN.md`.
+- Public verification routes through the native Swift DMV-profile JSON-LD/RDF canonicalization engine; JavaScript is retained only as a development and CI oracle.
+- This is a California DMV DL/ID verifier conformance report, not a claim of general-purpose JSON-LD/Data Integrity SDK conformance.

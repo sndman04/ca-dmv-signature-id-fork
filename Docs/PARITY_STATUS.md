@@ -64,7 +64,7 @@ Phase 2 is complete.
 
 Phase 3 is complete.
 
-Phase 4 is in progress.
+Phase 4 is complete.
 
 Phase 5 is complete.
 
@@ -73,7 +73,7 @@ Completed:
 - Long-term one-to-one JS parity plan created.
 - Main planning document links to the long-term parity plan.
 - Current supported-profile VCB and status-list proof verification paths are isolated behind `SupportedProfileDataIntegrityEngine`.
-- Supported proof and document canonicalization paths pass through JSON-LD-to-RDF conversion boundaries, but remain replacement targets for the final standards-grade/native canonicalization engine.
+- Production proof and document canonicalization paths pass through the native Swift JSON-LD/RDF canonicalization engine with pinned DMV profile contexts, typed RDF terms, derived blank-node labels, and fail-closed handling for unsupported signed data.
 - Privacy-safe parity dashboard format created.
 - Known production parity mismatch recorded as a redacted vector without raw barcode or PII.
 
@@ -138,8 +138,8 @@ Completed Phase 4 work:
 - Added `StatusListJSONLDRDFExpander` and `SupportedStatusListJSONLDRDFConverter` so status-list document canonicalization also flows through a supported-context JSON-LD-to-RDF boundary; unsupported contexts, unknown signed terms, unknown type values, and unsafe date text fail closed there.
 - Added JS/Swift status-list bit boundary parity for revoked bits, clear bits, byte-boundary indexes, the last bit in a short list, and out-of-range handling.
 - Routed Data Integrity proof canonicalization through `SupportedProofJSONLDRDFConverter`, so VCB and status-list proof configs now build supported JSON-LD first and fail closed for unsupported contexts, unknown proof terms, unsupported cryptosuites, unsupported proof purposes, unknown proof types, and unsafe date text.
-- Added `JSONLDCanonicalizationEngine` and the default `SupportedProfileJSONLDCanonicalizationEngine` so VCB document, status-list document, and proof canonicalization share one replaceable engine seam; focused tests assert each path routes through the configured profile.
-- Added `ProductionJSONLDCanonicalizationEngine.shared` as the single production default selector for VCB document, status-list document, and proof canonicalization; focused tests assert the selector matches the current supported-profile engine until the final engine replaces it.
+- Added `JSONLDCanonicalizationEngine` and the default `NativeSwiftJSONLDCanonicalizationEngine` so VCB document, status-list document, and proof canonicalization share one engine seam; focused tests assert each path routes through the configured profile.
+- Added `NativeSwiftJSONLDCanonicalizationEngine` as the production default for VCB document, status-list document, and proof canonicalization; focused tests assert the production selector uses the native Swift default and remains byte-equivalent to the supported-profile regression baseline across covered fixtures.
 - Moved supported-profile regression comparison behind `ProductionJSONLDCanonicalizationEngine.supportedProfileRegressionBaseline`, so self-test/oracle comparison paths no longer reference the supported-profile singleton directly outside the canonicalization module.
 - Threaded the configured `JSONLDCanonicalizationEngine` through `SupportedProfileDataIntegrityEngine`, `EcdsaXi2023Verifier`, and `EcdsaRdfc2019Verifier`, with focused tests asserting VCB and status-list proof verification use the injected engine profiles.
 - Centralized shared RDF primitive emission for supported JSON-LD converters, so VCB documents, status-list documents, and Data Integrity proofs use the same type, IRI, literal, and date-time quad construction while retaining profile-specific fail-closed errors.
@@ -147,7 +147,7 @@ Completed Phase 4 work:
 - Added `Tools/generic-jsonld-extension-parity.mjs` to compare JS and Swift canonical VCB document N-Quads for the generic extension subset, including `@id`, node-object `@type`, node-object `@reverse`, node-object `@graph`, node-object `@included`, node-object `@nest`, string `@index`, directed `@value`, `@json` value objects, `@set`, and `@list` values.
 - Added `Tools/generic-proof-extension-parity.mjs` to compare JS and Swift canonical Data Integrity proof N-Quads for the same generic extension subset, including proof-local `@id`, node-object `@type`, node-object `@reverse`, node-object `@graph`, node-object `@included`, node-object `@nest`, string `@index`, directed `@value`, `@json` value objects, `@set`, and `@list` values.
 - Extended `Tools/status-list-parity.mjs` to compare status-list document and proof canonical N-Quads directly, with SHA-256 fingerprints in the summary output in addition to final verify-data hex.
-- Added `Tools/canonicalization-engine-differential.mjs` as the replacement-engine contract gate: VCB document, VCB proof, status-list document, status-list proof, and official valid/invalid UAT VCB document/proof canonicalization must match the JavaScript SDK byte-for-byte for accepted canonical N-Quads, fail-closed cases must match JS accept/reject behavior, and covered canonicalization fixtures compare the production selector against the current supported-profile engine.
+- Added `Tools/canonicalization-engine-differential.mjs` as the replacement-engine contract gate: VCB document, VCB proof, status-list document, status-list proof, and official valid/invalid UAT VCB document/proof canonicalization must match the JavaScript SDK byte-for-byte for accepted canonical N-Quads, fail-closed cases must match JS accept/reject behavior, and covered canonicalization fixtures compare the production selector against the supported-profile regression baseline.
 - Added `Tools/generate-conformance-report.mjs` and `Docs/CONFORMANCE_REPORT.md` so the current privacy-safe parity corpus can be regenerated into a committed conformance summary.
 - Added `Tools/jsonld-behavior-characterization.mjs` and `Docs/JSONLD_BEHAVIOR_CHARACTERIZATION.md` to classify representative JSON-LD edge shapes; explicit blank-node `@id` values with safe local labels are now implemented in the generic extension path and covered by VCB, proof, and status-list parity fixtures.
 - Updated VCB profile validation to allow only extension fields that the generic absolute-IRI RDF path can canonicalize, making those supported extension terms reachable from the normal verifier while keeping compact unknown terms fail-closed.
@@ -176,11 +176,11 @@ Completed Phase 5 work:
 - Added `Tools/generated-signature-parity.mjs` to create runtime synthetic VCB signatures with an injected DID document and compare JS/Swift valid `z`, valid `u`, status-bearing credentials, validity-date credentials, combined status plus validity-date credentials, root/subject/status node-ID credentials, signed proof `expires` credentials including a past proof timestamp that remains JS-verified, expired `validUntil` credentials, tampered proof signature, tampered proof metadata (`created`, `expires`, and `verificationMethod`), and tampered protected AAMVA field outcomes, first failure stages, AAMVA hashes, canonical N-Quads, verify-data, and VCB byte lengths.
 - Added Swift decoder support for reference-emitted no-status compressed proof key ids and numeric epoch-second proof date values.
 
-Remaining Phase 4 gates:
+Completed Phase 4 gates:
 
-- Replace the remaining supported-context JSON-LD/RDF converter with the selected standards-grade or native-library-backed canonicalization engine.
-- Add reference-equivalent canonical N-Quads or verify-data comparisons for any remaining synthetic fixture classes beyond the committed official UAT, generated VCB, and status-list parity cases.
-- Apply the documented memory-safety, license, build, and platform criteria if a native-library bridge is selected later.
+- Production canonicalization defaults to the native Swift engine, not the supported-profile regression baseline.
+- Official UAT, generated VCB, status-list, generic extension, JSON-LD behavior characterization, and W3C RDFC subset gates provide reference-equivalent canonical N-Quads or verify-data comparisons for the committed/generated non-PII corpus.
+- No native-library bridge was selected; dependency, license, and platform risk remain limited to the existing Swift package dependency surface documented in `Docs/CANONICALIZATION_ENGINE_DECISION.md`.
 
 Completed Phase 5 gates:
 
