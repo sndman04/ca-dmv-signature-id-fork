@@ -33,12 +33,17 @@ enum SupportedJSONLDRDFConverter {
             let value = object[key]
             switch (nodeKind, key, value) {
             case (_, "type", .some(let value)):
-                quads.append(contentsOf: try typeQuads(value, subject: subject))
+                quads.append(contentsOf: try SupportedJSONLDRDFTerms.typeQuads(
+                    value,
+                    subject: subject,
+                    error: .unsupportedVCB,
+                    typeIRI: PinnedJSONLDTermRegistry.vcbTypeIRI
+                ))
             case (.credentialRoot, "issuer", .some(.string(let issuer))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.iriQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
-                    object: .iri(issuer)
+                    iri: issuer
                 ))
             case (.credentialRoot, "credentialSubject", .some(.object(let nested))):
                 let nestedSubject = RDFTerm.blank("credentialSubject")
@@ -65,83 +70,44 @@ enum SupportedJSONLDRDFConverter {
                     nodeKind: .credentialStatus
                 ))
             case (.credentialRoot, "validFrom", .some(.string(let dateTime))):
-                quads.append(try dateTimeQuad(
+                quads.append(try SupportedJSONLDRDFTerms.dateTimeQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
-                    value: dateTime
+                    value: dateTime,
+                    error: .unsupportedVCB
                 ))
             case (.credentialRoot, "validUntil", .some(.string(let dateTime))):
-                quads.append(try dateTimeQuad(
+                quads.append(try SupportedJSONLDRDFTerms.dateTimeQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
-                    value: dateTime
+                    value: dateTime,
+                    error: .unsupportedVCB
                 ))
             case (.credentialSubject, "protectedComponentIndex", .some(.string(let multibase))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.literalQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
-                    object: .literal(value: multibase, datatype: PinnedJSONLDTermRegistry.securityMultibaseDatatype)
+                    value: multibase,
+                    datatype: PinnedJSONLDTermRegistry.securityMultibaseDatatype
                 ))
             case (.credentialStatus, "terseStatusListBaseUrl", .some(.string(let url))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.iriQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
-                    object: .iri(url)
+                    iri: url
                 ))
             case (.credentialStatus, "terseStatusListIndex", .some(.unsigned(let index))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.literalQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
-                    object: .literal(value: String(index), datatype: PinnedJSONLDTermRegistry.xsdInteger)
+                    value: String(index),
+                    datatype: PinnedJSONLDTermRegistry.xsdInteger
                 ))
             default:
                 throw CADMVInternalError.unsupportedVCB
             }
         }
         return quads
-    }
-
-    private static func typeQuads(
-        _ value: SupportedJSONLDValue,
-        subject: RDFTerm
-    ) throws -> [RDFQuad] {
-        let values: [String]
-        switch value {
-        case .string(let text):
-            values = [text]
-        case .array(let array):
-            values = try array.map { item in
-                guard case .string(let text) = item else {
-                    throw CADMVInternalError.unsupportedVCB
-                }
-                return text
-            }
-        default:
-            throw CADMVInternalError.unsupportedVCB
-        }
-
-        return try values.map {
-            RDFQuad(
-                subject: subject,
-                predicate: PinnedJSONLDTermRegistry.rdfType,
-                object: .iri(try PinnedJSONLDTermRegistry.vcbTypeIRI($0))
-            )
-        }
-    }
-
-    private static func dateTimeQuad(
-        subject: RDFTerm,
-        predicate: String,
-        value: String
-    ) throws -> RDFQuad {
-        guard DMVVCBDecoder.isSafeDateTimeTextForRDF(value) else {
-            throw CADMVInternalError.unsupportedVCB
-        }
-        return RDFQuad(
-            subject: subject,
-            predicate: predicate,
-            object: .literal(value: value, datatype: PinnedJSONLDTermRegistry.xsdDateTime)
-        )
     }
 
 }

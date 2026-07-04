@@ -2,6 +2,53 @@
 import XCTest
 
 final class RDFDatasetCanonicalizerTests: XCTestCase {
+    func testSupportedJSONLDRDFTermsBuildsSharedRDFPrimitivesAndFailsClosed() throws {
+        let typeQuads = try SupportedJSONLDRDFTerms.typeQuads(
+            .array([.string("VerifiableCredential")]),
+            subject: .blank("root"),
+            error: .unsupportedVCB,
+            typeIRI: PinnedJSONLDTermRegistry.vcbTypeIRI
+        )
+        XCTAssertEqual(typeQuads, [
+            RDFQuad(
+                subject: .blank("root"),
+                predicate: PinnedJSONLDTermRegistry.rdfType,
+                object: .iri("https://www.w3.org/2018/credentials#VerifiableCredential")
+            )
+        ])
+
+        let dateQuad = try SupportedJSONLDRDFTerms.dateTimeQuad(
+            subject: .blank("root"),
+            predicate: "https://www.w3.org/2018/credentials#validUntil",
+            value: "2030-01-01T00:00:00Z",
+            error: .unsupportedVCB
+        )
+        XCTAssertEqual(
+            dateQuad.object,
+            .literal(
+                value: "2030-01-01T00:00:00Z",
+                datatype: PinnedJSONLDTermRegistry.xsdDateTime
+            )
+        )
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFTerms.typeQuads(
+            .array([.unsigned(1)]),
+            subject: .blank("root"),
+            error: .statusListDecodeFailed,
+            typeIRI: PinnedJSONLDTermRegistry.statusListTypeIRI
+        )) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+        XCTAssertThrowsError(try SupportedJSONLDRDFTerms.dateTimeQuad(
+            subject: .blank("root"),
+            predicate: "https://www.w3.org/2018/credentials#validUntil",
+            value: "2030-01-01T00:00:00Z\" .\n_:x",
+            error: .unsupportedVCB
+        )) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     func testPinnedJSONLDTermRegistryMapsSupportedTerms() throws {
         XCTAssertEqual(
             try PinnedJSONLDTermRegistry.vcbTypeIRI("OpticalBarcodeCredential"),

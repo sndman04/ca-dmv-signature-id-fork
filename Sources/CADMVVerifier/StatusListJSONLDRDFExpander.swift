@@ -90,12 +90,17 @@ enum SupportedStatusListJSONLDRDFConverter {
             let value = object[key]
             switch (nodeKind, key, value) {
             case (_, "type", .some(let value)):
-                quads.append(contentsOf: try typeQuads(value, subject: subject))
+                quads.append(contentsOf: try SupportedJSONLDRDFTerms.typeQuads(
+                    value,
+                    subject: subject,
+                    error: .statusListDecodeFailed,
+                    typeIRI: PinnedJSONLDTermRegistry.statusListTypeIRI
+                ))
             case (.credentialRoot, "issuer", .some(.string(let issuer))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.iriQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
-                    object: .iri(issuer)
+                    iri: issuer
                 ))
             case (.credentialRoot, "credentialSubject", .some(.object(let nested))):
                 guard case .string(let subjectID) = nested["id"] else {
@@ -113,89 +118,49 @@ enum SupportedStatusListJSONLDRDFConverter {
                     nodeKind: .credentialSubject
                 ))
             case (.credentialRoot, "description", .some(.string(let description))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.literalQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
-                    object: .literal(value: description, datatype: nil)
+                    value: description
                 ))
             case (.credentialRoot, "name", .some(.string(let name))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.literalQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
-                    object: .literal(value: name, datatype: nil)
+                    value: name
                 ))
             case (.credentialRoot, "validFrom", .some(.string(let dateTime))):
-                quads.append(try dateTimeQuad(
+                quads.append(try SupportedJSONLDRDFTerms.dateTimeQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
-                    value: dateTime
+                    value: dateTime,
+                    error: .statusListDecodeFailed
                 ))
             case (.credentialRoot, "validUntil", .some(.string(let dateTime))):
-                quads.append(try dateTimeQuad(
+                quads.append(try SupportedJSONLDRDFTerms.dateTimeQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
-                    value: dateTime
+                    value: dateTime,
+                    error: .statusListDecodeFailed
                 ))
             case (.credentialSubject, "encodedList", .some(.string(let encodedList))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.literalQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
-                    object: .literal(value: encodedList, datatype: PinnedJSONLDTermRegistry.securityMultibaseDatatype)
+                    value: encodedList,
+                    datatype: PinnedJSONLDTermRegistry.securityMultibaseDatatype
                 ))
             case (.credentialSubject, "statusPurpose", .some(.string(let statusPurpose))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.literalQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
-                    object: .literal(value: statusPurpose, datatype: nil)
+                    value: statusPurpose
                 ))
             default:
                 throw CADMVInternalError.statusListDecodeFailed
             }
         }
         return quads
-    }
-
-    private static func typeQuads(
-        _ value: SupportedJSONLDValue,
-        subject: RDFTerm
-    ) throws -> [RDFQuad] {
-        let values: [String]
-        switch value {
-        case .string(let text):
-            values = [text]
-        case .array(let array):
-            values = try array.map { item in
-                guard case .string(let text) = item else {
-                    throw CADMVInternalError.statusListDecodeFailed
-                }
-                return text
-            }
-        default:
-            throw CADMVInternalError.statusListDecodeFailed
-        }
-
-        return try values.map {
-            RDFQuad(
-                subject: subject,
-                predicate: PinnedJSONLDTermRegistry.rdfType,
-                object: .iri(try PinnedJSONLDTermRegistry.statusListTypeIRI($0))
-            )
-        }
-    }
-
-    private static func dateTimeQuad(
-        subject: RDFTerm,
-        predicate: String,
-        value: String
-    ) throws -> RDFQuad {
-        guard DMVVCBDecoder.isSafeDateTimeTextForRDF(value) else {
-            throw CADMVInternalError.statusListDecodeFailed
-        }
-        return RDFQuad(
-            subject: subject,
-            predicate: predicate,
-            object: .literal(value: value, datatype: PinnedJSONLDTermRegistry.xsdDateTime)
-        )
     }
 
 }

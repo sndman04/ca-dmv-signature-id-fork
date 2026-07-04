@@ -551,64 +551,55 @@ enum SupportedProofJSONLDRDFConverter {
             let value = document[key]
             switch (key, value) {
             case ("type", .some(.string(let type))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.iriQuad(
                     subject: .blank("proof"),
                     predicate: PinnedJSONLDTermRegistry.rdfType,
-                    object: .iri(try PinnedJSONLDTermRegistry.proofTypeIRI(type))
+                    iri: try PinnedJSONLDTermRegistry.proofTypeIRI(type)
                 ))
             case ("cryptosuite", .some(.string(let cryptosuite))):
                 guard cryptosuite == "ecdsa-xi-2023" || cryptosuite == "ecdsa-rdfc-2019" else {
                     throw CADMVInternalError.unsupportedVCB
                 }
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.literalQuad(
                     subject: .blank("proof"),
                     predicate: try PinnedJSONLDTermRegistry.proofPredicate(key),
-                    object: .literal(value: cryptosuite, datatype: PinnedJSONLDTermRegistry.cryptosuiteStringDatatype)
+                    value: cryptosuite,
+                    datatype: PinnedJSONLDTermRegistry.cryptosuiteStringDatatype
                 ))
             case ("proofPurpose", .some(.string(let proofPurpose))):
                 guard proofPurpose == "assertionMethod" else {
                     throw CADMVInternalError.unsupportedVCB
                 }
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.iriQuad(
                     subject: .blank("proof"),
                     predicate: try PinnedJSONLDTermRegistry.proofPredicate(key),
-                    object: .iri(PinnedJSONLDTermRegistry.securityIRI(proofPurpose))
+                    iri: PinnedJSONLDTermRegistry.securityIRI(proofPurpose)
                 ))
             case ("verificationMethod", .some(.string(let verificationMethod))):
-                quads.append(RDFQuad(
+                quads.append(SupportedJSONLDRDFTerms.iriQuad(
                     subject: .blank("proof"),
                     predicate: try PinnedJSONLDTermRegistry.proofPredicate(key),
-                    object: .iri(verificationMethod)
+                    iri: verificationMethod
                 ))
             case ("created", .some(.string(let dateTime))):
-                quads.append(try dateTimeQuad(
+                quads.append(try SupportedJSONLDRDFTerms.dateTimeQuad(
+                    subject: .blank("proof"),
                     predicate: try PinnedJSONLDTermRegistry.proofPredicate(key),
-                    value: dateTime
+                    value: dateTime,
+                    error: .unsupportedVCB
                 ))
             case ("expires", .some(.string(let dateTime))):
-                quads.append(try dateTimeQuad(
+                quads.append(try SupportedJSONLDRDFTerms.dateTimeQuad(
+                    subject: .blank("proof"),
                     predicate: try PinnedJSONLDTermRegistry.proofPredicate(key),
-                    value: dateTime
+                    value: dateTime,
+                    error: .unsupportedVCB
                 ))
             default:
                 throw CADMVInternalError.unsupportedVCB
             }
         }
         return quads
-    }
-
-    private static func dateTimeQuad(
-        predicate: String,
-        value: String
-    ) throws -> RDFQuad {
-        guard DMVVCBDecoder.isSafeDateTimeTextForRDF(value) else {
-            throw CADMVInternalError.unsupportedVCB
-        }
-        return RDFQuad(
-            subject: .blank("proof"),
-            predicate: predicate,
-            object: .literal(value: value, datatype: PinnedJSONLDTermRegistry.xsdDateTime)
-        )
     }
 
 }
