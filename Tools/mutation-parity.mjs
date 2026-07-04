@@ -61,6 +61,29 @@ for(const testCase of cases) {
   if(swift.firstFailureStage !== testCase.expectedStage) {
     failures.push('unexpected Swift failure stage');
   }
+  if(js.issuerAccepted !== swift.issuerAccepted) {
+    failures.push('issuer applicability mismatch');
+  }
+  if(js.vcbRequired !== swift.vcbRequired) {
+    failures.push('VCB requirement mismatch');
+  }
+  if(js.vcbByteLength !== swift.vcbByteLength) {
+    failures.push('decoded VCB byte length mismatch');
+  }
+  if(js.aamvaHashHex !== null || swift.aamvaHashHex !== null) {
+    failures.push('malformed VCB unexpectedly produced AAMVA hash');
+  }
+  if(js.verifyDataHex !== null || swift.verifyDataHex !== null) {
+    failures.push('malformed VCB unexpectedly produced verify-data');
+  }
+  if(js.vcbProofCanonicalNQuads !== null ||
+    swift.vcbProofCanonicalNQuads !== null) {
+    failures.push('malformed VCB unexpectedly produced proof N-Quads');
+  }
+  if(js.vcbDocumentCanonicalNQuads !== null ||
+    swift.vcbDocumentCanonicalNQuads !== null) {
+    failures.push('malformed VCB unexpectedly produced document N-Quads');
+  }
   const passed = failures.length === 0;
   failed ||= !passed;
   results.push({
@@ -70,6 +93,16 @@ for(const testCase of cases) {
     jsFirstFailureStage: js.firstFailureStage,
     swiftFirstFailureStage: swift.firstFailureStage,
     swiftFailureReason: swift.failureReason,
+    jsIssuerAccepted: js.issuerAccepted,
+    swiftIssuerAccepted: swift.issuerAccepted,
+    jsVCBRequired: js.vcbRequired,
+    swiftVCBRequired: swift.vcbRequired,
+    jsVCBByteLength: js.vcbByteLength,
+    swiftVCBByteLength: swift.vcbByteLength,
+    jsAamvaHashHex: js.aamvaHashHex,
+    swiftAamvaHashHex: swift.aamvaHashHex,
+    jsVerifyDataHex: js.verifyDataHex,
+    swiftVerifyDataHex: swift.verifyDataHex,
     passed,
     failures
   });

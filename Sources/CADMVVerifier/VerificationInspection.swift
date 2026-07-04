@@ -79,7 +79,7 @@ extension CADMVVerifier {
         let document = try AAMVADocumentParser().parse(rawPDF417: rawPDF417)
         let encodedVCB = document.verifiableCredentialBarcode
         let decodedVCB = encodedVCB.flatMap(Base64URL.decode(_:))
-        let credential = try decodedVCB.map(DMVVCBDecoder.decode(_:))
+        let credential = decodedVCB.flatMap { try? DMVVCBDecoder.decode($0) }
         let engine = canonicalizationEngineForSelfTest(
             useSupportedProfileEngine: useSupportedProfileEngine
         )

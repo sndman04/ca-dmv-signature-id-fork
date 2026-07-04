@@ -69,6 +69,28 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssert(result.failureReason == .vcbBase64Invalid)
     }
 
+    func testInspectionPreservesDiscoveryFieldsForMalformedBase64VCB() throws {
+        let barcode = AAMVATestBarcode.make(
+            issuer: "636014",
+            issueDate: "08052025",
+            jurisdiction: "CA",
+            encodedVCB: "not.valid.base64"
+        )
+
+        let inspection = try CADMVVerifier.inspectForSelfTest(rawPDF417: barcode)
+
+        XCTAssertTrue(inspection.issuerAccepted)
+        XCTAssertFalse(inspection.vcbRequired)
+        XCTAssertTrue(inspection.vcbPresent)
+        XCTAssertNil(inspection.decodedVCBByteCount)
+        XCTAssertFalse(inspection.uatCredentialShapeValid)
+        XCTAssertFalse(inspection.productionCredentialShapeValid)
+        XCTAssertNil(inspection.opticalDataHashHex)
+        XCTAssertNil(inspection.verifyDataHex)
+        XCTAssertNil(inspection.vcbProofCanonicalNQuads)
+        XCTAssertNil(inspection.vcbDocumentCanonicalNQuads)
+    }
+
     func testUnsupportedCBORReportsReason() async {
         let barcode = AAMVATestBarcode.make(
             issuer: "636014",
@@ -81,6 +103,28 @@ final class CADMVVerifierTests: XCTestCase {
 
         XCTAssert(result.status == .failed)
         XCTAssert(result.failureReason == .vcbCBORUnsupported)
+    }
+
+    func testInspectionPreservesDecodedByteCountForUnsupportedCBORVCB() throws {
+        let barcode = AAMVATestBarcode.make(
+            issuer: "636014",
+            issueDate: "08052025",
+            jurisdiction: "CA",
+            encodedVCB: "AQIDBA"
+        )
+
+        let inspection = try CADMVVerifier.inspectForSelfTest(rawPDF417: barcode)
+
+        XCTAssertTrue(inspection.issuerAccepted)
+        XCTAssertFalse(inspection.vcbRequired)
+        XCTAssertTrue(inspection.vcbPresent)
+        XCTAssertEqual(inspection.decodedVCBByteCount, 4)
+        XCTAssertFalse(inspection.uatCredentialShapeValid)
+        XCTAssertFalse(inspection.productionCredentialShapeValid)
+        XCTAssertNil(inspection.opticalDataHashHex)
+        XCTAssertNil(inspection.verifyDataHex)
+        XCTAssertNil(inspection.vcbProofCanonicalNQuads)
+        XCTAssertNil(inspection.vcbDocumentCanonicalNQuads)
     }
 
     func testVerifierReportsDIDResolutionFailureWhenDMVHostCannotResolve() async throws {
