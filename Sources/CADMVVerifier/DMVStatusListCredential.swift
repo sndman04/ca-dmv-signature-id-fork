@@ -200,16 +200,31 @@ enum DMVStatusListCredentialParser {
         let unknownRootKeys = unknownKeys(in: root, allowed: rootKeys)
         let unknownCredentialSubjectKeys = unknownKeys(in: subjectObject, allowed: subjectKeys)
         let unknownProofKeys = unknownKeys(in: proofObject, allowed: proofKeys)
+        let credential = try? parse(data)
 
         return CADMVStatusListProfileDiagnostic(
-            supported: (try? parse(data)) != nil &&
-                unknownRootKeys.isEmpty &&
-                unknownCredentialSubjectKeys.isEmpty &&
-                unknownProofKeys.isEmpty,
+            supported: credential.map(statusListProfileSupports(_:)) ?? false,
             unknownRootKeys: unknownRootKeys,
             unknownCredentialSubjectKeys: unknownCredentialSubjectKeys,
             unknownProofKeys: unknownProofKeys
         )
+    }
+
+    private static func statusListProfileSupports(
+        _ credential: DMVStatusListCredential
+    ) -> Bool {
+        canonicalizableAdditionalProperties(credential.additionalProperties) &&
+            canonicalizableAdditionalProperties(credential.credentialSubject.additionalProperties) &&
+            canonicalizableAdditionalProperties(credential.proof.additionalProperties)
+    }
+
+    private static func canonicalizableAdditionalProperties(
+        _ properties: [String: SupportedJSONLDValue]
+    ) -> Bool {
+        (try? SupportedJSONLDRDFTerms.requireGenericAbsoluteIRIProperties(
+            properties,
+            error: .statusListDecodeFailed
+        )) != nil
     }
 
     private static func additionalProperties(

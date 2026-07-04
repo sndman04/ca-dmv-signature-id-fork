@@ -146,7 +146,7 @@ Completed Phase 4 work:
 - Moved supported JSON-LD context-set policy for VCB documents, status-list documents, and proof documents into the pinned registry with profile-specific rejection coverage.
 - Added decoded `additionalProperties` storage for JS-accepted text-key unknown VCB credential and proof fields, projected those fields into the internal JSON-LD documents, and kept current public verification fail-closed until a standards-grade engine can canonicalize them instead of dropping them.
 - Added fail-closed decode coverage for compressed VCB maps that contain text aliases for known signed terms, preventing ambiguous duplicate values from overwriting the numeric compressed value during JSON-LD projection.
-- Added `additionalProperties` storage for unknown status-list root, credentialSubject, and proof fields, projected those fields into status-list document/proof JSON-LD, and kept status verification fail-closed as unavailable until a standards-grade engine can canonicalize them instead of dropping them.
+- Added `additionalProperties` storage for unknown status-list root, credentialSubject, and proof fields, projected those fields into status-list document/proof JSON-LD, and allow safe absolute-IRI extensions through the supported canonicalization path while keeping compact unknown fields and unsafe IRIs fail-closed as unavailable.
 
 Completed Phase 5 work:
 

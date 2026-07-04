@@ -1,4 +1,4 @@
-@testable import CADMVVerifier
+@_spi(Testing) @testable import CADMVVerifier
 import Crypto
 import Foundation
 import XCTest
@@ -182,6 +182,7 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
         }
         """
         let data = Data(json.utf8)
+        let diagnostic = DMVStatusListCredentialParser.profileDiagnostic(data)
         let credential = try DMVStatusListCredentialParser.parse(data)
         let document = StatusListJSONLDRDFExpander.jsonLDDocument(from: credential)
         let proofDocument = DataIntegrityProofCanonicalizer.jsonLDDocument(
@@ -195,6 +196,10 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
             additionalProperties: credential.proof.additionalProperties
         )
 
+        XCTAssertFalse(diagnostic.supported)
+        XCTAssertEqual(diagnostic.unknownRootKeys, ["credentialSchema"])
+        XCTAssertEqual(diagnostic.unknownCredentialSubjectKeys, ["ttl"])
+        XCTAssertEqual(diagnostic.unknownProofKeys, ["domain"])
         XCTAssertEqual(
             credential.additionalProperties["credentialSchema"],
             .object([
@@ -212,6 +217,64 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
         XCTAssertThrowsError(try SupportedProofJSONLDRDFConverter.quads(from: proofDocument)) { error in
             XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
         }
+    }
+
+    func testStatusListProfileDiagnosticAllowsCanonicalizableAbsoluteIRIExtensions() throws {
+        let json = """
+        {
+          "@context": ["https://www.w3.org/ns/credentials/v2"],
+          "id": "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0",
+          "type": ["VerifiableCredential", "BitstringStatusListCredential"],
+          "https://example.invalid/terms/root": {"https://example.invalid/terms/nested": 7.5},
+          "credentialSubject": {
+            "id": "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0#list",
+            "type": "BitstringStatusList",
+            "encodedList": "uAA",
+            "statusPurpose": "revocation",
+            "https://example.invalid/terms/subject": [true, null, "subject"]
+          },
+          "issuer": "did:web:uat-credentials.dmv.ca.gov",
+          "validFrom": "2026-01-01T00:00:00Z",
+          "proof": {
+            "type": "DataIntegrityProof",
+            "created": "2026-01-01T00:00:00Z",
+            "verificationMethod": "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+            "cryptosuite": "ecdsa-rdfc-2019",
+            "proofPurpose": "assertionMethod",
+            "proofValue": "zLdp",
+            "https://example.invalid/terms/proof": 12
+          }
+        }
+        """
+        let data = Data(json.utf8)
+        let diagnostic = DMVStatusListCredentialParser.profileDiagnostic(data)
+        let credential = try DMVStatusListCredentialParser.parse(data)
+        let nquads = try StatusListJSONLDRDFExpander.canonicalNQuads(credential)
+        let proofNQuads = try DataIntegrityProofCanonicalizer.canonicalNQuads(
+            contexts: ["https://www.w3.org/ns/credentials/v2"],
+            type: credential.proof.type,
+            created: credential.proof.created,
+            expires: nil,
+            cryptosuite: credential.proof.cryptosuite,
+            proofPurpose: credential.proof.proofPurpose,
+            verificationMethod: credential.proof.verificationMethod,
+            additionalProperties: credential.proof.additionalProperties
+        )
+
+        XCTAssertTrue(diagnostic.supported)
+        XCTAssertEqual(diagnostic.unknownRootKeys, ["https://example.invalid/terms/root"])
+        XCTAssertEqual(diagnostic.unknownCredentialSubjectKeys, ["https://example.invalid/terms/subject"])
+        XCTAssertEqual(diagnostic.unknownProofKeys, ["https://example.invalid/terms/proof"])
+        XCTAssert(nquads.contains("<https://example.invalid/terms/root>"))
+        XCTAssert(nquads.contains("<https://example.invalid/terms/nested> \"7.5E0\"^^<http://www.w3.org/2001/XMLSchema#double>"))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/subject> \"true\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+        ))
+        XCTAssert(nquads.contains("<https://example.invalid/terms/subject> \"subject\""))
+        XCTAssertFalse(nquads.contains(" null"))
+        XCTAssert(proofNQuads.contains(
+            "<https://example.invalid/terms/proof> \"12\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+        ))
     }
 
     private func mismatchedKey() -> DIDDocumentKey {
