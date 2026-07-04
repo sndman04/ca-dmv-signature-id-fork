@@ -23,6 +23,12 @@ const jsonGates = [
     args: ['Tools/generated-signature-parity.mjs']
   },
   {
+    id: 'mutation-parity',
+    label: 'Deterministic Mutation Parity',
+    command: process.execPath,
+    args: ['Tools/mutation-parity.mjs']
+  },
+  {
     id: 'status-list',
     label: 'Status-List Verify-Data And N-Quads Parity',
     command: process.execPath,

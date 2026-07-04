@@ -13,6 +13,7 @@ Tools/status-list-parity.mjs
 node Tools/canonicalization-engine-differential.mjs
 Tools/signature-policy-characterization.mjs
 Tools/generated-signature-parity.mjs
+node Tools/mutation-parity.mjs
 ```
 
 GitHub Actions runs the Swift gates, parity status check, and `Tools/reference-oracle-smoke.sh` on push and pull request in `.github/workflows/ci.yml`. The smoke wrapper runs the JS reference parity tools when Node and the reference SDK dependencies are available.
@@ -59,6 +60,9 @@ node Tools/signature-policy-characterization.mjs
 
 # Generated end-to-end VCB signature parity fixtures.
 node Tools/generated-signature-parity.mjs
+
+# Deterministic malformed VCB mutation parity fixtures.
+node Tools/mutation-parity.mjs
 
 # JSON-LD edge behavior classification against JS safe-mode canonicalization.
 node Tools/jsonld-behavior-characterization.mjs
