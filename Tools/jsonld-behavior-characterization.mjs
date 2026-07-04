@@ -114,7 +114,7 @@ const cases = [
     }
   },
   {
-    id: 'fail-closed-blank-node-id',
+    id: 'implemented-blank-node-id',
     classification: 'implemented',
     reason: 'Explicit blank-node identifiers are supported by the generic extension path with validated local labels.',
     extension: {

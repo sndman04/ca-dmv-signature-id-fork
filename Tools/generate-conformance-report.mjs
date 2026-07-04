@@ -5,6 +5,7 @@ import {spawnSync} from 'node:child_process';
 
 const outputPath = new URL('../Docs/CONFORMANCE_REPORT.md', import.meta.url);
 const checkOnly = process.argv.includes('--check');
+const generatedAt = 'deterministic from current fixtures and reference gates';
 const sdkPackage = JSON.parse(readFileSync(
   new URL('../References/cadmv-dlid-verifier-sdk/package.json', import.meta.url),
   'utf8'
@@ -134,14 +135,13 @@ for(const gate of testGates) {
   });
 }
 
-const existingReport = checkOnly ? readFileSync(outputPath, 'utf8') : null;
-const existingGeneratedAt = existingReport?.match(/^Generated: (.+)$/m)?.[1];
 const report = renderReport({
   sdkPackage,
-  generatedAt: existingGeneratedAt ?? new Date().toISOString(),
+  generatedAt,
   gates: gateResults
 });
 if(checkOnly) {
+  const existingReport = readFileSync(outputPath, 'utf8');
   if(normalizeForCheck(report) !== normalizeForCheck(existingReport)) {
     throw new Error('Conformance report is stale. Run `node Tools/generate-conformance-report.mjs` and commit the updated report.');
   }
@@ -152,7 +152,7 @@ if(checkOnly) {
 }
 
 function normalizeForCheck(report) {
-  return report.replace(/^- Duration: \d+ ms$/gm, '- Duration: <ignored> ms');
+  return report;
 }
 
 function runJSON(command, args) {
@@ -273,7 +273,7 @@ function renderReport({sdkPackage, generatedAt, gates}) {
     lines.push(`### ${gate.label}`, '');
     lines.push(`- Result: ${gate.passed ? 'PASS' : 'FAIL'}`);
     lines.push(`- Compared cases: ${gate.comparedFixtureCount}`);
-    lines.push(`- Duration: ${gate.durationMs} ms`);
+    lines.push('- Duration: omitted (runtime-dependent)');
     lines.push('- Case IDs:');
     for(const id of gate.fixtureIDs) {
       lines.push(`  - \`${id}\``);

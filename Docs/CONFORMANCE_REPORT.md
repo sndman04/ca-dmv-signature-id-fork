@@ -1,6 +1,6 @@
 # Conformance Report
 
-Generated: 2026-07-04T06:09:28.889Z
+Generated: deterministic from current fixtures and reference gates
 Report source: committed non-PII fixtures, generated synthetic cases, and the selected JavaScript reference SDK baseline
 Reference SDK: `cadmv-dlid-verifier-sdk@0.0.1-0`
 
@@ -33,7 +33,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 2
-- Duration: 4935 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `official-valid-uat`
   - `official-invalid-uat`
@@ -42,7 +42,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 14
-- Duration: 9445 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `generated-valid-z-signature`
   - `generated-valid-u-signature`
@@ -63,7 +63,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 2680 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `mutation-invalid-vcb-base64`
   - `mutation-truncated-vcb-cbor`
@@ -73,7 +73,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 4524 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `synthetic-status-list-base`
   - `synthetic-status-list-optional-fields`
@@ -87,7 +87,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 11
-- Duration: 5298 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `status-bit-0-revoked`
   - `status-bit-7-revoked`
@@ -105,7 +105,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 25
-- Duration: 34946 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `status-list-string-literal`
   - `status-list-integer-literal`
@@ -163,7 +163,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 536 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `generic-jsonld-extension-values`
 
@@ -171,7 +171,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 533 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `generic-proof-extension-values`
 
@@ -179,7 +179,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 50
-- Duration: 23060 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `vcb-document-string-literal`
   - `proof-string-literal`
@@ -287,7 +287,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 19
-- Duration: 9432 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `implemented-absolute-id-node`
   - `implemented-nested-graph`
@@ -299,7 +299,7 @@ Overall result: PASS
   - `implemented-nest-object`
   - `implemented-empty-list`
   - `fail-closed-relative-id-node`
-  - `fail-closed-blank-node-id`
+  - `implemented-blank-node-id`
   - `fail-closed-invalid-blank-node-id`
   - `fail-closed-nested-context`
   - `fail-closed-compact-property`
@@ -319,7 +319,7 @@ Overall result: PASS
   - implemented-nest-object: implemented; JS accepted=true; Swift accepted=true
   - implemented-empty-list: implemented; JS accepted=true; Swift accepted=true
   - fail-closed-relative-id-node: bothReject; JS accepted=false; Swift accepted=false
-  - fail-closed-blank-node-id: implemented; JS accepted=true; Swift accepted=true
+  - implemented-blank-node-id: implemented; JS accepted=true; Swift accepted=true
   - fail-closed-invalid-blank-node-id: bothReject; JS accepted=false; Swift accepted=false
   - fail-closed-nested-context: bothReject; JS accepted=false; Swift accepted=false
   - fail-closed-compact-property: bothReject; JS accepted=false; Swift accepted=false
@@ -333,7 +333,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 9
-- Duration: 7969 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `engine-vcb-document`
   - `engine-data-integrity-proof`
@@ -359,7 +359,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 3383 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `w3c-rdfc-subset`
 
@@ -367,7 +367,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 515 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `w3c-rdfc-issued-map-subset`
 
@@ -375,7 +375,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 768 ms
+- Duration: omitted (runtime-dependent)
 - Case IDs:
   - `w3c-rdfc-negative-clique`
 
