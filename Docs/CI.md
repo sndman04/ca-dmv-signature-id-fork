@@ -10,6 +10,7 @@ swift run CADMVVerifierSelfTest
 Tools/parity-status.sh
 Tools/reference-oracle-smoke.sh
 Tools/status-list-parity.mjs
+node Tools/canonicalization-engine-differential.mjs
 Tools/signature-policy-characterization.mjs
 Tools/generated-signature-parity.mjs
 ```
@@ -49,6 +50,9 @@ node Tools/parity-compare.mjs
 
 # Swift/JS status-list verify-data parity for synthetic status-list fixtures.
 node Tools/status-list-parity.mjs
+
+# Replacement canonicalization engine differential across supported profiles.
+node Tools/canonicalization-engine-differential.mjs
 
 # JS reference Data Integrity signature encoding and high-S policy.
 node Tools/signature-policy-characterization.mjs

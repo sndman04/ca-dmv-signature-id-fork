@@ -26,5 +26,6 @@ printf 'ANSI' | "$node_bin" Tools/reference-runner.mjs --stdin --mode=prod >/dev
 "$node_bin" Tools/generic-jsonld-extension-parity.mjs >/dev/null
 "$node_bin" Tools/generic-proof-extension-parity.mjs >/dev/null
 "$node_bin" Tools/jsonld-behavior-characterization.mjs >/dev/null
+"$node_bin" Tools/canonicalization-engine-differential.mjs >/dev/null
 
 echo "Reference oracle smoke: passed."

@@ -45,6 +45,12 @@ const jsonGates = [
     label: 'JSON-LD 1.1 Behavior Characterization',
     command: process.execPath,
     args: ['Tools/jsonld-behavior-characterization.mjs']
+  },
+  {
+    id: 'canonicalization-engine-differential',
+    label: 'Canonicalization Engine Differential',
+    command: process.execPath,
+    args: ['Tools/canonicalization-engine-differential.mjs']
   }
 ];
 
@@ -150,6 +156,17 @@ function notesForGate(id, json) {
   if(id === 'jsonld-behavior-characterization') {
     return (json.results ?? []).map(result =>
       `${result.id}: ${result.classification}; JS accepted=${result.jsAccepted}; Swift accepted=${result.swiftAccepted}`);
+  }
+  if(id === 'canonicalization-engine-differential') {
+    return (json.results ?? []).map(result => {
+      if(result.kind === 'rejection') {
+        return `${result.id}: ${result.profile}; JS accepted=${result.jsAccepted}; Swift accepted=${result.swiftAccepted}`;
+      }
+      return `${result.id}: ${result.profile}; ${shortPair(
+        result.jsCanonicalNQuadsSHA256,
+        result.swiftCanonicalNQuadsSHA256
+      )}`;
+    });
   }
   if(id !== 'status-list') {
     return [];
