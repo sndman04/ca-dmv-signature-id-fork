@@ -1,3 +1,5 @@
+import Foundation
+
 indirect enum SupportedJSONLDValue: Equatable, Sendable {
     case string(String)
     case unsigned(UInt64)
@@ -6,6 +8,36 @@ indirect enum SupportedJSONLDValue: Equatable, Sendable {
     case null
     case array([SupportedJSONLDValue])
     case object([String: SupportedJSONLDValue])
+
+    static func fromJSON(
+        _ value: Any,
+        error: CADMVInternalError
+    ) throws -> SupportedJSONLDValue {
+        switch value {
+        case let text as String:
+            return .string(text)
+        case let number as NSNumber:
+            if CFGetTypeID(number) == CFBooleanGetTypeID() {
+                return .bool(number.boolValue)
+            }
+            if number.doubleValue.rounded() == number.doubleValue,
+               number.doubleValue >= 0,
+               let unsigned = UInt64(exactly: number) {
+                return .unsigned(unsigned)
+            }
+            return .number(number.stringValue)
+        case let bool as Bool:
+            return .bool(bool)
+        case let array as [Any]:
+            return .array(try array.map { try fromJSON($0, error: error) })
+        case let object as [String: Any]:
+            return .object(try object.mapValues { try fromJSON($0, error: error) })
+        case _ as NSNull:
+            return .null
+        default:
+            throw error
+        }
+    }
 }
 
 enum SupportedJSONLDRDFConverter {

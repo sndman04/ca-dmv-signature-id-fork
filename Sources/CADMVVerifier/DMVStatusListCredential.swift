@@ -233,36 +233,12 @@ enum DMVStatusListCredentialParser {
     ) throws -> [String: SupportedJSONLDValue] {
         var properties: [String: SupportedJSONLDValue] = [:]
         for (key, value) in object where !allowed.contains(key) {
-            properties[key] = try supportedJSONLDValue(from: value)
+            properties[key] = try SupportedJSONLDValue.fromJSON(
+                value,
+                error: .statusListDecodeFailed
+            )
         }
         return properties
-    }
-
-    private static func supportedJSONLDValue(from value: Any) throws -> SupportedJSONLDValue {
-        switch value {
-        case let text as String:
-            return .string(text)
-        case let number as NSNumber:
-            if CFGetTypeID(number) == CFBooleanGetTypeID() {
-                return .bool(number.boolValue)
-            }
-            if number.doubleValue.rounded() == number.doubleValue,
-               number.doubleValue >= 0,
-               let unsigned = UInt64(exactly: number) {
-                return .unsigned(unsigned)
-            }
-            return .number(number.stringValue)
-        case let bool as Bool:
-            return .bool(bool)
-        case let array as [Any]:
-            return .array(try array.map(supportedJSONLDValue(from:)))
-        case let object as [String: Any]:
-            return .object(try object.mapValues(supportedJSONLDValue(from:)))
-        case _ as NSNull:
-            return .null
-        default:
-            throw CADMVInternalError.statusListDecodeFailed
-        }
     }
 
     private static func unknownKeys(

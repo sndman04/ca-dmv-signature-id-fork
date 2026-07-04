@@ -2,6 +2,43 @@
 import XCTest
 
 final class RDFDatasetCanonicalizerTests: XCTestCase {
+    func testSupportedJSONLDValueParsesJSONObjectsConsistently() throws {
+        let parsed = try SupportedJSONLDValue.fromJSON(
+            [
+                "string": "value",
+                "unsigned": NSNumber(value: UInt64(7)),
+                "negative": NSNumber(value: -1),
+                "double": NSNumber(value: 7.5),
+                "bool": true,
+                "null": NSNull(),
+                "array": ["a", NSNumber(value: false), NSNull()],
+                "object": [
+                    "nested": NSNumber(value: 2)
+                ]
+            ] as [String: Any],
+            error: .unsupportedVCB
+        )
+
+        XCTAssertEqual(parsed, .object([
+            "string": .string("value"),
+            "unsigned": .unsigned(7),
+            "negative": .number("-1"),
+            "double": .number("7.5"),
+            "bool": .bool(true),
+            "null": .null,
+            "array": .array([.string("a"), .bool(false), .null]),
+            "object": .object([
+                "nested": .unsigned(2)
+            ])
+        ]))
+        XCTAssertThrowsError(try SupportedJSONLDValue.fromJSON(
+            Date(),
+            error: .statusListDecodeFailed
+        )) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+    }
+
     func testSupportedJSONLDRDFTermsBuildsSharedRDFPrimitivesAndFailsClosed() throws {
         let typeQuads = try SupportedJSONLDRDFTerms.typeQuads(
             .array([.string("VerifiableCredential")]),
