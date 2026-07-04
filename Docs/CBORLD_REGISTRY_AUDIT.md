@@ -97,6 +97,8 @@ Unknown signed fields fail closed today because the supported-profile canonicali
 
 Swift now preserves JS-accepted text-encoded unknown credential and proof keys in the decoded credential model and JSON-LD projections, while the public verifier still fails closed with an unsupported profile until the replacement canonicalization engine can feed those fields into the same RDF canonicalization path as the JS verifier. Unknown compressed numeric term ids continue to fail during CBOR-LD decode. The supported-context JSON-LD-to-RDF boundary also rejects unknown signed terms rather than silently dropping them. Accepting and then dropping unknown signed fields would create a false-positive verification risk.
 
+For compressed credentials, text keys that are aliases for supported compressed terms, such as `validUntil` or proof `created`, are not treated as extension fields. They fail during CBOR-LD decode so a payload cannot provide one value under the numeric compressed key and another under the text alias, which would otherwise make the later JSON-LD projection ambiguous.
+
 ## Parity Evidence
 
 Current parity checks:

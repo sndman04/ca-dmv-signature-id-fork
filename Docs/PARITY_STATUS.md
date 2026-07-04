@@ -142,6 +142,7 @@ Completed Phase 4 work:
 - Added a pinned JSON-LD term registry for the DMV, VC, status-list, schema.org, and security terms currently accepted by VCB, status-list, and proof converters; converters now use that registry while continuing to fail closed for unsupported signed terms.
 - Moved supported JSON-LD context-set policy for VCB documents, status-list documents, and proof documents into the pinned registry with profile-specific rejection coverage.
 - Added decoded `additionalProperties` storage for JS-accepted text-key unknown VCB credential and proof fields, projected those fields into the internal JSON-LD documents, and kept current public verification fail-closed until a standards-grade engine can canonicalize them instead of dropping them.
+- Added fail-closed decode coverage for compressed VCB maps that contain text aliases for known signed terms, preventing ambiguous duplicate values from overwriting the numeric compressed value during JSON-LD projection.
 - Added `additionalProperties` storage for unknown status-list root, credentialSubject, and proof fields, projected those fields into status-list document/proof JSON-LD, and kept status verification fail-closed as unavailable until a standards-grade engine can canonicalize them instead of dropping them.
 
 Completed Phase 5 work:

@@ -489,6 +489,24 @@ final class CADMVVerifierTests: XCTestCase {
         }
     }
 
+    func testDecoderRejectsCompressedCredentialTextAliasCollision() throws {
+        XCTAssertThrowsError(try DMVVCBDecoder.decode(CBORFixture.credential(
+            validUntil: "2030-01-01T00:00:00Z",
+            includeCollidingTextCredentialKey: true
+        ))) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
+    func testDecoderRejectsCompressedProofTextAliasCollision() throws {
+        XCTAssertThrowsError(try DMVVCBDecoder.decode(CBORFixture.credential(
+            proofCreated: "2026-01-01T00:00:00Z",
+            includeCollidingTextProofKey: true
+        ))) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     func testDecoderPreservesTextEncodedUnknownCredentialKeyForCanonicalization() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential(
             textEncoded: true,
@@ -836,7 +854,9 @@ private enum CBORFixture {
         proofCreated: String? = nil,
         proofExpires: String? = nil,
         includeUnknownCredentialKey: Bool = false,
-        includeUnknownProofKey: Bool = false
+        includeUnknownProofKey: Bool = false,
+        includeCollidingTextCredentialKey: Bool = false,
+        includeCollidingTextProofKey: Bool = false
     ) -> Data {
         credential(
             protectedComponentIndexValue: textEncoded
@@ -853,7 +873,9 @@ private enum CBORFixture {
             proofCreated: proofCreated,
             proofExpires: proofExpires,
             includeUnknownCredentialKey: includeUnknownCredentialKey,
-            includeUnknownProofKey: includeUnknownProofKey
+            includeUnknownProofKey: includeUnknownProofKey,
+            includeCollidingTextCredentialKey: includeCollidingTextCredentialKey,
+            includeCollidingTextProofKey: includeCollidingTextProofKey
         )
     }
 
@@ -972,7 +994,9 @@ private enum CBORFixture {
         proofCreated: String? = nil,
         proofExpires: String? = nil,
         includeUnknownCredentialKey: Bool = false,
-        includeUnknownProofKey: Bool = false
+        includeUnknownProofKey: Bool = false,
+        includeCollidingTextCredentialKey: Bool = false,
+        includeCollidingTextProofKey: Bool = false
     ) -> Data {
         let payload = compressedCredentialMap(
             protectedComponentIndexValue: protectedComponentIndexValue,
@@ -987,7 +1011,9 @@ private enum CBORFixture {
             proofCreated: proofCreated,
             proofExpires: proofExpires,
             includeUnknownCredentialKey: includeUnknownCredentialKey,
-            includeUnknownProofKey: includeUnknownProofKey
+            includeUnknownProofKey: includeUnknownProofKey,
+            includeCollidingTextCredentialKey: includeCollidingTextCredentialKey,
+            includeCollidingTextProofKey: includeCollidingTextProofKey
         )
 
         return tagged(51_997, array([
@@ -1010,6 +1036,8 @@ private enum CBORFixture {
         proofExpires: String? = nil,
         includeUnknownCredentialKey: Bool = false,
         includeUnknownProofKey: Bool = false,
+        includeCollidingTextCredentialKey: Bool = false,
+        includeCollidingTextProofKey: Bool = false,
         proofPairs overrideProofPairs: [(Data, Data)]? = nil
     ) -> Data {
         var proofPairs = overrideProofPairs ?? [
@@ -1027,6 +1055,9 @@ private enum CBORFixture {
         }
         if includeUnknownProofKey {
             proofPairs.append((textEncoded ? text("unknownProofOption") : unsigned(999), text("unsupported")))
+        }
+        if includeCollidingTextProofKey {
+            proofPairs.append((text("created"), text("2026-02-01T00:00:00Z")))
         }
 
         var credentialTypeValues = textEncoded
@@ -1064,6 +1095,9 @@ private enum CBORFixture {
         }
         if includeUnknownCredentialKey {
             pairs.append((textEncoded ? text("unknownCredentialOption") : unsigned(999), text("unsupported")))
+        }
+        if includeCollidingTextCredentialKey {
+            pairs.append((text("validUntil"), text("2031-01-01T00:00:00Z")))
         }
 
         return map(pairs)

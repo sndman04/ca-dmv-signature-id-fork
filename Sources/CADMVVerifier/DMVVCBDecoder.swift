@@ -17,6 +17,10 @@ enum DMVVCBDecoder {
         .textString("credentialSubject"), .textString("credentialStatus"),
         .textString("proof")
     ]
+    private static let compressedCredentialReservedTextKeys: Set<String> = [
+        "@context", "type", "issuer", "validFrom", "validUntil",
+        "credentialSubject", "credentialStatus", "proof"
+    ]
     private static let compressedProofKeys: Set<CBORValue> = [
         .unsigned(198), .unsigned(200),
         .unsigned(156), .unsigned(202), .unsigned(204), .unsigned(208),
@@ -27,6 +31,10 @@ enum DMVVCBDecoder {
         .textString("type"), .textString("created"), .textString("expires"),
         .textString("cryptosuite"), .textString("proofPurpose"),
         .textString("proofValue"), .textString("verificationMethod")
+    ]
+    private static let compressedProofReservedTextKeys: Set<String> = [
+        "type", "created", "expires", "cryptosuite", "proofPurpose",
+        "proofValue", "verificationMethod"
     ]
 
     static func decode(_ data: Data) throws -> DMVVerifiableCredential {
@@ -115,7 +123,8 @@ enum DMVVCBDecoder {
             proof: try proof(from: requiredMap(map, key: 182)),
             additionalProperties: try additionalTextProperties(
                 in: map,
-                excluding: compressedCredentialKeys
+                excluding: compressedCredentialKeys,
+                rejectingNames: compressedCredentialReservedTextKeys
             )
         )
     }
@@ -266,7 +275,8 @@ enum DMVVCBDecoder {
             verificationMethod: try url(from: requiredValue(map, key: keySet.verificationMethod)),
             additionalProperties: try additionalTextProperties(
                 in: map,
-                excluding: compressedProofKeys
+                excluding: compressedProofKeys,
+                rejectingNames: compressedProofReservedTextKeys
             )
         )
     }
@@ -566,12 +576,16 @@ enum DMVVCBDecoder {
 
     private static func additionalTextProperties(
         in map: [CBORValue: CBORValue],
-        excluding allowed: Set<CBORValue>
+        excluding allowed: Set<CBORValue>,
+        rejectingNames reservedNames: Set<String> = []
     ) throws -> [String: SupportedJSONLDValue] {
         var properties: [String: SupportedJSONLDValue] = [:]
         for (key, value) in map where !allowed.contains(key) {
             guard case .textString(let name) = key else {
                 continue
+            }
+            guard !reservedNames.contains(name) else {
+                throw CADMVInternalError.unsupportedVCB
             }
             properties[name] = try supportedJSONLDValue(from: value)
         }
