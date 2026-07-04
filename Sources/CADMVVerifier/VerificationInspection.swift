@@ -27,7 +27,6 @@ public struct CADMVVerificationInspection: Equatable, Sendable {
     public let vcbPresent: Bool
     public let decodedVCBByteCount: Int?
     public let decodedCredentialIssuer: String?
-    public let decodedCredentialProofValue: String?
     public let uatCredentialShapeValid: Bool
     public let productionCredentialShapeValid: Bool
     public let opticalDataHashHex: String?
@@ -43,7 +42,6 @@ public struct CADMVVerificationInspection: Equatable, Sendable {
         vcbPresent: Bool,
         decodedVCBByteCount: Int?,
         decodedCredentialIssuer: String?,
-        decodedCredentialProofValue: String?,
         uatCredentialShapeValid: Bool,
         productionCredentialShapeValid: Bool,
         opticalDataHashHex: String?,
@@ -58,7 +56,6 @@ public struct CADMVVerificationInspection: Equatable, Sendable {
         self.vcbPresent = vcbPresent
         self.decodedVCBByteCount = decodedVCBByteCount
         self.decodedCredentialIssuer = decodedCredentialIssuer
-        self.decodedCredentialProofValue = decodedCredentialProofValue
         self.uatCredentialShapeValid = uatCredentialShapeValid
         self.productionCredentialShapeValid = productionCredentialShapeValid
         self.opticalDataHashHex = opticalDataHashHex
@@ -96,7 +93,6 @@ extension CADMVVerifier {
             vcbPresent: encodedVCB != nil,
             decodedVCBByteCount: decodedVCB?.count,
             decodedCredentialIssuer: credential?.issuer,
-            decodedCredentialProofValue: credential?.proof.proofValue,
             uatCredentialShapeValid: credential.map {
                 (try? DMVCredentialValidator.validate($0, mode: .uat)) != nil
             } ?? false,

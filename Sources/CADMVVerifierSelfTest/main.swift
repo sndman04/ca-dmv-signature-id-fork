@@ -625,10 +625,6 @@ enum CADMVVerifierSelfTest {
             validInspection.decodedCredentialIssuer == "did:web:uat-credentials.dmv.ca.gov",
             "valid UAT issuer should match decoded reference credential"
         )
-        expect(
-            validInspection.decodedCredentialProofValue == "z43jxJrDSKCMo83ki5FWSjV7CTugPzco4g4xT2X2RegvyjJwpRS59U2nHbvdtLo9R9Xejvy7HqwaYU6NgnHJEAo6F",
-            "valid UAT proof value should match decoded reference credential"
-        )
         expect(validInspection.uatCredentialShapeValid, "valid UAT credential shape should validate in UAT mode")
         expect(!validInspection.productionCredentialShapeValid, "valid UAT credential shape should not validate in production mode")
         expect(
@@ -656,10 +652,6 @@ enum CADMVVerifierSelfTest {
         expect(
             invalidInspection.decodedCredentialIssuer == "did:web:uat-credentials.dmv.ca.gov",
             "invalid UAT issuer should match decoded reference credential"
-        )
-        expect(
-            invalidInspection.decodedCredentialProofValue == "z2y9TzfWdhznKxM9dxkckDxmLLyFBfyVSC4rbJP5zufLxjnmYWvf6o8kuF6M9txfKPXf39pdwmKWHZpGU9HVNoWwk",
-            "invalid UAT proof value should match decoded reference credential"
         )
         expect(invalidInspection.uatCredentialShapeValid, "invalid UAT credential shape should validate in UAT mode")
         expect(!invalidInspection.productionCredentialShapeValid, "invalid UAT credential shape should not validate in production mode")
