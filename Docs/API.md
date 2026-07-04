@@ -70,7 +70,7 @@ Unsupported status-list credential shapes fail closed. Newly added signed fields
 
 For VCB credentials, status-list credentials, and Data Integrity proofs, standards-valid extension fields whose property names are safe absolute `http` or `https` IRIs are included in canonicalization when their values can be represented by the supported JSON-LD/RDF path. The current JS-parity-covered extension subset includes strings, JSON integers and doubles, booleans, arrays, null omission, `@set`, `@list`, `@value` with safe `@type`, `@language`, `@direction`, or `@type: "@json"`, absolute-IRI and explicit blank-node `@id` node references, nested absolute-IRI node objects, node-object `@type`, `@reverse`, `@graph`, `@included`, `@nest`, and string `@index` metadata ignored by RDF output. Compact unknown property names and unsafe IRIs fail closed as unsupported credential profiles rather than being ignored.
 
-Numeric extension values are normalized with bounded coefficient and exponent sizes. Values outside those bounds fail closed rather than being expanded into large RDF lexical forms.
+Numeric extension values must be finite JSON numbers. Non-finite numeric values are rejected at the JSON-LD value boundary, and finite values are normalized with bounded coefficient and exponent sizes. Values outside those bounds fail closed rather than being expanded into large RDF lexical forms.
 
 When a verified credential includes `validUntil` or proof `expires` data, the verifier returns `.expired` after the signature verifies and after any required revocation check completes as not revoked. If status checking is required but unavailable, `.unavailable` takes precedence over `.expired`; if the status list marks the credential revoked, `.revoked` takes precedence.
 

@@ -20,6 +20,9 @@ indirect enum SupportedJSONLDValue: Equatable, Sendable {
             if CFGetTypeID(number) == CFBooleanGetTypeID() {
                 return .bool(number.boolValue)
             }
+            guard number.doubleValue.isFinite else {
+                throw error
+            }
             if number.doubleValue.rounded() == number.doubleValue,
                number.doubleValue >= 0,
                let unsigned = UInt64(exactly: number) {

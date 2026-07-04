@@ -37,6 +37,18 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         )) { error in
             XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
         }
+        for number in [
+            NSNumber(value: Double.nan),
+            NSNumber(value: Double.infinity),
+            NSNumber(value: -Double.infinity)
+        ] {
+            XCTAssertThrowsError(try SupportedJSONLDValue.fromJSON(
+                number,
+                error: .unsupportedVCB
+            )) { error in
+                XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+            }
+        }
     }
 
     func testSupportedJSONLDRDFTermsBuildsSharedRDFPrimitivesAndFailsClosed() throws {
