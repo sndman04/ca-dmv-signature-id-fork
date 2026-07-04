@@ -26,7 +26,15 @@ const extensionDocument = {
   },
   'https://example.invalid/terms/reference': {
     '@id': 'did:web:issuer.example#resource',
+    '@type': [
+      'https://example.invalid/types/Reference',
+      'https://example.invalid/types/SecondReference'
+    ],
     'https://example.invalid/terms/referenceName': 'Reference'
+  },
+  'https://example.invalid/terms/typedBlankNode': {
+    '@type': 'https://example.invalid/types/BlankNode',
+    'https://example.invalid/terms/blankNodeName': 'Typed blank node'
   },
   'https://example.invalid/terms/typedValue': {
     '@value': 'typed',

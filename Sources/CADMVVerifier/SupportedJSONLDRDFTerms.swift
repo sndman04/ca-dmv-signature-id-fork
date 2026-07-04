@@ -233,6 +233,14 @@ enum SupportedJSONLDRDFTerms {
                 guard let value = object[key] else {
                     continue
                 }
+                if key == "@type" {
+                    quads.append(contentsOf: try genericTypeQuads(
+                        value,
+                        subject: nestedSubject,
+                        error: error
+                    ))
+                    continue
+                }
                 guard let nestedQuads = try genericAbsoluteIRIQuads(
                     key: key,
                     value: value,
@@ -379,6 +387,17 @@ enum SupportedJSONLDRDFTerms {
             object: nestedSubject
         )]
         for key in object.keys.sorted() where key != "@id" {
+            if key == "@type" {
+                guard let value = object[key] else {
+                    continue
+                }
+                quads.append(contentsOf: try genericTypeQuads(
+                    value,
+                    subject: nestedSubject,
+                    error: error
+                ))
+                continue
+            }
             guard let value = object[key],
                   let nestedQuads = try genericAbsoluteIRIQuads(
                     key: key,
@@ -462,6 +481,17 @@ enum SupportedJSONLDRDFTerms {
             blankNodeCounter += 1
             var quads: [RDFQuad] = []
             for key in object.keys.sorted() {
+                if key == "@type" {
+                    guard let value = object[key] else {
+                        continue
+                    }
+                    quads.append(contentsOf: try genericTypeQuads(
+                        value,
+                        subject: nestedSubject,
+                        error: error
+                    ))
+                    continue
+                }
                 guard let value = object[key],
                       let nestedQuads = try genericAbsoluteIRIQuads(
                         key: key,
@@ -493,6 +523,17 @@ enum SupportedJSONLDRDFTerms {
         let nestedSubject = RDFTerm.iri(idValue)
         var quads: [RDFQuad] = []
         for key in object.keys.sorted() where key != "@id" {
+            if key == "@type" {
+                guard let value = object[key] else {
+                    continue
+                }
+                quads.append(contentsOf: try genericTypeQuads(
+                    value,
+                    subject: nestedSubject,
+                    error: error
+                ))
+                continue
+            }
             guard let value = object[key],
                   let nestedQuads = try genericAbsoluteIRIQuads(
                     key: key,
@@ -575,6 +616,32 @@ enum SupportedJSONLDRDFTerms {
             return (value ? "true" : "false", PinnedJSONLDTermRegistry.xsdBoolean)
         default:
             throw error
+        }
+    }
+
+    private static func genericTypeQuads(
+        _ value: SupportedJSONLDValue,
+        subject: RDFTerm,
+        error: CADMVInternalError
+    ) throws -> [RDFQuad] {
+        let typeValues: [SupportedJSONLDValue]
+        switch value {
+        case .array(let values):
+            typeValues = values
+        default:
+            typeValues = [value]
+        }
+
+        return try typeValues.map { value in
+            guard case .string(let iri) = value,
+                  try isSafeIRI(iri, error: error) else {
+                throw error
+            }
+            return RDFQuad(
+                subject: subject,
+                predicate: PinnedJSONLDTermRegistry.rdfType,
+                object: .iri(iri)
+            )
         }
     }
 

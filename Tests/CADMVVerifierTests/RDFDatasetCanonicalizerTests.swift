@@ -308,12 +308,42 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             "<https://example.invalid/terms/emptyList> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>"
         ))
         XCTAssertNoThrow(try DMVCredentialValidator.validate(credential, mode: .uat))
+
+        let typedNodeNQuads = try VCBJSONLDRDFExpander.canonicalNQuads(vcbCredential(
+            credentialStatus: nil,
+            additionalProperties: [
+                "https://example.invalid/terms/typedNode": .object([
+                    "@id": .string("https://example.invalid/resources/typed-node"),
+                    "@type": .array([
+                        .string("https://example.invalid/types/TypedNode"),
+                        .string("https://example.invalid/types/SecondType")
+                    ]),
+                    "https://example.invalid/terms/name": .string("Typed node")
+                ]),
+                "https://example.invalid/terms/typedBlankNode": .object([
+                    "@type": .string("https://example.invalid/types/BlankNode"),
+                    "https://example.invalid/terms/name": .string("Typed blank node")
+                ])
+            ]
+        ))
+        XCTAssert(typedNodeNQuads.contains(
+            "<https://example.invalid/resources/typed-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/TypedNode>"
+        ))
+        XCTAssert(typedNodeNQuads.contains(
+            "<https://example.invalid/resources/typed-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/SecondType>"
+        ))
+        XCTAssert(typedNodeNQuads.contains(
+            "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/BlankNode>"
+        ))
     }
 
     func testValidatorAllowsOnlyCanonicalizableAbsoluteIRIExtensionTerms() throws {
         XCTAssertNoThrow(try DMVCredentialValidator.validate(vcbCredential(
             additionalProperties: [
-                "https://example.invalid/terms/root": .string("root")
+                "https://example.invalid/terms/root": .string("root"),
+                "https://example.invalid/terms/typedNode": .object([
+                    "@type": .string("https://example.invalid/types/Root")
+                ])
             ],
             proofAdditionalProperties: [
                 "https://example.invalid/terms/proof": .number("7.5")
@@ -331,6 +361,16 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssertThrowsError(try DMVCredentialValidator.validate(vcbCredential(
             proofAdditionalProperties: [
                 "https://example.invalid/terms/unsafe space": .string("unsupported")
+            ]
+        ), mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(vcbCredential(
+            additionalProperties: [
+                "https://example.invalid/terms/typedNode": .object([
+                    "@type": .string("CompactType")
+                ])
             ]
         ), mode: .uat)) { error in
             XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
@@ -508,10 +548,17 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
     func testStatusListJSONLDConverterIncludesAbsoluteIRIExtensionTerms() throws {
         let credential = statusListCredential(
             additionalProperties: [
-                "https://example.invalid/terms/root": .string("root")
+                "https://example.invalid/terms/root": .string("root"),
+                "https://example.invalid/terms/rootNode": .object([
+                    "@type": .string("https://example.invalid/types/StatusRootNode")
+                ])
             ],
             credentialSubjectAdditionalProperties: [
-                "https://example.invalid/terms/subject": .bool(false)
+                "https://example.invalid/terms/subject": .bool(false),
+                "https://example.invalid/terms/subjectNode": .object([
+                    "@id": .string("https://example.invalid/resources/status-subject-node"),
+                    "@type": .string("https://example.invalid/types/StatusSubjectNode")
+                ])
             ]
         )
 
@@ -520,6 +567,12 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssert(nquads.contains("<https://example.invalid/terms/root> \"root\""))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/subject> \"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+        ))
+        XCTAssert(nquads.contains(
+            "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/StatusRootNode>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/resources/status-subject-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/StatusSubjectNode>"
         ))
     }
 
@@ -617,12 +670,19 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             proofPurpose: "assertionMethod",
             verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
             additionalProperties: [
-                "https://example.invalid/terms/proof": .unsigned(42)
+                "https://example.invalid/terms/proof": .unsigned(42),
+                "https://example.invalid/terms/proofNode": .object([
+                    "@id": .string("https://example.invalid/resources/proof-node"),
+                    "@type": .string("https://example.invalid/types/ProofNode")
+                ])
             ]
         )
 
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/proof> \"42\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/resources/proof-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/ProofNode>"
         ))
     }
 

@@ -67,12 +67,20 @@ const extensionFixture = {
       }
     ]
   },
+  'https://example.test/status/rootTypedNode': {
+    '@type': 'https://example.test/status/RootType',
+    'https://example.test/status/rootTypedName': 'typed root'
+  },
   credentialSubject: {
     ...optionalFieldsFixture.credentialSubject,
     'https://example.test/status/subjectInteger': 86400,
     'https://example.test/status/subjectBoolean': true,
     'https://example.test/status/subjectNode': {
       '@id': 'https://example.test/status/subject-node',
+      '@type': [
+        'https://example.test/status/SubjectType',
+        'https://example.test/status/SecondSubjectType'
+      ],
       'https://example.test/status/nestedValue': {
         '@value': 'subject nested',
         '@language': 'en'
@@ -82,6 +90,10 @@ const extensionFixture = {
   proof: {
     ...optionalFieldsFixture.proof,
     'https://example.test/status/proofString': 'proof extension',
+    'https://example.test/status/proofNode': {
+      '@id': 'https://example.test/status/proof-node',
+      '@type': 'https://example.test/status/ProofType'
+    },
     'https://example.test/status/proofTypedValue': {
       '@value': '7',
       '@type': 'http://www.w3.org/2001/XMLSchema#integer'

@@ -23,7 +23,15 @@ const proofConfig = {
   expires: '2026-01-02T00:00:00Z',
   'https://example.invalid/proof/reference': {
     '@id': 'did:web:issuer.example#proof-resource',
+    '@type': [
+      'https://example.invalid/types/ProofReference',
+      'https://example.invalid/types/SecondProofReference'
+    ],
     'https://example.invalid/proof/referenceName': 'Proof Reference'
+  },
+  'https://example.invalid/proof/typedBlankNode': {
+    '@type': 'https://example.invalid/types/ProofBlankNode',
+    'https://example.invalid/proof/blankNodeName': 'Typed proof blank node'
   },
   'https://example.invalid/proof/typedValue': {
     '@value': 'proof typed',
