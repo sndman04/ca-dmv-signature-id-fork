@@ -19,6 +19,9 @@ protocol JSONLDCanonicalizationEngine: Sendable {
 enum ProductionJSONLDCanonicalizationEngine {
     static let shared: any JSONLDCanonicalizationEngine =
         SupportedProfileJSONLDCanonicalizationEngine.shared
+
+    static let supportedProfileRegressionBaseline: any JSONLDCanonicalizationEngine =
+        SupportedProfileJSONLDCanonicalizationEngine()
 }
 
 struct SupportedProfileJSONLDCanonicalizationEngine: JSONLDCanonicalizationEngine {

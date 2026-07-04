@@ -386,7 +386,7 @@ extension CADMVVerifier {
         useSupportedProfileEngine: Bool
     ) -> any JSONLDCanonicalizationEngine {
         useSupportedProfileEngine
-            ? SupportedProfileJSONLDCanonicalizationEngine.shared
+            ? ProductionJSONLDCanonicalizationEngine.supportedProfileRegressionBaseline
             : ProductionJSONLDCanonicalizationEngine.shared
     }
 }
