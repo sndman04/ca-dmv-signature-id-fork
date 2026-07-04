@@ -30,6 +30,11 @@ const extensionDocument = {
       'https://example.invalid/types/Reference',
       'https://example.invalid/types/SecondReference'
     ],
+    '@reverse': {
+      'https://example.invalid/terms/pointsTo': {
+        '@id': 'https://example.invalid/resources/source'
+      }
+    },
     'https://example.invalid/terms/referenceName': 'Reference'
   },
   'https://example.invalid/terms/typedBlankNode': {

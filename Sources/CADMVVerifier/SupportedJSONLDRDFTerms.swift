@@ -241,6 +241,15 @@ enum SupportedJSONLDRDFTerms {
                     ))
                     continue
                 }
+                if key == "@reverse" {
+                    quads.append(contentsOf: try genericReverseQuads(
+                        value,
+                        object: nestedSubject,
+                        error: error,
+                        blankNodeCounter: &blankNodeCounter
+                    ))
+                    continue
+                }
                 guard let nestedQuads = try genericAbsoluteIRIQuads(
                     key: key,
                     value: value,
@@ -398,6 +407,18 @@ enum SupportedJSONLDRDFTerms {
                 ))
                 continue
             }
+            if key == "@reverse" {
+                guard let value = object[key] else {
+                    continue
+                }
+                quads.append(contentsOf: try genericReverseQuads(
+                    value,
+                    object: nestedSubject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                ))
+                continue
+            }
             guard let value = object[key],
                   let nestedQuads = try genericAbsoluteIRIQuads(
                     key: key,
@@ -492,6 +513,18 @@ enum SupportedJSONLDRDFTerms {
                     ))
                     continue
                 }
+                if key == "@reverse" {
+                    guard let value = object[key] else {
+                        continue
+                    }
+                    quads.append(contentsOf: try genericReverseQuads(
+                        value,
+                        object: nestedSubject,
+                        error: error,
+                        blankNodeCounter: &blankNodeCounter
+                    ))
+                    continue
+                }
                 guard let value = object[key],
                       let nestedQuads = try genericAbsoluteIRIQuads(
                         key: key,
@@ -531,6 +564,18 @@ enum SupportedJSONLDRDFTerms {
                     value,
                     subject: nestedSubject,
                     error: error
+                ))
+                continue
+            }
+            if key == "@reverse" {
+                guard let value = object[key] else {
+                    continue
+                }
+                quads.append(contentsOf: try genericReverseQuads(
+                    value,
+                    object: nestedSubject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
                 ))
                 continue
             }
@@ -617,6 +662,104 @@ enum SupportedJSONLDRDFTerms {
         default:
             throw error
         }
+    }
+
+    private static func genericReverseQuads(
+        _ value: SupportedJSONLDValue,
+        object: RDFTerm,
+        error: CADMVInternalError,
+        blankNodeCounter: inout Int
+    ) throws -> [RDFQuad] {
+        guard case .object(let reverseObject) = value else {
+            throw error
+        }
+
+        var quads: [RDFQuad] = []
+        for predicate in reverseObject.keys.sorted() {
+            guard try isSafeAbsoluteIRI(predicate, error: error),
+                  let reverseValue = reverseObject[predicate] else {
+                throw error
+            }
+            let values: [SupportedJSONLDValue]
+            switch reverseValue {
+            case .array(let array):
+                values = array
+            default:
+                values = [reverseValue]
+            }
+            for value in values {
+                let reverseSubject = try genericNodeSubjectTerm(
+                    value,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                )
+                quads.append(contentsOf: reverseSubject.quads)
+                quads.append(RDFQuad(
+                    subject: reverseSubject.term,
+                    predicate: predicate,
+                    object: object
+                ))
+            }
+        }
+        return quads
+    }
+
+    private static func genericNodeSubjectTerm(
+        _ value: SupportedJSONLDValue,
+        error: CADMVInternalError,
+        blankNodeCounter: inout Int
+    ) throws -> (term: RDFTerm, quads: [RDFQuad]) {
+        guard case .object(let object) = value,
+              object["@list"] == nil,
+              object["@set"] == nil,
+              object["@value"] == nil else {
+            throw error
+        }
+        if let id = object["@id"] {
+            return try genericNodeObjectTerm(
+                object,
+                id: id,
+                error: error,
+                blankNodeCounter: &blankNodeCounter
+            )
+        }
+
+        let nestedSubject = RDFTerm.blank("\(genericBlankNodePrefix)\(blankNodeCounter)")
+        blankNodeCounter += 1
+        var quads: [RDFQuad] = []
+        for key in object.keys.sorted() {
+            guard let value = object[key] else {
+                continue
+            }
+            if key == "@type" {
+                quads.append(contentsOf: try genericTypeQuads(
+                    value,
+                    subject: nestedSubject,
+                    error: error
+                ))
+                continue
+            }
+            if key == "@reverse" {
+                quads.append(contentsOf: try genericReverseQuads(
+                    value,
+                    object: nestedSubject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                ))
+                continue
+            }
+            guard let nestedQuads = try genericAbsoluteIRIQuads(
+                key: key,
+                value: value,
+                subject: nestedSubject,
+                error: error,
+                blankNodeCounter: &blankNodeCounter
+            ) else {
+                throw error
+            }
+            quads.append(contentsOf: nestedQuads)
+        }
+        return (nestedSubject, quads)
     }
 
     private static func genericTypeQuads(

@@ -81,6 +81,11 @@ const extensionFixture = {
         'https://example.test/status/SubjectType',
         'https://example.test/status/SecondSubjectType'
       ],
+      '@reverse': {
+        'https://example.test/status/statusPointsTo': {
+          '@id': 'https://example.test/status/status-source'
+        }
+      },
       'https://example.test/status/nestedValue': {
         '@value': 'subject nested',
         '@language': 'en'
@@ -92,7 +97,12 @@ const extensionFixture = {
     'https://example.test/status/proofString': 'proof extension',
     'https://example.test/status/proofNode': {
       '@id': 'https://example.test/status/proof-node',
-      '@type': 'https://example.test/status/ProofType'
+      '@type': 'https://example.test/status/ProofType',
+      '@reverse': {
+        'https://example.test/status/proofPointsTo': {
+          '@id': 'https://example.test/status/proof-source'
+        }
+      }
     },
     'https://example.test/status/proofTypedValue': {
       '@value': '7',

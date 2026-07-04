@@ -318,6 +318,11 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                         .string("https://example.invalid/types/TypedNode"),
                         .string("https://example.invalid/types/SecondType")
                     ]),
+                    "@reverse": .object([
+                        "https://example.invalid/terms/pointsTo": .object([
+                            "@id": .string("https://example.invalid/resources/source")
+                        ])
+                    ]),
                     "https://example.invalid/terms/name": .string("Typed node")
                 ]),
                 "https://example.invalid/terms/typedBlankNode": .object([
@@ -331,6 +336,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(typedNodeNQuads.contains(
             "<https://example.invalid/resources/typed-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/SecondType>"
+        ))
+        XCTAssert(typedNodeNQuads.contains(
+            "<https://example.invalid/resources/source> <https://example.invalid/terms/pointsTo> <https://example.invalid/resources/typed-node>"
         ))
         XCTAssert(typedNodeNQuads.contains(
             "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/BlankNode>"
@@ -370,6 +378,20 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             additionalProperties: [
                 "https://example.invalid/terms/typedNode": .object([
                     "@type": .string("CompactType")
+                ])
+            ]
+        ), mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(vcbCredential(
+            additionalProperties: [
+                "https://example.invalid/terms/reverseNode": .object([
+                    "@reverse": .object([
+                        "compactReverseTerm": .object([
+                            "@id": .string("https://example.invalid/resources/source")
+                        ])
+                    ])
                 ])
             ]
         ), mode: .uat)) { error in
@@ -557,7 +579,12 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 "https://example.invalid/terms/subject": .bool(false),
                 "https://example.invalid/terms/subjectNode": .object([
                     "@id": .string("https://example.invalid/resources/status-subject-node"),
-                    "@type": .string("https://example.invalid/types/StatusSubjectNode")
+                    "@type": .string("https://example.invalid/types/StatusSubjectNode"),
+                    "@reverse": .object([
+                        "https://example.invalid/terms/statusPointsTo": .object([
+                            "@id": .string("https://example.invalid/resources/status-source")
+                        ])
+                    ])
                 ])
             ]
         )
@@ -573,6 +600,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/resources/status-subject-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/StatusSubjectNode>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/resources/status-source> <https://example.invalid/terms/statusPointsTo> <https://example.invalid/resources/status-subject-node>"
         ))
     }
 
@@ -673,7 +703,14 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 "https://example.invalid/terms/proof": .unsigned(42),
                 "https://example.invalid/terms/proofNode": .object([
                     "@id": .string("https://example.invalid/resources/proof-node"),
-                    "@type": .string("https://example.invalid/types/ProofNode")
+                    "@type": .string("https://example.invalid/types/ProofNode"),
+                    "@reverse": .object([
+                        "https://example.invalid/terms/proofPointsTo": .array([
+                            .object([
+                                "@id": .string("https://example.invalid/resources/proof-source")
+                            ])
+                        ])
+                    ])
                 ])
             ]
         )
@@ -683,6 +720,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/resources/proof-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/ProofNode>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/resources/proof-source> <https://example.invalid/terms/proofPointsTo> <https://example.invalid/resources/proof-node>"
         ))
     }
 

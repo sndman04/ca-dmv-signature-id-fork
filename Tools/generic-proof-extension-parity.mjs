@@ -27,6 +27,13 @@ const proofConfig = {
       'https://example.invalid/types/ProofReference',
       'https://example.invalid/types/SecondProofReference'
     ],
+    '@reverse': {
+      'https://example.invalid/proof/pointsTo': [
+        {
+          '@id': 'https://example.invalid/resources/proof-source'
+        }
+      ]
+    },
     'https://example.invalid/proof/referenceName': 'Proof Reference'
   },
   'https://example.invalid/proof/typedBlankNode': {
