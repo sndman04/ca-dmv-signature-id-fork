@@ -154,6 +154,84 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
         }
     }
 
+    func testSupportedProfileVCBEngineRoutesThroughConfiguredJSONLDEngine() throws {
+        let recordingEngine = RecordingJSONLDCanonicalizationEngine()
+        let dataIntegrityEngine = SupportedProfileDataIntegrityEngine(
+            jsonLDCanonicalizationEngine: recordingEngine
+        )
+        let credential = DMVVerifiableCredential(
+            context: [
+                "https://www.w3.org/ns/credentials/v2",
+                "https://w3id.org/vc-barcodes/v1"
+            ],
+            type: ["VerifiableCredential", "OpticalBarcodeCredential"],
+            issuer: "did:web:uat-credentials.dmv.ca.gov",
+            validFrom: nil,
+            validUntil: nil,
+            credentialSubject: DMVVerifiableCredential.CredentialSubject(
+                type: "AamvaDriversLicenseScannableInformation",
+                protectedComponentIndex: "uAQID"
+            ),
+            credentialStatus: nil,
+            proof: DMVVerifiableCredential.Proof(
+                type: "DataIntegrityProof",
+                created: nil,
+                expires: nil,
+                cryptosuite: "ecdsa-xi-2023",
+                proofPurpose: "assertionMethod",
+                proofValue: "zLdp",
+                verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"
+            )
+        )
+
+        XCTAssertThrowsError(try dataIntegrityEngine.verifyVCB(
+            credential: credential,
+            opticalDataHash: Data(repeating: 0, count: 32),
+            verificationKey: matchingKey(id: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
+        )) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+        XCTAssertEqual(recordingEngine.profiles, [.dataIntegrityProof, .vcbDocument])
+    }
+
+    func testSupportedProfileStatusListEngineRoutesThroughConfiguredJSONLDEngine() throws {
+        let recordingEngine = RecordingJSONLDCanonicalizationEngine()
+        let dataIntegrityEngine = SupportedProfileDataIntegrityEngine(
+            jsonLDCanonicalizationEngine: recordingEngine
+        )
+        let credential = DMVStatusListCredential(
+            id: "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0",
+            type: ["VerifiableCredential", "BitstringStatusListCredential"],
+            issuer: "did:web:uat-credentials.dmv.ca.gov",
+            validFrom: nil,
+            validUntil: nil,
+            name: nil,
+            description: nil,
+            credentialSubject: DMVStatusListCredential.CredentialSubject(
+                id: "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0#list",
+                type: "BitstringStatusList",
+                encodedList: "uAA",
+                statusPurpose: "revocation"
+            ),
+            proof: DMVStatusListCredential.Proof(
+                type: "DataIntegrityProof",
+                created: nil,
+                verificationMethod: "did:web:uat-credentials.dmv.ca.gov#status-vm-1",
+                cryptosuite: "ecdsa-rdfc-2019",
+                proofPurpose: "assertionMethod",
+                proofValue: "zLdp"
+            )
+        )
+
+        XCTAssertThrowsError(try dataIntegrityEngine.verifyStatusListCredential(
+            credential,
+            verificationKey: matchingKey(id: "did:web:uat-credentials.dmv.ca.gov#status-vm-1")
+        )) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+        XCTAssertEqual(recordingEngine.profiles, [.dataIntegrityProof, .statusListDocument])
+    }
+
     func testStatusListParserPreservesUnknownSignedFieldsButSupportedProfileRejectsThem() throws {
         let json = """
         {
@@ -278,8 +356,12 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
     }
 
     private func mismatchedKey() -> DIDDocumentKey {
+        matchingKey(id: "did:web:uat-credentials.dmv.ca.gov#different")
+    }
+
+    private func matchingKey(id: String) -> DIDDocumentKey {
         DIDDocumentKey(
-            id: "did:web:uat-credentials.dmv.ca.gov#different",
+            id: id,
             controller: "did:web:uat-credentials.dmv.ca.gov",
             type: "Multikey",
             publicKeyMultibase: "zSynthetic",
@@ -314,5 +396,25 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
         }
         XCTAssertEqual(borrow, 0)
         return result
+    }
+}
+
+private final class RecordingJSONLDCanonicalizationEngine: JSONLDCanonicalizationEngine, @unchecked Sendable {
+    private(set) var profiles: [SupportedJSONLDCanonicalizationProfile] = []
+
+    func canonicalNQuads(
+        document: [String: SupportedJSONLDValue],
+        profile: SupportedJSONLDCanonicalizationProfile
+    ) throws -> String {
+        profiles.append(profile)
+        return "<https://example.invalid/s> <https://example.invalid/p> \"sentinel\" .\n"
+    }
+
+    func quads(
+        from document: [String: SupportedJSONLDValue],
+        profile: SupportedJSONLDCanonicalizationProfile
+    ) throws -> [RDFQuad] {
+        profiles.append(profile)
+        return []
     }
 }

@@ -7,7 +7,9 @@ enum EcdsaXi2023Verifier {
     static func verify(
         credential: DMVVerifiableCredential,
         opticalDataHash: Data,
-        verificationKey: DIDDocumentKey
+        verificationKey: DIDDocumentKey,
+        engine: any JSONLDCanonicalizationEngine =
+            SupportedProfileJSONLDCanonicalizationEngine.shared
     ) throws -> Bool {
         guard credential.proof.verificationMethod == verificationKey.id else {
             throw CADMVInternalError.unsupportedVCB
@@ -15,7 +17,8 @@ enum EcdsaXi2023Verifier {
 
         let verifyData = try createVerifyData(
             credential: credential,
-            opticalDataHash: opticalDataHash
+            opticalDataHash: opticalDataHash,
+            engine: engine
         )
         return try ECDSAProofVerifier.verifyP256Signature(
             proofValue: credential.proof.proofValue,
@@ -27,7 +30,9 @@ enum EcdsaXi2023Verifier {
 
     static func createVerifyData(
         credential: DMVVerifiableCredential,
-        opticalDataHash: Data
+        opticalDataHash: Data,
+        engine: any JSONLDCanonicalizationEngine =
+            SupportedProfileJSONLDCanonicalizationEngine.shared
     ) throws -> Data {
         let proofHash = Data(SHA256.hash(data: Data(try DataIntegrityProofCanonicalizer.canonicalNQuads(
             contexts: credential.context,
@@ -37,9 +42,13 @@ enum EcdsaXi2023Verifier {
             cryptosuite: credential.proof.cryptosuite,
             proofPurpose: credential.proof.proofPurpose,
             verificationMethod: credential.proof.verificationMethod,
-            additionalProperties: credential.proof.additionalProperties
+            additionalProperties: credential.proof.additionalProperties,
+            engine: engine
         ).utf8)))
-        let documentHash = Data(SHA256.hash(data: Data(try VCBJSONLDRDFExpander.canonicalNQuads(credential).utf8)))
+        let documentHash = Data(SHA256.hash(data: Data(try VCBJSONLDRDFExpander.canonicalNQuads(
+            credential,
+            engine: engine
+        ).utf8)))
         let externalHash = Data(SHA256.hash(data: opticalDataHash))
 
         var data = Data()

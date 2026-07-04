@@ -16,6 +16,15 @@ protocol DataIntegrityVerificationEngine: Sendable {
 struct SupportedProfileDataIntegrityEngine: DataIntegrityVerificationEngine {
     static let shared = SupportedProfileDataIntegrityEngine()
 
+    private let jsonLDCanonicalizationEngine: any JSONLDCanonicalizationEngine
+
+    init(
+        jsonLDCanonicalizationEngine: any JSONLDCanonicalizationEngine =
+            SupportedProfileJSONLDCanonicalizationEngine.shared
+    ) {
+        self.jsonLDCanonicalizationEngine = jsonLDCanonicalizationEngine
+    }
+
     func verifyVCB(
         credential: DMVVerifiableCredential,
         opticalDataHash: Data,
@@ -24,7 +33,8 @@ struct SupportedProfileDataIntegrityEngine: DataIntegrityVerificationEngine {
         try EcdsaXi2023Verifier.verify(
             credential: credential,
             opticalDataHash: opticalDataHash,
-            verificationKey: verificationKey
+            verificationKey: verificationKey,
+            engine: jsonLDCanonicalizationEngine
         )
     }
 
@@ -34,7 +44,8 @@ struct SupportedProfileDataIntegrityEngine: DataIntegrityVerificationEngine {
     ) throws -> Bool {
         try EcdsaRdfc2019Verifier.verify(
             credential: credential,
-            verificationKey: verificationKey
+            verificationKey: verificationKey,
+            engine: jsonLDCanonicalizationEngine
         )
     }
 }
