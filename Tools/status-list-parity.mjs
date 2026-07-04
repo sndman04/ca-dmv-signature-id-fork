@@ -86,6 +86,10 @@ const extensionFixture = {
           '@id': 'https://example.test/status/status-source'
         }
       },
+      '@graph': {
+        '@id': 'https://example.test/status/status-in-graph',
+        'https://example.test/status/statusGraphName': 'Status graph'
+      },
       'https://example.test/status/nestedValue': {
         '@value': 'subject nested',
         '@language': 'en'
@@ -102,6 +106,10 @@ const extensionFixture = {
         'https://example.test/status/proofPointsTo': {
           '@id': 'https://example.test/status/proof-source'
         }
+      },
+      '@graph': {
+        '@id': 'https://example.test/status/proof-in-graph',
+        'https://example.test/status/proofGraphName': 'Proof graph'
       }
     },
     'https://example.test/status/proofTypedValue': {

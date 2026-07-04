@@ -34,6 +34,11 @@ const proofConfig = {
         }
       ]
     },
+    '@graph': {
+      '@id': 'https://example.invalid/resources/proof-in-graph',
+      '@type': 'https://example.invalid/types/ProofInGraph',
+      'https://example.invalid/proof/graphName': 'Proof graph'
+    },
     'https://example.invalid/proof/referenceName': 'Proof Reference'
   },
   'https://example.invalid/proof/typedBlankNode': {

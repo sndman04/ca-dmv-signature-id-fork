@@ -250,6 +250,15 @@ enum SupportedJSONLDRDFTerms {
                     ))
                     continue
                 }
+                if key == "@graph" {
+                    quads.append(contentsOf: try genericGraphQuads(
+                        value,
+                        graph: nestedSubject,
+                        error: error,
+                        blankNodeCounter: &blankNodeCounter
+                    ))
+                    continue
+                }
                 guard let nestedQuads = try genericAbsoluteIRIQuads(
                     key: key,
                     value: value,
@@ -419,6 +428,18 @@ enum SupportedJSONLDRDFTerms {
                 ))
                 continue
             }
+            if key == "@graph" {
+                guard let value = object[key] else {
+                    continue
+                }
+                quads.append(contentsOf: try genericGraphQuads(
+                    value,
+                    graph: nestedSubject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                ))
+                continue
+            }
             guard let value = object[key],
                   let nestedQuads = try genericAbsoluteIRIQuads(
                     key: key,
@@ -525,6 +546,18 @@ enum SupportedJSONLDRDFTerms {
                     ))
                     continue
                 }
+                if key == "@graph" {
+                    guard let value = object[key] else {
+                        continue
+                    }
+                    quads.append(contentsOf: try genericGraphQuads(
+                        value,
+                        graph: nestedSubject,
+                        error: error,
+                        blankNodeCounter: &blankNodeCounter
+                    ))
+                    continue
+                }
                 guard let value = object[key],
                       let nestedQuads = try genericAbsoluteIRIQuads(
                         key: key,
@@ -574,6 +607,18 @@ enum SupportedJSONLDRDFTerms {
                 quads.append(contentsOf: try genericReverseQuads(
                     value,
                     object: nestedSubject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                ))
+                continue
+            }
+            if key == "@graph" {
+                guard let value = object[key] else {
+                    continue
+                }
+                quads.append(contentsOf: try genericGraphQuads(
+                    value,
+                    graph: nestedSubject,
                     error: error,
                     blankNodeCounter: &blankNodeCounter
                 ))
@@ -748,6 +793,15 @@ enum SupportedJSONLDRDFTerms {
                 ))
                 continue
             }
+            if key == "@graph" {
+                quads.append(contentsOf: try genericGraphQuads(
+                    value,
+                    graph: nestedSubject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                ))
+                continue
+            }
             guard let nestedQuads = try genericAbsoluteIRIQuads(
                 key: key,
                 value: value,
@@ -760,6 +814,92 @@ enum SupportedJSONLDRDFTerms {
             quads.append(contentsOf: nestedQuads)
         }
         return (nestedSubject, quads)
+    }
+
+    private static func genericGraphQuads(
+        _ value: SupportedJSONLDValue,
+        graph: RDFTerm,
+        error: CADMVInternalError,
+        blankNodeCounter: inout Int
+    ) throws -> [RDFQuad] {
+        let graphNodes: [SupportedJSONLDValue]
+        switch value {
+        case .array(let array):
+            graphNodes = array
+        default:
+            graphNodes = [value]
+        }
+
+        var quads: [RDFQuad] = []
+        for graphNode in graphNodes {
+            guard case .object(let object) = graphNode,
+                  object["@list"] == nil,
+                  object["@set"] == nil,
+                  object["@value"] == nil else {
+                throw error
+            }
+            let subject: RDFTerm
+            if let id = object["@id"] {
+                guard case .string(let idValue) = id,
+                      try isSafeIRI(idValue, error: error) else {
+                    throw error
+                }
+                subject = .iri(idValue)
+            } else {
+                subject = .blank("\(genericBlankNodePrefix)\(blankNodeCounter)")
+                blankNodeCounter += 1
+            }
+
+            for key in object.keys.sorted() where key != "@id" {
+                guard let value = object[key] else {
+                    continue
+                }
+                if key == "@type" {
+                    quads.append(contentsOf: try withGraph(
+                        genericTypeQuads(value, subject: subject, error: error),
+                        graph: graph
+                    ))
+                    continue
+                }
+                if key == "@reverse" {
+                    quads.append(contentsOf: try withGraph(
+                        genericReverseQuads(
+                            value,
+                            object: subject,
+                            error: error,
+                            blankNodeCounter: &blankNodeCounter
+                        ),
+                        graph: graph
+                    ))
+                    continue
+                }
+                guard let nestedQuads = try genericAbsoluteIRIQuads(
+                    key: key,
+                    value: value,
+                    subject: subject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                ) else {
+                    throw error
+                }
+                quads.append(contentsOf: withGraph(nestedQuads, graph: graph))
+            }
+        }
+        return quads
+    }
+
+    private static func withGraph(
+        _ quads: [RDFQuad],
+        graph: RDFTerm
+    ) -> [RDFQuad] {
+        quads.map {
+            RDFQuad(
+                subject: $0.subject,
+                predicate: $0.predicate,
+                object: $0.object,
+                graph: $0.graph ?? graph
+            )
+        }
     }
 
     private static func genericTypeQuads(

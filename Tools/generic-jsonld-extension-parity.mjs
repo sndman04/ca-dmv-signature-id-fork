@@ -35,6 +35,13 @@ const extensionDocument = {
         '@id': 'https://example.invalid/resources/source'
       }
     },
+    '@graph': [
+      {
+        '@id': 'https://example.invalid/resources/in-graph',
+        '@type': 'https://example.invalid/types/InGraph',
+        'https://example.invalid/terms/graphName': 'In graph'
+      }
+    ],
     'https://example.invalid/terms/referenceName': 'Reference'
   },
   'https://example.invalid/terms/typedBlankNode': {
