@@ -46,6 +46,10 @@ const proofConfig = {
       '@type': 'https://example.invalid/types/ProofIncluded',
       'https://example.invalid/proof/includedName': 'Proof included'
     },
+    '@nest': {
+      '@type': 'https://example.invalid/types/ProofNestedType',
+      'https://example.invalid/proof/nestedName': 'Proof nested'
+    },
     'https://example.invalid/proof/referenceName': 'Proof Reference'
   },
   'https://example.invalid/proof/typedBlankNode': {

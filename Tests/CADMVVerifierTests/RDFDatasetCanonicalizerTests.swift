@@ -343,6 +343,10 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                             "https://example.invalid/terms/includedName": .string("Included")
                         ])
                     ]),
+                    "@nest": .object([
+                        "@type": .string("https://example.invalid/types/NestedType"),
+                        "https://example.invalid/terms/nestedName": .string("Nested")
+                    ]),
                     "https://example.invalid/terms/name": .string("Typed node")
                 ]),
                 "https://example.invalid/terms/typedBlankNode": .object([
@@ -372,6 +376,12 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(typedNodeNQuads.contains(
             "<https://example.invalid/resources/included> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/Included>"
+        ))
+        XCTAssert(typedNodeNQuads.contains(
+            "<https://example.invalid/resources/typed-node> <https://example.invalid/terms/nestedName> \"Nested\""
+        ))
+        XCTAssert(typedNodeNQuads.contains(
+            "<https://example.invalid/resources/typed-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/NestedType>"
         ))
         XCTAssert(typedNodeNQuads.contains(
             "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/BlankNode>"
@@ -465,6 +475,20 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@id": .string("https://example.invalid/resources/indexed"),
                     "@index": .unsigned(7),
                     "https://example.invalid/terms/name": .string("Indexed")
+                ])
+            ]
+        ), mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(vcbCredential(
+            additionalProperties: [
+                "https://example.invalid/terms/nestedNode": .object([
+                    "@id": .string("https://example.invalid/resources/nested"),
+                    "@nest": .object([
+                        "@id": .string("https://example.invalid/resources/colliding"),
+                        "https://example.invalid/terms/name": .string("Nested")
+                    ])
                 ])
             ]
         ), mode: .uat)) { error in
@@ -667,6 +691,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@included": .object([
                         "@id": .string("https://example.invalid/resources/status-included"),
                         "https://example.invalid/terms/statusIncludedName": .string("Status included")
+                    ]),
+                    "@nest": .object([
+                        "https://example.invalid/terms/statusNestedName": .string("Status nested")
                     ])
                 ])
             ]
@@ -692,6 +719,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/resources/status-included> <https://example.invalid/terms/statusIncludedName> \"Status included\""
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/resources/status-subject-node> <https://example.invalid/terms/statusNestedName> \"Status nested\""
         ))
     }
 
@@ -809,6 +839,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@included": .object([
                         "@id": .string("https://example.invalid/resources/proof-included"),
                         "https://example.invalid/terms/proofIncludedName": .string("Proof included")
+                    ]),
+                    "@nest": .object([
+                        "https://example.invalid/terms/proofNestedName": .string("Proof nested")
                     ])
                 ])
             ]
@@ -828,6 +861,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/resources/proof-included> <https://example.invalid/terms/proofIncludedName> \"Proof included\""
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/resources/proof-node> <https://example.invalid/terms/proofNestedName> \"Proof nested\""
         ))
     }
 

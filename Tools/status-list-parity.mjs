@@ -99,6 +99,9 @@ const extensionFixture = {
         '@id': 'https://example.test/status/status-included',
         'https://example.test/status/statusIncludedName': 'Status included'
       },
+      '@nest': {
+        'https://example.test/status/statusNestedName': 'Status nested'
+      },
       'https://example.test/status/nestedValue': {
         '@value': 'subject nested',
         '@language': 'en'
@@ -125,6 +128,9 @@ const extensionFixture = {
       '@included': {
         '@id': 'https://example.test/status/proof-included',
         'https://example.test/status/proofIncludedName': 'Proof included'
+      },
+      '@nest': {
+        'https://example.test/status/proofNestedName': 'Proof nested'
       }
     },
     'https://example.test/status/proofTypedValue': {

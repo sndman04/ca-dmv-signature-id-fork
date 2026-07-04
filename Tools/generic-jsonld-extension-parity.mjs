@@ -51,6 +51,10 @@ const extensionDocument = {
         'https://example.invalid/terms/includedName': 'Included'
       }
     ],
+    '@nest': {
+      '@type': 'https://example.invalid/types/NestedType',
+      'https://example.invalid/terms/nestedName': 'Nested'
+    },
     'https://example.invalid/terms/referenceName': 'Reference'
   },
   'https://example.invalid/terms/typedBlankNode': {
