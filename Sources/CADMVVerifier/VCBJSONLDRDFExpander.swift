@@ -1,7 +1,7 @@
 enum VCBJSONLDRDFExpander {
     static func canonicalNQuads(
         _ credential: DMVVerifiableCredential,
-        engine: any JSONLDCanonicalizationEngine = SupportedProfileJSONLDCanonicalizationEngine.shared
+        engine: any JSONLDCanonicalizationEngine = ProductionJSONLDCanonicalizationEngine.shared
     ) throws -> String {
         try engine.canonicalNQuads(
             document: jsonLDDocument(from: credential),
@@ -11,7 +11,7 @@ enum VCBJSONLDRDFExpander {
 
     static func documentQuads(
         _ credential: DMVVerifiableCredential,
-        engine: any JSONLDCanonicalizationEngine = SupportedProfileJSONLDCanonicalizationEngine.shared
+        engine: any JSONLDCanonicalizationEngine = ProductionJSONLDCanonicalizationEngine.shared
     ) throws -> [RDFQuad] {
         try engine.quads(
             from: jsonLDDocument(from: credential),

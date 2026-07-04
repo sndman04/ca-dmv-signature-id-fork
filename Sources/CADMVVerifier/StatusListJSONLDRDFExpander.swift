@@ -1,7 +1,7 @@
 enum StatusListJSONLDRDFExpander {
     static func canonicalNQuads(
         _ credential: DMVStatusListCredential,
-        engine: any JSONLDCanonicalizationEngine = SupportedProfileJSONLDCanonicalizationEngine.shared
+        engine: any JSONLDCanonicalizationEngine = ProductionJSONLDCanonicalizationEngine.shared
     ) throws -> String {
         try engine.canonicalNQuads(
             document: jsonLDDocument(from: credential),
@@ -11,7 +11,7 @@ enum StatusListJSONLDRDFExpander {
 
     static func documentQuads(
         _ credential: DMVStatusListCredential,
-        engine: any JSONLDCanonicalizationEngine = SupportedProfileJSONLDCanonicalizationEngine.shared
+        engine: any JSONLDCanonicalizationEngine = ProductionJSONLDCanonicalizationEngine.shared
     ) throws -> [RDFQuad] {
         try engine.quads(
             from: jsonLDDocument(from: credential),

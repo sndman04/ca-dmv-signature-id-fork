@@ -16,6 +16,11 @@ protocol JSONLDCanonicalizationEngine: Sendable {
     ) throws -> [RDFQuad]
 }
 
+enum ProductionJSONLDCanonicalizationEngine {
+    static let shared: any JSONLDCanonicalizationEngine =
+        SupportedProfileJSONLDCanonicalizationEngine.shared
+}
+
 struct SupportedProfileJSONLDCanonicalizationEngine: JSONLDCanonicalizationEngine {
     static let shared = SupportedProfileJSONLDCanonicalizationEngine()
 

@@ -9,7 +9,7 @@ enum EcdsaXi2023Verifier {
         opticalDataHash: Data,
         verificationKey: DIDDocumentKey,
         engine: any JSONLDCanonicalizationEngine =
-            SupportedProfileJSONLDCanonicalizationEngine.shared
+            ProductionJSONLDCanonicalizationEngine.shared
     ) throws -> Bool {
         guard credential.proof.verificationMethod == verificationKey.id else {
             throw CADMVInternalError.unsupportedVCB
@@ -32,7 +32,7 @@ enum EcdsaXi2023Verifier {
         credential: DMVVerifiableCredential,
         opticalDataHash: Data,
         engine: any JSONLDCanonicalizationEngine =
-            SupportedProfileJSONLDCanonicalizationEngine.shared
+            ProductionJSONLDCanonicalizationEngine.shared
     ) throws -> Data {
         let proofHash = Data(SHA256.hash(data: Data(try DataIntegrityProofCanonicalizer.canonicalNQuads(
             contexts: credential.context,
@@ -500,7 +500,7 @@ enum DataIntegrityProofCanonicalizer {
         proofPurpose: String,
         verificationMethod: String,
         additionalProperties: [String: SupportedJSONLDValue] = [:],
-        engine: any JSONLDCanonicalizationEngine = SupportedProfileJSONLDCanonicalizationEngine.shared
+        engine: any JSONLDCanonicalizationEngine = ProductionJSONLDCanonicalizationEngine.shared
     ) throws -> String {
         try engine.canonicalNQuads(
             document: jsonLDDocument(

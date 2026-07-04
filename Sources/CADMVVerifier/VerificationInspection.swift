@@ -260,7 +260,7 @@ extension CADMVVerifier {
         guard let document = json as? [String: Any] else {
             throw CADMVInternalError.unsupportedVCB
         }
-        return try SupportedProfileJSONLDCanonicalizationEngine.shared.canonicalNQuads(
+        return try ProductionJSONLDCanonicalizationEngine.shared.canonicalNQuads(
             document: document.mapValues {
                 try SupportedJSONLDValue.fromJSON($0, error: .unsupportedVCB)
             },
@@ -273,7 +273,7 @@ extension CADMVVerifier {
         guard let document = json as? [String: Any] else {
             throw CADMVInternalError.unsupportedVCB
         }
-        return try SupportedProfileJSONLDCanonicalizationEngine.shared.canonicalNQuads(
+        return try ProductionJSONLDCanonicalizationEngine.shared.canonicalNQuads(
             document: document.mapValues {
                 try SupportedJSONLDValue.fromJSON($0, error: .unsupportedVCB)
             },

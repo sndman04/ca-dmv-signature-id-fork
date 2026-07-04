@@ -20,7 +20,7 @@ struct SupportedProfileDataIntegrityEngine: DataIntegrityVerificationEngine {
 
     init(
         jsonLDCanonicalizationEngine: any JSONLDCanonicalizationEngine =
-            SupportedProfileJSONLDCanonicalizationEngine.shared
+            ProductionJSONLDCanonicalizationEngine.shared
     ) {
         self.jsonLDCanonicalizationEngine = jsonLDCanonicalizationEngine
     }

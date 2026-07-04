@@ -9,7 +9,7 @@ enum EcdsaRdfc2019Verifier {
         credential: DMVStatusListCredential,
         verificationKey: DIDDocumentKey,
         engine: any JSONLDCanonicalizationEngine =
-            SupportedProfileJSONLDCanonicalizationEngine.shared
+            ProductionJSONLDCanonicalizationEngine.shared
     ) throws -> Bool {
         guard credential.proof.verificationMethod == verificationKey.id,
               credential.issuer == verificationKey.controller else {
@@ -31,7 +31,7 @@ enum EcdsaRdfc2019Verifier {
     static func createVerifyData(
         _ credential: DMVStatusListCredential,
         engine: any JSONLDCanonicalizationEngine =
-            SupportedProfileJSONLDCanonicalizationEngine.shared
+            ProductionJSONLDCanonicalizationEngine.shared
     ) throws -> Data {
         let proofHash = Data(SHA256.hash(data: Data(try DataIntegrityProofCanonicalizer.canonicalNQuads(
             contexts: ["https://www.w3.org/ns/credentials/v2"],

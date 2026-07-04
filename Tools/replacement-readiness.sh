@@ -14,9 +14,19 @@ report_failure() {
 if rg -n \
   'SupportedProfileJSONLDCanonicalizationEngine\.shared' \
   Sources/CADMVVerifier \
+  | grep -v '^Sources/CADMVVerifier/JSONLDCanonicalizationEngine.swift:' \
   >/tmp/cadmv-replacement-engine-refs.txt; then
-  report_failure "Public verifier paths still default to SupportedProfileJSONLDCanonicalizationEngine.shared."
+  report_failure "Public verifier paths still reference SupportedProfileJSONLDCanonicalizationEngine.shared outside the production selector."
   cat /tmp/cadmv-replacement-engine-refs.txt
+fi
+
+if rg -n \
+  --with-filename \
+  'SupportedProfileJSONLDCanonicalizationEngine\.shared' \
+  Sources/CADMVVerifier/JSONLDCanonicalizationEngine.swift \
+  >/tmp/cadmv-production-selector-refs.txt; then
+  report_failure "ProductionJSONLDCanonicalizationEngine.shared still resolves to the supported-profile engine."
+  cat /tmp/cadmv-production-selector-refs.txt
 fi
 
 if rg -n \

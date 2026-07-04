@@ -794,6 +794,23 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssertEqual(engine.canonicalDocuments.first?["validFrom"], .string("2026-01-01T00:00:00Z"))
     }
 
+    func testProductionJSONLDCanonicalizationEngineMatchesCurrentSupportedProfileEngine() throws {
+        let document = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
+            validFrom: "2026-01-01T00:00:00Z"
+        ))
+
+        let production = try ProductionJSONLDCanonicalizationEngine.shared.canonicalNQuads(
+            document: document,
+            profile: .vcbDocument
+        )
+        let supportedProfile = try SupportedProfileJSONLDCanonicalizationEngine.shared.canonicalNQuads(
+            document: document,
+            profile: .vcbDocument
+        )
+
+        XCTAssertEqual(production, supportedProfile)
+    }
+
     func testStatusListJSONLDExpanderBuildsDocumentQuadsFromCredentialModel() throws {
         let credential = statusListCredential(
             validFrom: "2026-01-01T00:00:00Z",
