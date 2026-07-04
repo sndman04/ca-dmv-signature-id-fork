@@ -349,12 +349,12 @@ Tasks:
   - unsafe strings rejected where applicable
 - Confirm decoded Swift credential models preserve all fields that affect signatures.
 - Add oracle comparisons for decoded credential shape without exposing PII.
-- Preserve JS-accepted text-encoded unknown signed fields in decoded JSON-LD state for standards-grade canonicalization rather than dropping them; continue rejecting unknown compressed numeric term ids to match JS decode behavior.
+- Preserve JS-accepted text-encoded unknown signed fields in decoded JSON-LD state rather than dropping them; continue rejecting unknown compressed numeric term ids to match JS decode behavior, and fail closed for compact unknown fields that the reference safe-mode canonicalizer rejects.
 
 Exit criteria:
 
 - [x] Swift CBOR-LD decoding matches the official SDK for every committed fixture.
-- [x] No signature-relevant field is dropped before canonicalization for supported fields; JS-accepted text-key unknown signed fields are preserved for the replacement engine and fail closed in the public verifier until standards canonicalization can process them.
+- [x] No signature-relevant field is dropped before canonicalization for supported fields; JS-accepted text-key unknown signed fields are preserved in the decoded model, safe absolute-IRI extensions are canonicalized, and compact unknown fields fail closed in parity with reference safe-mode canonicalization.
 - [x] Unsupported credential shapes fail at a documented stage.
 
 ## Phase 4: Introduce A Standards-Grade Canonicalization Engine
@@ -428,7 +428,7 @@ Progress:
 - The native RDFC core exposes an internal issued-identifier map and validates it against a W3C map-test subset, so canonical blank-node labels are checked directly as well as through rendered N-Quads.
 - The supported-profile JSON-LD-to-RDF converters now resolve their accepted terms through `PinnedJSONLDTermRegistry`, a single pinned registry for the DMV, VC, status-list, schema.org, and security IRIs currently accepted by VCB, status-list, and proof canonicalization.
 - The supported-profile JSON-LD-to-RDF converters now also use `PinnedJSONLDTermRegistry` for accepted context-set policy, keeping VCB document, status-list document, and proof document context handling explicit and covered by profile-specific rejection tests.
-- JS-accepted text-key unknown VCB credential and proof fields are now preserved in decoded `additionalProperties` and projected into internal JSON-LD documents; the current supported-profile verifier rejects them as unsupported rather than dropping them, leaving the final acceptance decision to the standards-grade canonicalization engine.
+- JS-accepted text-key unknown VCB credential and proof fields are now preserved in decoded `additionalProperties` and projected into internal JSON-LD documents. Safe absolute-IRI extensions are canonicalized generically, while compact unknown terms are rejected in parity with the reference safe-mode canonicalizer rather than being dropped.
 - Compressed VCB maps now reject text aliases for known signed terms during decode, so mixed numeric/text encodings cannot create ambiguous duplicate values or overwrite parsed supported fields before canonicalization.
 - Unknown status-list root, credentialSubject, and proof fields are now preserved in status-list `additionalProperties` and projected into document/proof JSON-LD; safe absolute-IRI extensions are accepted through the supported canonicalization path while compact unknown fields and unsafe IRIs remain fail-closed as unavailable.
 - Canonicalization engine selection is documented in `Docs/CANONICALIZATION_ENGINE_DECISION.md`: continue native Swift hardening now, use JS only as a development oracle, and require explicit bridge/dependency acceptance criteria before adding an external engine.

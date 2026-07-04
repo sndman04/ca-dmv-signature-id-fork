@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import {decode} from '../References/cadmv-dlid-verifier-sdk/node_modules/@digitalbazaar/cborld/lib/index.js';
+import {canonize as canonizeEcdsaXi2023}
+  from '../References/cadmv-dlid-verifier-sdk/node_modules/@digitalbazaar/ecdsa-xi-2023-cryptosuite/lib/canonize.js';
 import {JsonLdDocumentLoader}
   from '../References/cadmv-dlid-verifier-sdk/node_modules/jsonld-document-loader/lib/index.js';
 import {contexts as vcbContexts}
@@ -54,6 +56,53 @@ for(const testCase of cases) {
       passed,
       error: message
     });
+  }
+}
+
+for(const testCase of cases.filter(testCase => testCase.expectDecoded)) {
+  const decoded = await decode({
+    cborldBytes: testCase.bytes,
+    documentLoader,
+    typeTableLoader: () => typeTable
+  });
+  const document = structuredClone(decoded);
+  delete document.proof;
+  const proofConfig = {
+    '@context': decoded['@context'],
+    ...decoded.proof
+  };
+  delete proofConfig.proofValue;
+  for(const [id, input, expectSafeModeError] of [
+    [
+      `${testCase.id}-document-canonicalization`,
+      document,
+      testCase.id === 'text-unknown-credential-key'
+    ],
+    [
+      `${testCase.id}-proof-canonicalization`,
+      proofConfig,
+      testCase.id === 'text-unknown-proof-key'
+    ]
+  ]) {
+    try {
+      await canonizeEcdsaXi2023(input, {documentLoader});
+      results.push({
+        id,
+        canonicalized: true,
+        passed: !expectSafeModeError,
+        error: null
+      });
+    } catch(e) {
+      const message = e?.message ?? String(e);
+      const passed = expectSafeModeError &&
+        /Safe mode validation error/.test(message);
+      results.push({
+        id,
+        canonicalized: false,
+        passed,
+        error: message
+      });
+    }
   }
 }
 

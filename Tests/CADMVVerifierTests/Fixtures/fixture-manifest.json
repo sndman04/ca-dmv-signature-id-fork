@@ -163,14 +163,13 @@
     {
       "id": "unknown-ignorable-cborld-values",
       "class": "synthetic",
-      "storageLevel": "documented-gap",
+      "storageLevel": "generated",
       "source": "Docs/LONG_TERM_JS_PARITY_PLAN.md",
       "jsParityRequired": true,
       "nativeSwiftParityRequired": true,
       "expectedPublicResult": "varies",
       "expectedFirstFailureStage": "varies",
-      "categories": ["unknown-ignorable-cborld-values"],
-      "gapReason": "JS characterization is recorded in Tools/cborld-unknown-field-characterization.mjs. Swift preserves JS-accepted text-encoded unknown signed fields internally and now canonicalizes safe absolute-IRI extensions, but compact unknown terms still need final standards-grade coverage before this can move out of documented-gap status."
+      "categories": ["unknown-ignorable-cborld-values"]
     }
   ]
 }

@@ -36,7 +36,6 @@ final class FixtureManifestTests: XCTestCase {
             $0["storageLevel"] as? String == "documented-gap"
         }
 
-        XCTAssertFalse(documentedGaps.isEmpty)
         for fixture in documentedGaps {
             let reason = fixture["gapReason"] as? String
             XCTAssertFalse(reason?.isEmpty ?? true, "Documented gaps must explain why coverage is not materialized.")

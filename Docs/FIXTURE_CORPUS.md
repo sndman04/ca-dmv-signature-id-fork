@@ -32,7 +32,7 @@ Current committed/generated coverage includes:
 
 Documented gaps:
 
-- `unknown-ignorable-cborld-values`: JS behavior is characterized and Swift preserves JS-accepted text-encoded unknown signed fields internally. Safe absolute-IRI extension terms now canonicalize generically, but compact unknown terms still need final standards-grade coverage instead of failing closed.
+- `unknown-ignorable-cborld-values`: JS behavior is characterized and Swift preserves JS-accepted text-encoded unknown signed fields internally. Safe absolute-IRI extension terms now canonicalize generically, and compact unknown terms are reference-characterized as fail-closed during safe-mode canonicalization.
 
 These documented gaps satisfy Phase 2 inventory requirements, but they do not satisfy the final project requirement that nothing remain skipped or deferred. They must be converted into generated or committed test coverage before the long-term replacement is complete.
 
