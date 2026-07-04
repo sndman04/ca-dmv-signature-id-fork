@@ -95,7 +95,7 @@ Unknown signed fields fail closed today because the supported-profile canonicali
 - Text-encoded unknown proof keys decode successfully and are preserved in `proof`.
 - Unknown compressed numeric term ids fail during CBOR-LD decode.
 
-Swift now preserves JS-accepted text-encoded unknown credential and proof keys in the decoded credential model and JSON-LD projections, while the public verifier still fails closed with an unsupported profile until the replacement canonicalization engine can feed those fields into the same RDF canonicalization path as the JS verifier. Unknown compressed numeric term ids continue to fail during CBOR-LD decode. The supported-context JSON-LD-to-RDF boundary also rejects unknown signed terms rather than silently dropping them. Accepting and then dropping unknown signed fields would create a false-positive verification risk.
+Swift now preserves JS-accepted text-encoded unknown credential and proof keys in the decoded credential model and JSON-LD projections. Safe absolute-IRI extension terms can be included in RDF canonicalization generically; compact unknown terms still fail closed with an unsupported profile until the replacement canonicalization engine can feed those fields into the same RDF canonicalization path as the JS verifier. Unknown compressed numeric term ids continue to fail during CBOR-LD decode. The supported-context JSON-LD-to-RDF boundary also rejects unsupported signed terms rather than silently dropping them. Accepting and then dropping unknown signed fields would create a false-positive verification risk.
 
 For compressed credentials, text keys that are aliases for supported compressed terms, such as `validUntil` or proof `created`, are not treated as extension fields. They fail during CBOR-LD decode so a payload cannot provide one value under the numeric compressed key and another under the text alias, which would otherwise make the later JSON-LD projection ambiguous.
 
@@ -112,4 +112,4 @@ Current parity checks:
 
 Current known gap:
 
-- `unknown-ignorable-cborld-values` is decoded into preserved JSON-LD state for JS-accepted text-key fields, but the final Swift replacement still needs standards-grade JSON-LD/RDF canonicalization before it can safely match JS acceptance of those signed fields.
+- `unknown-ignorable-cborld-values` is decoded into preserved JSON-LD state for JS-accepted text-key fields. Safe absolute-IRI extensions are canonicalized generically, but compact unknown terms and non-integer JSON numbers still require standards-grade JSON-LD/RDF canonicalization before Swift can safely match JS acceptance of those signed fields.

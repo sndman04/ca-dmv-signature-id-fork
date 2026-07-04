@@ -83,6 +83,24 @@ enum SupportedStatusListJSONLDRDFConverter {
         nodeKind: StatusListNodeKind
     ) throws -> [RDFQuad] {
         var quads: [RDFQuad] = []
+        var genericBlankNodeCounter = 0
+        try appendNodeQuads(
+            object,
+            subject: subject,
+            nodeKind: nodeKind,
+            genericBlankNodeCounter: &genericBlankNodeCounter,
+            quads: &quads
+        )
+        return quads
+    }
+
+    private static func appendNodeQuads(
+        _ object: [String: SupportedJSONLDValue],
+        subject: RDFTerm,
+        nodeKind: StatusListNodeKind,
+        genericBlankNodeCounter: inout Int,
+        quads: inout [RDFQuad]
+    ) throws {
         for key in object.keys.sorted() {
             guard key != "@context", key != "id" else {
                 continue
@@ -112,11 +130,13 @@ enum SupportedStatusListJSONLDRDFConverter {
                     predicate: try PinnedJSONLDTermRegistry.statusListPredicate(key),
                     object: nestedSubject
                 ))
-                quads.append(contentsOf: try nodeQuads(
+                try appendNodeQuads(
                     nested,
                     subject: nestedSubject,
-                    nodeKind: .credentialSubject
-                ))
+                    nodeKind: .credentialSubject,
+                    genericBlankNodeCounter: &genericBlankNodeCounter,
+                    quads: &quads
+                )
             case (.credentialRoot, "description", .some(.string(let description))):
                 quads.append(SupportedJSONLDRDFTerms.literalQuad(
                     subject: subject,
@@ -157,10 +177,20 @@ enum SupportedStatusListJSONLDRDFConverter {
                     value: statusPurpose
                 ))
             default:
+                if let value,
+                   let genericQuads = try SupportedJSONLDRDFTerms.genericAbsoluteIRIQuads(
+                    key: key,
+                    value: value,
+                    subject: subject,
+                    error: .statusListDecodeFailed,
+                    blankNodeCounter: &genericBlankNodeCounter
+                ) {
+                    quads.append(contentsOf: genericQuads)
+                    continue
+                }
                 throw CADMVInternalError.statusListDecodeFailed
             }
         }
-        return quads
     }
 
 }

@@ -166,6 +166,68 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssert(nquads.contains("\"2030-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime>"))
     }
 
+    func testVCBJSONLDConverterIncludesAbsoluteIRIExtensionTermsLikeReferenceJSONLD() throws {
+        let nquads = try VCBJSONLDRDFExpander.canonicalNQuads(vcbCredential(
+            credentialStatus: nil,
+            additionalProperties: [
+                "https://example.invalid/terms/array": .array([.string("a"), .string("b")]),
+                "https://example.invalid/terms/bool": .bool(true),
+                "https://example.invalid/terms/integer": .unsigned(7),
+                "https://example.invalid/terms/null": .null,
+                "https://example.invalid/terms/object": .object([
+                    "https://example.invalid/terms/nested": .string("value")
+                ]),
+                "https://example.invalid/terms/string": .string("hello")
+            ]
+        ))
+
+        XCTAssertEqual(nquads, """
+        _:c14n0 <https://example.invalid/terms/nested> "value" .
+        _:c14n1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/vc-barcodes#OpticalBarcodeCredential> .
+        _:c14n1 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://www.w3.org/2018/credentials#VerifiableCredential> .
+        _:c14n1 <https://example.invalid/terms/array> "a" .
+        _:c14n1 <https://example.invalid/terms/array> "b" .
+        _:c14n1 <https://example.invalid/terms/bool> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .
+        _:c14n1 <https://example.invalid/terms/integer> "7"^^<http://www.w3.org/2001/XMLSchema#integer> .
+        _:c14n1 <https://example.invalid/terms/object> _:c14n0 .
+        _:c14n1 <https://example.invalid/terms/string> "hello" .
+        _:c14n1 <https://www.w3.org/2018/credentials#credentialSubject> _:c14n2 .
+        _:c14n1 <https://www.w3.org/2018/credentials#issuer> <did:web:uat-credentials.dmv.ca.gov> .
+        _:c14n2 <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://w3id.org/vc-barcodes#AamvaDriversLicenseScannableInformation> .
+        _:c14n2 <https://w3id.org/vc-barcodes#protectedComponentIndex> "uAQID"^^<https://w3id.org/security#multibase> .
+
+        """)
+    }
+
+    func testVCBJSONLDConverterRejectsCompactUnsafeAndDecimalExtensionTerms() throws {
+        var compactTermDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
+            credentialStatus: nil
+        ))
+        compactTermDocument["unknownCredentialOption"] = .string("unsupported")
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: compactTermDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        var unsafeIRIDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
+            credentialStatus: nil
+        ))
+        unsafeIRIDocument["https://example.invalid/terms/unsafe space"] = .string("unsupported")
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: unsafeIRIDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        var numberDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
+            credentialStatus: nil
+        ))
+        numberDocument["https://example.invalid/terms/decimal"] = .number("7.5")
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: numberDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     func testVCBJSONLDExpanderOmitsAbsentStatusAndValidityDates() throws {
         let quads = try VCBJSONLDRDFExpander.documentQuads(vcbCredential(
             credentialStatus: nil
@@ -257,6 +319,24 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssert(nquads.contains("\"2030-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime>"))
     }
 
+    func testStatusListJSONLDConverterIncludesAbsoluteIRIExtensionTerms() throws {
+        let credential = statusListCredential(
+            additionalProperties: [
+                "https://example.invalid/terms/root": .string("root")
+            ],
+            credentialSubjectAdditionalProperties: [
+                "https://example.invalid/terms/subject": .bool(false)
+            ]
+        )
+
+        let nquads = try StatusListJSONLDRDFExpander.canonicalNQuads(credential)
+
+        XCTAssert(nquads.contains("<https://example.invalid/terms/root> \"root\""))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/subject> \"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>"
+        ))
+    }
+
     func testStatusListJSONLDExpanderOmitsAbsentOptionalFields() throws {
         let quads = try StatusListJSONLDRDFExpander.documentQuads(statusListCredential())
 
@@ -336,6 +416,28 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         _:c14n0 <https://w3id.org/security#verificationMethod> <did:web:credentials.dmv.ca.gov#vm-vcb-1> .
 
         """)
+    }
+
+    func testDataIntegrityProofConverterIncludesAbsoluteIRIExtensionTerms() throws {
+        let nquads = try DataIntegrityProofCanonicalizer.canonicalNQuads(
+            contexts: [
+                "https://www.w3.org/ns/credentials/v2",
+                "https://w3id.org/vc-barcodes/v1"
+            ],
+            type: "DataIntegrityProof",
+            created: nil,
+            expires: nil,
+            cryptosuite: "ecdsa-xi-2023",
+            proofPurpose: "assertionMethod",
+            verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+            additionalProperties: [
+                "https://example.invalid/terms/proof": .unsigned(42)
+            ]
+        )
+
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/proof> \"42\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+        ))
     }
 
     func testDataIntegrityProofCanonicalizerOmitsAbsentOptionalDates() throws {
@@ -1031,7 +1133,8 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             terseStatusListIndex: 1
         ),
         validFrom: String? = nil,
-        validUntil: String? = nil
+        validUntil: String? = nil,
+        additionalProperties: [String: SupportedJSONLDValue] = [:]
     ) -> DMVVerifiableCredential {
         DMVVerifiableCredential(
             context: [
@@ -1058,7 +1161,8 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 proofPurpose: "assertionMethod",
                 proofValue: "zLdp",
                 verificationMethod: "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1"
-            )
+            ),
+            additionalProperties: additionalProperties
         )
     }
 
@@ -1066,7 +1170,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         validFrom: String? = nil,
         validUntil: String? = nil,
         name: String? = nil,
-        description: String? = nil
+        description: String? = nil,
+        additionalProperties: [String: SupportedJSONLDValue] = [:],
+        credentialSubjectAdditionalProperties: [String: SupportedJSONLDValue] = [:]
     ) -> DMVStatusListCredential {
         DMVStatusListCredential(
             id: "https://example.com/status/1",
@@ -1083,7 +1189,8 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 id: "https://example.com/status/1#list",
                 type: "BitstringStatusList",
                 encodedList: "uH4sIAAAAAAAAA2NhAAD717UlAgAAAA",
-                statusPurpose: "revocation"
+                statusPurpose: "revocation",
+                additionalProperties: credentialSubjectAdditionalProperties
             ),
             proof: DMVStatusListCredential.Proof(
                 type: "DataIntegrityProof",
@@ -1092,7 +1199,8 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 cryptosuite: "ecdsa-rdfc-2019",
                 proofPurpose: "assertionMethod",
                 proofValue: "zLdp"
-            )
+            ),
+            additionalProperties: additionalProperties
         )
     }
 

@@ -26,6 +26,24 @@ enum SupportedJSONLDRDFConverter {
         nodeKind: NodeKind
     ) throws -> [RDFQuad] {
         var quads: [RDFQuad] = []
+        var genericBlankNodeCounter = 0
+        try appendNodeQuads(
+            object,
+            subject: subject,
+            nodeKind: nodeKind,
+            genericBlankNodeCounter: &genericBlankNodeCounter,
+            quads: &quads
+        )
+        return quads
+    }
+
+    private static func appendNodeQuads(
+        _ object: [String: SupportedJSONLDValue],
+        subject: RDFTerm,
+        nodeKind: NodeKind,
+        genericBlankNodeCounter: inout Int,
+        quads: inout [RDFQuad]
+    ) throws {
         for key in object.keys.sorted() {
             guard key != "@context" else {
                 continue
@@ -52,11 +70,13 @@ enum SupportedJSONLDRDFConverter {
                     predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
                     object: nestedSubject
                 ))
-                quads.append(contentsOf: try nodeQuads(
+                try appendNodeQuads(
                     nested,
                     subject: nestedSubject,
-                    nodeKind: .credentialSubject
-                ))
+                    nodeKind: .credentialSubject,
+                    genericBlankNodeCounter: &genericBlankNodeCounter,
+                    quads: &quads
+                )
             case (.credentialRoot, "credentialStatus", .some(.object(let nested))):
                 let nestedSubject = RDFTerm.blank("credentialStatus")
                 quads.append(RDFQuad(
@@ -64,11 +84,13 @@ enum SupportedJSONLDRDFConverter {
                     predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
                     object: nestedSubject
                 ))
-                quads.append(contentsOf: try nodeQuads(
+                try appendNodeQuads(
                     nested,
                     subject: nestedSubject,
-                    nodeKind: .credentialStatus
-                ))
+                    nodeKind: .credentialStatus,
+                    genericBlankNodeCounter: &genericBlankNodeCounter,
+                    quads: &quads
+                )
             case (.credentialRoot, "validFrom", .some(.string(let dateTime))):
                 quads.append(try SupportedJSONLDRDFTerms.dateTimeQuad(
                     subject: subject,
@@ -104,10 +126,20 @@ enum SupportedJSONLDRDFConverter {
                     datatype: PinnedJSONLDTermRegistry.xsdInteger
                 ))
             default:
+                if let value,
+                   let genericQuads = try SupportedJSONLDRDFTerms.genericAbsoluteIRIQuads(
+                    key: key,
+                    value: value,
+                    subject: subject,
+                    error: .unsupportedVCB,
+                    blankNodeCounter: &genericBlankNodeCounter
+                ) {
+                    quads.append(contentsOf: genericQuads)
+                    continue
+                }
                 throw CADMVInternalError.unsupportedVCB
             }
         }
-        return quads
     }
 
 }

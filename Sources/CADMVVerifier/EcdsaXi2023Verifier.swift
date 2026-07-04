@@ -544,6 +544,7 @@ enum SupportedProofJSONLDRDFConverter {
     ) throws -> [RDFQuad] {
         try PinnedJSONLDTermRegistry.requireProofContexts(document["@context"])
         var quads: [RDFQuad] = []
+        var genericBlankNodeCounter = 0
         for key in document.keys.sorted() {
             guard key != "@context" else {
                 continue
@@ -596,6 +597,17 @@ enum SupportedProofJSONLDRDFConverter {
                     error: .unsupportedVCB
                 ))
             default:
+                if let value,
+                   let genericQuads = try SupportedJSONLDRDFTerms.genericAbsoluteIRIQuads(
+                    key: key,
+                    value: value,
+                    subject: .blank("proof"),
+                    error: .unsupportedVCB,
+                    blankNodeCounter: &genericBlankNodeCounter
+                ) {
+                    quads.append(contentsOf: genericQuads)
+                    continue
+                }
                 throw CADMVInternalError.unsupportedVCB
             }
         }
