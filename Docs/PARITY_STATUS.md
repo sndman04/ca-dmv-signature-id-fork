@@ -126,7 +126,7 @@ Completed Phase 4 work:
 - Added RDF dataset graph-name support, including blank nodes used as graph names, so the canonicalizer handles quads rather than default-graph triples only.
 - Added JS oracle VCB verify-data output and made `Tools/parity-compare.mjs` fail on official-fixture verify-data mismatches.
 - Added JS/Swift VCB proof and document canonical N-Quads comparisons for committed official UAT fixtures.
-- Added `Tools/status-list-parity.mjs` to compare JS and Swift `ecdsa-rdfc-2019` verify-data for synthetic status-list fixtures, including optional live-style VC fields.
+- Added `Tools/status-list-parity.mjs` to compare JS and Swift `ecdsa-rdfc-2019` verify-data for synthetic status-list fixtures, including optional live-style VC fields and safe absolute-IRI extension terms on the status-list root, credentialSubject, and proof.
 - Added synthetic regression coverage for the observed production class where status-list and subject blank nodes can swap canonical order based on credential content.
 - Added exact-output proof canonicalization tests for optional `created` and `expires` handling, plus W3C shared-hash canonicalization coverage.
 - Rechecked the prohibited-storage production vector locally in memory; the previous `data-integrity-vcb` divergence is resolved without committing raw payloads or PII.

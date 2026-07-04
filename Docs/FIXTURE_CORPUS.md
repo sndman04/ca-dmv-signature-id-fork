@@ -28,13 +28,15 @@ Current committed/generated coverage includes:
 - Synthetic DID/network failure cases.
 - Synthetic status-list and expiration cases.
 - Runtime-generated JS/Swift parity cases for signed VCB credentials with no status, `credentialStatus`, `validFrom`/`validUntil`, combined status plus validity dates, alternate `proofValue` encodings, tampered signatures, and tampered protected AAMVA data.
+- Runtime-generated JS/Swift status-list verify-data parity cases for the base status-list credential, optional live-style VC fields, and safe absolute-IRI extension terms on the status-list root, credentialSubject, and proof.
+- Generated unknown CBOR-LD behavior coverage: JS-accepted text-key unknowns are preserved, unknown compressed numeric term ids are rejected, safe absolute-IRI extensions canonicalize generically, and compact unknown terms fail closed in parity with reference safe-mode canonicalization.
 - Redacted production parity mismatch tracking without private payload data.
 
 Documented gaps:
 
-- `unknown-ignorable-cborld-values`: JS behavior is characterized and Swift preserves JS-accepted text-encoded unknown signed fields internally. Safe absolute-IRI extension terms now canonicalize generically, and compact unknown terms are reference-characterized as fail-closed during safe-mode canonicalization.
+- None currently recorded in the fixture manifest.
 
-These documented gaps satisfy Phase 2 inventory requirements, but they do not satisfy the final project requirement that nothing remain skipped or deferred. They must be converted into generated or committed test coverage before the long-term replacement is complete.
+Any future documented gap may satisfy Phase 2 inventory requirements temporarily, but it does not satisfy the final project requirement that nothing remain skipped or deferred. Documented gaps must be converted into generated or committed test coverage before the long-term replacement is complete.
 
 ## Validation
 

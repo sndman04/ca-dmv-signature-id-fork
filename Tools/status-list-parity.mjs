@@ -52,9 +52,47 @@ const optionalFieldsFixture = {
   description: 'This credential expresses status information for some other credentials in an encoded and compressed list.'
 };
 
+const extensionFixture = {
+  ...optionalFieldsFixture,
+  'https://example.test/status/rootString': 'root extension',
+  'https://example.test/status/rootSet': {
+    '@set': ['alpha', 'beta']
+  },
+  'https://example.test/status/rootList': {
+    '@list': [
+      'first',
+      42,
+      {
+        '@id': 'https://example.test/status/list-node'
+      }
+    ]
+  },
+  credentialSubject: {
+    ...optionalFieldsFixture.credentialSubject,
+    'https://example.test/status/subjectInteger': 86400,
+    'https://example.test/status/subjectBoolean': true,
+    'https://example.test/status/subjectNode': {
+      '@id': 'https://example.test/status/subject-node',
+      'https://example.test/status/nestedValue': {
+        '@value': 'subject nested',
+        '@language': 'en'
+      }
+    }
+  },
+  proof: {
+    ...optionalFieldsFixture.proof,
+    'https://example.test/status/proofString': 'proof extension',
+    'https://example.test/status/proofTypedValue': {
+      '@value': '7',
+      '@type': 'http://www.w3.org/2001/XMLSchema#integer'
+    }
+  }
+};
+
 const fixtures = [
   {id: 'synthetic-status-list-base', credential: baseFixture},
-  {id: 'synthetic-status-list-optional-fields', credential: optionalFieldsFixture}
+  {id: 'synthetic-status-list-optional-fields', credential: optionalFieldsFixture},
+  {id: 'synthetic-status-list-absolute-iri-extensions', credential: extensionFixture}
 ];
 
 const results = [];
