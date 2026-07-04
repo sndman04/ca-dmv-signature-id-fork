@@ -1,7 +1,7 @@
 # Conformance Report
 
-Generated: 2026-07-04T02:38:08.071Z
-Repository revision: `a392c6d`
+Generated: 2026-07-04T02:46:15.185Z
+Repository revision: `d5b999a`
 Reference SDK: `cadmv-dlid-verifier-sdk@0.0.1-0`
 
 This report is generated from committed non-PII fixtures and synthetic cases. It does not include raw PDF417 payloads, decoded identity fields, or real private scan data.
@@ -18,7 +18,7 @@ Overall result: PASS
 | Generic VCB JSON-LD Extension N-Quads Parity | `node Tools/generic-jsonld-extension-parity.mjs` | 1 | PASS |
 | Generic Proof JSON-LD Extension N-Quads Parity | `node Tools/generic-proof-extension-parity.mjs` | 1 | PASS |
 | JSON-LD 1.1 Behavior Characterization | `node Tools/jsonld-behavior-characterization.mjs` | 12 | PASS |
-| Canonicalization Engine Differential | `node Tools/canonicalization-engine-differential.mjs` | 5 | PASS |
+| Canonicalization Engine Differential | `node Tools/canonicalization-engine-differential.mjs` | 9 | PASS |
 | W3C RDFC-1.0 Conformance Subset | `Tools/swift-test.sh --filter RDFDatasetCanonicalizerTests/testW3CRDFC10ConformanceSubset` | 1 | PASS |
 | W3C RDFC-1.0 Issued-Identifier Map Subset | `Tools/swift-test.sh --filter RDFDatasetCanonicalizerTests/testW3CRDFC10IssuedIdentifierMapSubset` | 1 | PASS |
 | W3C RDFC-1.0 Negative Clique Fail-Closed Coverage | `Tools/swift-test.sh --filter RDFDatasetCanonicalizerTests/testW3CRDFC10NegativeCliqueGraphFailsClosed` | 1 | PASS |
@@ -29,7 +29,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 2
-- Duration: 2410 ms
+- Duration: 1695 ms
 - Case IDs:
   - `official-valid-uat`
   - `official-invalid-uat`
@@ -38,7 +38,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 8
-- Duration: 6020 ms
+- Duration: 5883 ms
 - Case IDs:
   - `generated-valid-z-signature`
   - `generated-valid-u-signature`
@@ -53,7 +53,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 4945 ms
+- Duration: 5044 ms
 - Case IDs:
   - `synthetic-status-list-base`
   - `synthetic-status-list-optional-fields`
@@ -67,7 +67,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 555 ms
+- Duration: 536 ms
 - Case IDs:
   - `generic-jsonld-extension-values`
 
@@ -75,7 +75,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 565 ms
+- Duration: 537 ms
 - Case IDs:
   - `generic-proof-extension-values`
 
@@ -83,7 +83,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 12
-- Duration: 6027 ms
+- Duration: 6101 ms
 - Case IDs:
   - `implemented-absolute-id-node`
   - `implemented-nested-graph`
@@ -114,26 +114,34 @@ Overall result: PASS
 ### Canonicalization Engine Differential
 
 - Result: PASS
-- Compared cases: 5
-- Duration: 2422 ms
+- Compared cases: 9
+- Duration: 4125 ms
 - Case IDs:
   - `engine-vcb-document`
   - `engine-data-integrity-proof`
   - `engine-status-list-document`
   - `engine-status-list-proof`
+  - `engine-official-valid-uat-vcb-document`
+  - `engine-official-valid-uat-proof`
+  - `engine-official-invalid-uat-vcb-document`
+  - `engine-official-invalid-uat-proof`
   - `engine-rejects-compact-unknown-vcb-field`
 - Notes:
   - engine-vcb-document: vcbDocument; N-Quads SHA-256 711f1a0061a7de2fc19fdd3b44020647a4e9c24b88cd3212d9701cd1bb4ffe3d
   - engine-data-integrity-proof: dataIntegrityProof; N-Quads SHA-256 317e2786b39b0a763c1a51aefa756edfc4571214e920654a8ad91dbe70392ac8
   - engine-status-list-document: statusListDocument; N-Quads SHA-256 229f31e2c5b5c0652b46cad3a676ce8e65db9afc4867ff54cf70f464601cf2be
   - engine-status-list-proof: dataIntegrityProof; N-Quads SHA-256 ea8bbe8b6f2ce2862763ce62cce15d131e6d1fc5c233a370fa51b516d5492e29
+  - engine-official-valid-uat-vcb-document: vcbDocument; N-Quads SHA-256 abbbb98c352b3775dd421c18f8b620f40b0e680cc8e4e4ee5486b6c3de3e710d
+  - engine-official-valid-uat-proof: dataIntegrityProof; N-Quads SHA-256 15806ce019af44239dabfc6bd43fe9301277e1db8832f571d7f646806ba99fed
+  - engine-official-invalid-uat-vcb-document: vcbDocument; N-Quads SHA-256 f6ed10f34b046214d5e6870e316e3ff8f86ae0ab2a45a510b39ea17a08172d0f
+  - engine-official-invalid-uat-proof: dataIntegrityProof; N-Quads SHA-256 15806ce019af44239dabfc6bd43fe9301277e1db8832f571d7f646806ba99fed
   - engine-rejects-compact-unknown-vcb-field: vcbDocument; JS accepted=false; Swift accepted=false
 
 ### W3C RDFC-1.0 Conformance Subset
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 3381 ms
+- Duration: 4389 ms
 - Case IDs:
   - `w3c-rdfc-subset`
 
@@ -141,7 +149,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 526 ms
+- Duration: 545 ms
 - Case IDs:
   - `w3c-rdfc-issued-map-subset`
 
@@ -149,7 +157,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 769 ms
+- Duration: 782 ms
 - Case IDs:
   - `w3c-rdfc-negative-clique`
 

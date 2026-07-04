@@ -2,6 +2,7 @@
 
 import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import fs from 'node:fs';
 import {DataIntegrityProof}
   from '../References/cadmv-dlid-verifier-sdk/node_modules/@digitalbazaar/data-integrity/lib/index.js';
 import {
@@ -22,6 +23,12 @@ const verificationMethod = {
   controller: 'did:web:uat-credentials.dmv.ca.gov',
   publicKeyMultibase: 'zDnaeVp3tjD8ipWSt42tBZJLCsDA9SrtYXGvLg5dL3qXtXDKP'
 };
+
+const officialFixtureSource = fs.readFileSync(
+  new URL('../References/cadmv-dlid-verifier-sdk/tests/001-main.test.js',
+    import.meta.url),
+  'utf8'
+);
 
 const vcbDocument = {
   '@context': [
@@ -197,6 +204,38 @@ const acceptanceCases = [
     profile: 'dataIntegrityProof',
     jsCanonicalNQuads: async () => (await jsStatusListCanonicalParts(statusListCredential)).proofCanonicalNQuads,
     swiftCanonicalNQuads: () => swiftCanonicalNQuads('--status-list-proof-nquads', statusListCredential)
+  },
+  {
+    id: 'engine-official-valid-uat-vcb-document',
+    profile: 'vcbDocument',
+    jsCanonicalNQuads: async () =>
+      (await officialOracleParts('validUatExample')).js.vcbDocumentCanonicalNQuads,
+    swiftCanonicalNQuads: async () =>
+      (await officialOracleParts('validUatExample')).swift.vcbDocumentCanonicalNQuads
+  },
+  {
+    id: 'engine-official-valid-uat-proof',
+    profile: 'dataIntegrityProof',
+    jsCanonicalNQuads: async () =>
+      (await officialOracleParts('validUatExample')).js.vcbProofCanonicalNQuads,
+    swiftCanonicalNQuads: async () =>
+      (await officialOracleParts('validUatExample')).swift.vcbProofCanonicalNQuads
+  },
+  {
+    id: 'engine-official-invalid-uat-vcb-document',
+    profile: 'vcbDocument',
+    jsCanonicalNQuads: async () =>
+      (await officialOracleParts('invalidUatExample')).js.vcbDocumentCanonicalNQuads,
+    swiftCanonicalNQuads: async () =>
+      (await officialOracleParts('invalidUatExample')).swift.vcbDocumentCanonicalNQuads
+  },
+  {
+    id: 'engine-official-invalid-uat-proof',
+    profile: 'dataIntegrityProof',
+    jsCanonicalNQuads: async () =>
+      (await officialOracleParts('invalidUatExample')).js.vcbProofCanonicalNQuads,
+    swiftCanonicalNQuads: async () =>
+      (await officialOracleParts('invalidUatExample')).swift.vcbProofCanonicalNQuads
   }
 ];
 
@@ -209,6 +248,7 @@ const rejectionCases = [
   }
 ];
 
+const officialOracleCache = new Map();
 const results = [];
 let failed = false;
 
@@ -268,6 +308,35 @@ async function jsVcbCanonicalNQuads(document) {
   return canonizeEcdsaXi2023(document, {
     documentLoader: buildVcbContextLoader()
   });
+}
+
+async function officialOracleParts(sourceName) {
+  if(officialOracleCache.has(sourceName)) {
+    return officialOracleCache.get(sourceName);
+  }
+  const promise = (async () => {
+    const payload = extractStringLiteral(sourceName, officialFixtureSource);
+    const parts = {
+      js: runJSON(process.execPath, [
+        'Tools/reference-runner.mjs',
+        '--stdin',
+        '--mode=uat'
+      ], payload).result,
+      swift: runJSON('swift', [
+        'run',
+        'CADMVVerifierOracle',
+        '--mode=uat'
+      ], payload).result
+    };
+    for(const [implementation, result] of Object.entries(parts)) {
+      if(!result.vcbDocumentCanonicalNQuads || !result.vcbProofCanonicalNQuads) {
+        throw new Error(`${implementation} ${sourceName} did not produce VCB canonical N-Quads`);
+      }
+    }
+    return parts;
+  })();
+  officialOracleCache.set(sourceName, promise);
+  return promise;
 }
 
 async function jsStatusListCanonicalParts(credential) {
@@ -350,4 +419,13 @@ function runJSON(command, args, input) {
 
 function sha256Hex(value) {
   return createHash('sha256').update(value, 'utf8').digest('hex');
+}
+
+function extractStringLiteral(name, source) {
+  const pattern = new RegExp(`const ${name} = '((?:\\\\\\\\.|[^'])*)';`);
+  const match = source.match(pattern);
+  if(!match) {
+    throw new Error(`Fixture not found: ${name}`);
+  }
+  return Function(`return '${match[1]}'`)();
 }
