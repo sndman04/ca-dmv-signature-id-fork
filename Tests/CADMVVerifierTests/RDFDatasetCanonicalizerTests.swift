@@ -1297,6 +1297,59 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         """)
     }
 
+    func testRDFDatasetCanonicalizerRejectsMalformedTermsBeforeRendering() {
+        let malformedDatasets = [
+            [
+                RDFQuad(
+                    subject: .iri("https://example.com/bad subject"),
+                    predicate: "https://example.com/predicate",
+                    object: .literal(value: "value", datatype: nil)
+                )
+            ],
+            [
+                RDFQuad(
+                    subject: .iri("https://example.com/subject"),
+                    predicate: "https://example.com/bad\npredicate",
+                    object: .literal(value: "value", datatype: nil)
+                )
+            ],
+            [
+                RDFQuad(
+                    subject: .iri("https://example.com/subject"),
+                    predicate: "https://example.com/predicate",
+                    object: .literal(value: "value", datatype: "https://example.com/bad datatype")
+                )
+            ],
+            [
+                RDFQuad(
+                    subject: .iri("https://example.com/subject"),
+                    predicate: "https://example.com/predicate",
+                    object: .languageLiteral(value: "value", language: "en/")
+                )
+            ],
+            [
+                RDFQuad(
+                    subject: .blank("bad label"),
+                    predicate: "https://example.com/predicate",
+                    object: .literal(value: "value", datatype: nil)
+                )
+            ],
+            [
+                RDFQuad(
+                    subject: .iri("https://example.com/subject"),
+                    predicate: "https://example.com/predicate",
+                    object: .iri("not-an-iri")
+                )
+            ]
+        ]
+
+        for dataset in malformedDatasets {
+            XCTAssertThrowsError(try RDFDatasetCanonicalizer.canonicalNQuads(dataset)) { error in
+                XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+            }
+        }
+    }
+
     func testNDegreeCanonicalizationFailsClosedWhenWorkBudgetIsExceeded() {
         let quads = (0..<129).map { index in
             RDFQuad(

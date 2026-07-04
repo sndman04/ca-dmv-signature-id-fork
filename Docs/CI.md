@@ -106,6 +106,7 @@ The stdin mode emits JSON with the selected SDK baseline, mode, high-level outco
 - Data Integrity proofValue `z` base58btc and `u` base64url acceptance, text proofValue preservation before signature extraction, malformed/unsupported raw-signature rejection, and P-256 high-S counterpart behavior against the JS reference.
 - Generic JSON-LD extension number parsing rejects non-finite values, and number normalization is bounded so oversized coefficients and exponents fail closed before large allocation.
 - Production JSON-LD canonicalization defaults route through one selector so the final engine replacement is not scattered across verifier helpers.
+- RDF Dataset Canonicalization validates IRI, predicate, datatype, language, and blank-node term safety before rendering canonical N-Quads.
 - Generated end-to-end VCB signatures covering valid `z`, valid `u`, status-bearing credentials, validity dates, expired valid signatures, tampered proof signature, and tampered protected AAMVA field parity against the JS reference.
 - Status-list gzip output limit enforcement.
 - Malformed status-list multibase/gzip corpus rejection.

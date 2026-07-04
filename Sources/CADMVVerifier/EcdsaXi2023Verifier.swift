@@ -97,6 +97,7 @@ enum RDFDatasetCanonicalizer {
 
     static func canonicalNQuads(_ quads: [RDFQuad]) throws -> String {
         let dataset = Array(Set(quads))
+        try validate(dataset)
         guard !dataset.isEmpty else {
             return ""
         }
@@ -109,6 +110,7 @@ enum RDFDatasetCanonicalizer {
 
     static func canonicalIdentifierMap(_ quads: [RDFQuad]) throws -> [String: String] {
         let dataset = Array(Set(quads))
+        try validate(dataset)
         let identifiers = blankNodeIdentifiers(in: dataset)
         let firstDegreeHashes = Dictionary(uniqueKeysWithValues: identifiers.map {
             ($0, firstDegreeHash(identifier: $0, quads: dataset))
@@ -440,6 +442,79 @@ enum RDFDatasetCanonicalizer {
             }
         }
         return escaped
+    }
+
+    private static func validate(_ quads: [RDFQuad]) throws {
+        for quad in quads {
+            try validateTerm(quad.subject, position: .subject)
+            try validateIRI(quad.predicate)
+            try validateTerm(quad.object, position: .object)
+            if let graph = quad.graph {
+                try validateTerm(graph, position: .graph)
+            }
+        }
+    }
+
+    private enum TermPosition {
+        case subject
+        case object
+        case graph
+    }
+
+    private static func validateTerm(
+        _ term: RDFTerm,
+        position: TermPosition
+    ) throws {
+        switch term {
+        case .blank(let identifier):
+            guard !identifier.isEmpty,
+                  !identifier.unicodeScalars.contains(where: { $0.value <= 0x20 || $0.value == 0x7f }) else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+        case .iri(let value):
+            try validateIRI(value)
+        case .literal(_, let datatype):
+            guard position == .object else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            if let datatype {
+                try validateIRI(datatype)
+            }
+        case .languageLiteral(_, let language):
+            guard position == .object,
+                  isValidLanguageTag(language) else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+        }
+    }
+
+    private static func validateIRI(_ value: String) throws {
+        guard !value.isEmpty,
+              value.utf8.contains(UInt8(ascii: ":")) else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        for scalar in value.unicodeScalars {
+            if scalar.value <= 0x20 || scalar.value == 0x7f ||
+                "<>\"{}|^`\\".unicodeScalars.contains(scalar) {
+                throw CADMVInternalError.unsupportedVCB
+            }
+        }
+    }
+
+    private static func isValidLanguageTag(_ value: String) -> Bool {
+        guard !value.isEmpty else {
+            return false
+        }
+        let parts = value.split(separator: "-", omittingEmptySubsequences: false)
+        guard parts.allSatisfy({ !$0.isEmpty }) else {
+            return false
+        }
+        return value.utf8.allSatisfy {
+            ($0 >= UInt8(ascii: "A") && $0 <= UInt8(ascii: "Z")) ||
+                ($0 >= UInt8(ascii: "a") && $0 <= UInt8(ascii: "z")) ||
+                ($0 >= UInt8(ascii: "0") && $0 <= UInt8(ascii: "9")) ||
+                $0 == UInt8(ascii: "-")
+        }
     }
 }
 

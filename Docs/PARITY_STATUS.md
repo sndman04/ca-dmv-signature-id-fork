@@ -164,6 +164,7 @@ Completed Phase 4 work:
 - Added Swift CBOR parser hardening coverage for oversized byte/text lengths, oversized array/map counts, unsupported indefinite-length/simple/float encodings, negative integer overflow, and trailing top-level bytes.
 - Added bounded generic JSON-LD number normalization coverage so oversized coefficients and exponents fail closed before large allocation.
 - Added JSON-LD value parsing coverage that rejects non-finite numeric inputs before canonicalization.
+- Added RDF Dataset Canonicalizer term-safety validation so malformed IRIs, predicates, datatype IRIs, language tags, and blank-node labels fail closed before N-Quads rendering.
 
 Completed Phase 5 work:
 
