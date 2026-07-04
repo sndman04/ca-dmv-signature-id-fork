@@ -220,6 +220,48 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
     }
 
+    func testVCBJSONLDConverterCanonicalizesJSONLDObjectExtensionValues() throws {
+        let credential = vcbCredential(
+            credentialStatus: nil,
+            additionalProperties: [
+                "https://example.invalid/terms/reference": .object([
+                    "@id": .string("did:web:issuer.example#resource"),
+                    "https://example.invalid/terms/referenceName": .string("Reference")
+                ]),
+                "https://example.invalid/terms/typedValue": .object([
+                    "@value": .string("typed"),
+                    "@type": .string("https://example.invalid/types/Custom")
+                ]),
+                "https://example.invalid/terms/languageValue": .object([
+                    "@value": .string("Hello"),
+                    "@language": .string("EN-US")
+                ]),
+                "https://example.invalid/terms/numericValue": .object([
+                    "@value": .number("7.5")
+                ])
+            ]
+        )
+
+        let nquads = try VCBJSONLDRDFExpander.canonicalNQuads(credential)
+
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/reference> <did:web:issuer.example#resource>"
+        ))
+        XCTAssert(nquads.contains(
+            "<did:web:issuer.example#resource> <https://example.invalid/terms/referenceName> \"Reference\""
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/typedValue> \"typed\"^^<https://example.invalid/types/Custom>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/languageValue> \"Hello\"@en-us"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/numericValue> \"7.5E0\"^^<http://www.w3.org/2001/XMLSchema#double>"
+        ))
+        XCTAssertNoThrow(try DMVCredentialValidator.validate(credential, mode: .uat))
+    }
+
     func testValidatorAllowsOnlyCanonicalizableAbsoluteIRIExtensionTerms() throws {
         XCTAssertNoThrow(try DMVCredentialValidator.validate(vcbCredential(
             additionalProperties: [
@@ -272,6 +314,30 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         malformedNumberDocument["https://example.invalid/terms/number"] = .number("not-a-number")
 
         XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: malformedNumberDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        var mixedIDValueDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
+            credentialStatus: nil
+        ))
+        mixedIDValueDocument["https://example.invalid/terms/mixed"] = .object([
+            "@id": .string("https://example.invalid/resource"),
+            "@value": .string("unsupported")
+        ])
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: mixedIDValueDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        var unsafeTypedValueDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
+            credentialStatus: nil
+        ))
+        unsafeTypedValueDocument["https://example.invalid/terms/typed"] = .object([
+            "@value": .string("unsupported"),
+            "@type": .string("https://example.invalid/types/unsafe space")
+        ])
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: unsafeTypedValueDocument)) { error in
             XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
         }
     }

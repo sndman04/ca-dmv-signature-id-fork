@@ -26,6 +26,19 @@ enum SupportedJSONLDRDFTerms {
         )
     }
 
+    static func languageLiteralQuad(
+        subject: RDFTerm,
+        predicate: String,
+        value: String,
+        language: String
+    ) -> RDFQuad {
+        RDFQuad(
+            subject: subject,
+            predicate: predicate,
+            object: .languageLiteral(value: value, language: language)
+        )
+    }
+
     static func dateTimeQuad(
         subject: RDFTerm,
         predicate: String,
@@ -170,6 +183,25 @@ enum SupportedJSONLDRDFTerms {
             }
             return quads
         case .object(let object):
+            if let id = object["@id"] {
+                return try genericNodeObjectQuads(
+                    predicate: predicate,
+                    object: object,
+                    id: id,
+                    subject: subject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                )
+            }
+            if let value = object["@value"] {
+                return try genericValueObjectQuads(
+                    predicate: predicate,
+                    object: object,
+                    value: value,
+                    subject: subject,
+                    error: error
+                )
+            }
             let nestedSubject = RDFTerm.blank("\(genericBlankNodePrefix)\(blankNodeCounter)")
             blankNodeCounter += 1
             var quads = [RDFQuad(
@@ -196,6 +228,120 @@ enum SupportedJSONLDRDFTerms {
         }
     }
 
+    private static func genericNodeObjectQuads(
+        predicate: String,
+        object: [String: SupportedJSONLDValue],
+        id: SupportedJSONLDValue,
+        subject: RDFTerm,
+        error: CADMVInternalError,
+        blankNodeCounter: inout Int
+    ) throws -> [RDFQuad] {
+        guard object["@value"] == nil,
+              case .string(let idValue) = id,
+              try isSafeIRI(idValue, error: error) else {
+            throw error
+        }
+
+        let nestedSubject = RDFTerm.iri(idValue)
+        var quads = [RDFQuad(
+            subject: subject,
+            predicate: predicate,
+            object: nestedSubject
+        )]
+        for key in object.keys.sorted() where key != "@id" {
+            guard let value = object[key],
+                  let nestedQuads = try genericAbsoluteIRIQuads(
+                    key: key,
+                    value: value,
+                    subject: nestedSubject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                  ) else {
+                throw error
+            }
+            quads.append(contentsOf: nestedQuads)
+        }
+        return quads
+    }
+
+    private static func genericValueObjectQuads(
+        predicate: String,
+        object: [String: SupportedJSONLDValue],
+        value: SupportedJSONLDValue,
+        subject: RDFTerm,
+        error: CADMVInternalError
+    ) throws -> [RDFQuad] {
+        guard object["@id"] == nil,
+              object.keys.allSatisfy({ $0 == "@value" || $0 == "@type" || $0 == "@language" }) else {
+            throw error
+        }
+        if case .null = value {
+            return []
+        }
+        guard !(object["@type"] != nil && object["@language"] != nil) else {
+            throw error
+        }
+
+        if let language = object["@language"] {
+            guard case .string(let languageValue) = language,
+                  case .string(let text) = value,
+                  isSafeLanguageTag(languageValue) else {
+                throw error
+            }
+            return [
+                languageLiteralQuad(
+                    subject: subject,
+                    predicate: predicate,
+                    value: text,
+                    language: languageValue.lowercased()
+                )
+            ]
+        }
+
+        let literal = try genericLiteral(value, error: error)
+        if let type = object["@type"] {
+            guard case .string(let datatype) = type,
+                  try isSafeIRI(datatype, error: error) else {
+                throw error
+            }
+            return [
+                literalQuad(
+                    subject: subject,
+                    predicate: predicate,
+                    value: literal.value,
+                    datatype: datatype
+                )
+            ]
+        }
+        return [
+            literalQuad(
+                subject: subject,
+                predicate: predicate,
+                value: literal.value,
+                datatype: literal.datatype
+            )
+        ]
+    }
+
+    private static func genericLiteral(
+        _ value: SupportedJSONLDValue,
+        error: CADMVInternalError
+    ) throws -> (value: String, datatype: String?) {
+        switch value {
+        case .string(let text):
+            return (text, nil)
+        case .unsigned(let number):
+            return (String(number), PinnedJSONLDTermRegistry.xsdInteger)
+        case .number(let number):
+            let literal = try jsonNumberLiteral(number, error: error)
+            return (literal.value, literal.datatype)
+        case .bool(let value):
+            return (value ? "true" : "false", PinnedJSONLDTermRegistry.xsdBoolean)
+        default:
+            throw error
+        }
+    }
+
     private static func isSafeAbsoluteIRI(
         _ value: String,
         error: CADMVInternalError
@@ -210,6 +356,59 @@ enum SupportedJSONLDRDFTerms {
             }
         }
         return true
+    }
+
+    private static func isSafeIRI(
+        _ value: String,
+        error: CADMVInternalError
+    ) throws -> Bool {
+        guard let first = value.utf8.first,
+              isASCIIAlpha(first),
+              let separator = value.utf8.firstIndex(of: UInt8(ascii: ":")),
+              separator != value.utf8.startIndex,
+              value.utf8.index(after: separator) < value.utf8.endIndex else {
+            return false
+        }
+        for byte in value.utf8[..<separator] {
+            guard isASCIIAlphaNumeric(byte) ||
+                    byte == UInt8(ascii: "+") ||
+                    byte == UInt8(ascii: ".") ||
+                    byte == UInt8(ascii: "-") else {
+                return false
+            }
+        }
+        for scalar in value.unicodeScalars {
+            if scalar.value <= 0x20 || scalar.value == 0x7f ||
+                "<>\"{}|^`\\".unicodeScalars.contains(scalar) {
+                throw error
+            }
+        }
+        return true
+    }
+
+    private static func isASCIIAlphaNumeric(_ byte: UInt8) -> Bool {
+        isASCIIAlpha(byte) || (byte >= UInt8(ascii: "0") && byte <= UInt8(ascii: "9"))
+    }
+
+    private static func isASCIIAlpha(_ byte: UInt8) -> Bool {
+        (byte >= UInt8(ascii: "A") && byte <= UInt8(ascii: "Z")) ||
+            (byte >= UInt8(ascii: "a") && byte <= UInt8(ascii: "z"))
+    }
+
+    private static func isSafeLanguageTag(_ value: String) -> Bool {
+        guard !value.isEmpty else {
+            return false
+        }
+        let parts = value.split(separator: "-", omittingEmptySubsequences: false)
+        guard parts.allSatisfy({ !$0.isEmpty }) else {
+            return false
+        }
+        return value.utf8.allSatisfy {
+            ($0 >= UInt8(ascii: "A") && $0 <= UInt8(ascii: "Z")) ||
+                ($0 >= UInt8(ascii: "a") && $0 <= UInt8(ascii: "z")) ||
+                ($0 >= UInt8(ascii: "0") && $0 <= UInt8(ascii: "9")) ||
+                $0 == UInt8(ascii: "-")
+        }
     }
 
     private static func jsonNumberLiteral(
