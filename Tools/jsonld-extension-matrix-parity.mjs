@@ -194,6 +194,12 @@ const cases = [
         }
       ]
     }
+  },
+  {
+    id: 'empty-list',
+    value: {
+      '@list': []
+    }
   }
 ];
 

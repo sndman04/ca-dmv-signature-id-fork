@@ -197,6 +197,12 @@ const cases = [
         {'https://example.test/status/listNested': 'nested'}
       ]
     }
+  },
+  {
+    id: 'empty-list',
+    value: {
+      '@list': []
+    }
   }
 ];
 

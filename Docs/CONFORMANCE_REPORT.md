@@ -1,7 +1,7 @@
 # Conformance Report
 
-Generated: 2026-07-04T04:02:19.190Z
-Repository revision: `5b54890`
+Generated: 2026-07-04T04:08:22.547Z
+Repository revision: `3a2ff8e`
 Reference SDK: `cadmv-dlid-verifier-sdk@0.0.1-0`
 
 This report is generated from committed non-PII fixtures and synthetic cases. It does not include raw PDF417 payloads, decoded identity fields, or real private scan data.
@@ -16,10 +16,10 @@ Overall result: PASS
 | Generated Signature Parity | `node Tools/generated-signature-parity.mjs` | 8 | PASS |
 | Deterministic Mutation Parity | `node Tools/mutation-parity.mjs` | 3 | PASS |
 | Status-List Verify-Data And N-Quads Parity | `node Tools/status-list-parity.mjs` | 3 | PASS |
-| Status-List Extension Matrix Verify-Data And N-Quads Parity | `node Tools/status-list-extension-matrix-parity.mjs` | 24 | PASS |
+| Status-List Extension Matrix Verify-Data And N-Quads Parity | `node Tools/status-list-extension-matrix-parity.mjs` | 25 | PASS |
 | Generic VCB JSON-LD Extension N-Quads Parity | `node Tools/generic-jsonld-extension-parity.mjs` | 1 | PASS |
 | Generic Proof JSON-LD Extension N-Quads Parity | `node Tools/generic-proof-extension-parity.mjs` | 1 | PASS |
-| JSON-LD Extension Matrix N-Quads Parity | `node Tools/jsonld-extension-matrix-parity.mjs` | 48 | PASS |
+| JSON-LD Extension Matrix N-Quads Parity | `node Tools/jsonld-extension-matrix-parity.mjs` | 50 | PASS |
 | JSON-LD 1.1 Behavior Characterization | `node Tools/jsonld-behavior-characterization.mjs` | 19 | PASS |
 | Canonicalization Engine Differential | `node Tools/canonicalization-engine-differential.mjs` | 9 | PASS |
 | W3C RDFC-1.0 Conformance Subset | `Tools/swift-test.sh --filter RDFDatasetCanonicalizerTests/testW3CRDFC10ConformanceSubset` | 1 | PASS |
@@ -32,7 +32,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 2
-- Duration: 1661 ms
+- Duration: 1898 ms
 - Case IDs:
   - `official-valid-uat`
   - `official-invalid-uat`
@@ -41,7 +41,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 8
-- Duration: 5810 ms
+- Duration: 6248 ms
 - Case IDs:
   - `generated-valid-z-signature`
   - `generated-valid-u-signature`
@@ -56,7 +56,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 2518 ms
+- Duration: 2637 ms
 - Case IDs:
   - `mutation-invalid-vcb-base64`
   - `mutation-truncated-vcb-cbor`
@@ -66,7 +66,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 4194 ms
+- Duration: 4527 ms
 - Case IDs:
   - `synthetic-status-list-base`
   - `synthetic-status-list-optional-fields`
@@ -79,8 +79,8 @@ Overall result: PASS
 ### Status-List Extension Matrix Verify-Data And N-Quads Parity
 
 - Result: PASS
-- Compared cases: 24
-- Duration: 34272 ms
+- Compared cases: 25
+- Duration: 36105 ms
 - Case IDs:
   - `status-list-string-literal`
   - `status-list-integer-literal`
@@ -106,6 +106,7 @@ Overall result: PASS
   - `status-list-array-set`
   - `status-list-scalar-list`
   - `status-list-array-list`
+  - `status-list-empty-list`
 - Notes:
   - status-list-string-literal: document N-Quads SHA-256 d96c8a6dfc319e2c03b3ab4e45dfe2f3a3454a2c871ed95089fe65108666ba50; proof N-Quads SHA-256 4be3abc2839305fcb40ac38e366817ec7ac941a9bb7d09d8b73a0acedb08561c
   - status-list-integer-literal: document N-Quads SHA-256 3228e287fd3268bba67fec006d3cd547572546c3d7c74977636acb0cd68579ba; proof N-Quads SHA-256 5989e3e410d84a71d41ad607321b310e2c0ba772326afff775441aebeff1ae3a
@@ -131,12 +132,13 @@ Overall result: PASS
   - status-list-array-set: document N-Quads SHA-256 d10a3e406a5a5db069025c5e94da689ac0692ca31493cc6f19c746c46f28d7c6; proof N-Quads SHA-256 b227ea285a841a16ba7f4c0d8c20a11c2ebd418d0d248c5ae80d8ad406583977
   - status-list-scalar-list: document N-Quads SHA-256 72224d5d4eb83c3162c1de08eda1a9de623aef4a6c44e001321103ae95b81ce2; proof N-Quads SHA-256 912375d598ef6b08bbc416e916a9666fb3e987b7a534982cec3f875b6211405e
   - status-list-array-list: document N-Quads SHA-256 9a82f62a5d3690eae0ef2ba48d3cedf6a6367e2434d473631717f5d8ba9747bb; proof N-Quads SHA-256 4d378be37a21255d0fa19c76ffe081c5686eb201a651d53a72b82e67a096b6c8
+  - status-list-empty-list: document N-Quads SHA-256 cce71e1bae6a0974b5651f0083f41a731d447eb79770356c50be5d1729361738; proof N-Quads SHA-256 be6ff2d94ca8e07625d81734c113dec04c0acc66c8ec402b8a862124f39d6e84
 
 ### Generic VCB JSON-LD Extension N-Quads Parity
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 524 ms
+- Duration: 534 ms
 - Case IDs:
   - `generic-jsonld-extension-values`
 
@@ -144,15 +146,15 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 529 ms
+- Duration: 532 ms
 - Case IDs:
   - `generic-proof-extension-values`
 
 ### JSON-LD Extension Matrix N-Quads Parity
 
 - Result: PASS
-- Compared cases: 48
-- Duration: 22637 ms
+- Compared cases: 50
+- Duration: 23167 ms
 - Case IDs:
   - `vcb-document-string-literal`
   - `proof-string-literal`
@@ -202,6 +204,8 @@ Overall result: PASS
   - `proof-scalar-list`
   - `vcb-document-array-list`
   - `proof-array-list`
+  - `vcb-document-empty-list`
+  - `proof-empty-list`
 - Notes:
   - vcb-document-string-literal: vcb-document; N-Quads SHA-256 89e1fa7bb52f0c509bf6f6234b2535c2f066f43254e98755c06eb86f88579ae9
   - proof-string-literal: proof; N-Quads SHA-256 f9aa72a1b4835c92b23e722d603f79be454f106d687050654aeed802c9ae02af
@@ -251,12 +255,14 @@ Overall result: PASS
   - proof-scalar-list: proof; N-Quads SHA-256 9767cefe29423f5c0d7ec5a46f7fa0cbe81dbc729b51a988d61b493e927472d1
   - vcb-document-array-list: vcb-document; N-Quads SHA-256 5eaeac8be1a6d7c14a91d7d6400452dff166090bec3fc53385554ffc6467fd4a
   - proof-array-list: proof; N-Quads SHA-256 fe0e6ae45864317d255f949346b632db7fa5ccd283c87099954355d00d2d5e47
+  - vcb-document-empty-list: vcb-document; N-Quads SHA-256 eab05bdb96b1c572bae05de4313a5b992c097ab7798b16488d8a2090a338294e
+  - proof-empty-list: proof; N-Quads SHA-256 89fc7cbcdedf87c2d264347e8f18c63eabf7ea1f417d189e1afe78ea0dab6f55
 
 ### JSON-LD 1.1 Behavior Characterization
 
 - Result: PASS
 - Compared cases: 19
-- Duration: 9179 ms
+- Duration: 9251 ms
 - Case IDs:
   - `implemented-absolute-id-node`
   - `implemented-nested-graph`
@@ -302,7 +308,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 9
-- Duration: 7965 ms
+- Duration: 8057 ms
 - Case IDs:
   - `engine-vcb-document`
   - `engine-data-integrity-proof`
@@ -328,7 +334,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 3832 ms
+- Duration: 4035 ms
 - Case IDs:
   - `w3c-rdfc-subset`
 
@@ -336,7 +342,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 522 ms
+- Duration: 537 ms
 - Case IDs:
   - `w3c-rdfc-issued-map-subset`
 
@@ -344,7 +350,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 749 ms
+- Duration: 779 ms
 - Case IDs:
   - `w3c-rdfc-negative-clique`
 
