@@ -48,6 +48,8 @@ DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer swift run CADMVVerifier
 
 The SwiftPM tests cover focused regression cases. The self-test contains the official valid/invalid UAT fixture parity checks and uses fixture-backed DID Web and status endpoint responses. CI must run both `Tools/swift-test.sh` and `swift run CADMVVerifierSelfTest`.
 
+`FuzzRegressionTests` runs deterministic generated crash/regression seeds through the AAMVA parser, CBOR reader, VCB decoder, and public malformed-result mapping. These are not randomized CI fuzzers; they are stable seeds that make parser hardening regressions reproducible in the standard SwiftPM test gate.
+
 `Tools/parity-status.sh` reports known JS/Swift parity gaps from `Docs/PARITY_STATUS.md` separately from Swift unit-test failures. During Phase 0 it is informational because the migration plan intentionally records known blocking parity work before the JS oracle harness is complete.
 
 `Tools/reference-oracle-smoke.sh` runs the JavaScript reference oracle when Node and the reference SDK dependencies are available. If either is missing, it prints an explicit skip message instead of silently passing as though JS parity was checked.
@@ -112,6 +114,7 @@ The stdin mode emits JSON with the selected SDK baseline, mode, high-level outco
 - Unsupported CBOR indefinite-length, simple-value, float, break-code, negative-overflow, and trailing-byte encodings fail closed.
 - Current, uncompressed, legacy uncompressed, and legacy compressed CBOR-LD DMV-profile decode forms.
 - Malformed AAMVA header/subfile descriptor offsets and lengths fail closed.
+- Deterministic generated fuzz seeds for AAMVA scanner payloads, CBOR byte streams, VCB decoder inputs, and privacy-safe public malformed-result mapping.
 - Base64/Base64URL malformed length, alphabet, and padding rejection.
 - Base58 malformed alphabet rejection.
 - Data Integrity proofValue `z` base58btc and `u` base64url acceptance, text proofValue preservation before signature extraction, malformed/unsupported raw-signature rejection, and P-256 high-S counterpart behavior against the JS reference.

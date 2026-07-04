@@ -38,6 +38,7 @@ Current committed/generated coverage includes:
 - Release-audit gate coverage through `Tools/final-release-audit.sh`, which runs the committed fixture/parity gates, checks replacement readiness, verifies conformance report freshness, and fails if accepted security exceptions are present without inventory review.
 - Generated unknown CBOR-LD behavior coverage: JS-accepted text-key unknowns are preserved, unknown compressed numeric term ids are rejected, safe absolute-IRI extensions canonicalize generically, and compact unknown terms fail closed in parity with reference safe-mode canonicalization.
 - Synthetic CBOR parser hardening coverage for duplicate map keys, oversized byte/text lengths, oversized array/map counts, unsupported indefinite-length encodings, unsupported simple/float values, negative integer overflow, and trailing top-level bytes.
+- Deterministic generated fuzz regression seeds for AAMVA parser boundaries, CBOR byte streams, VCB decoder fail-closed behavior, and privacy-safe public malformed-result mapping.
 - Redacted production parity mismatch tracking without private payload data.
 
 Documented gaps:

@@ -196,6 +196,7 @@ Completed Phase 7/8/9 readiness work:
 
 - Added `Tools/final-release-audit.sh` as the aggregate release gate for debug/release builds, Swift tests, fixture self-test, parity status, JS reference smoke, replacement readiness, conformance report freshness, and security-exception inventory.
 - Added `node Tools/generate-conformance-report.mjs --check` so release audits can prove the committed conformance report is current without rewriting timestamps.
+- Added deterministic fuzz regression seeds under `FuzzRegressionTests` for AAMVA parser boundaries, CBOR byte streams, VCB decoder fail-closed behavior, and privacy-safe public malformed-result mapping.
 
 Completed Phase 4 gates:
 

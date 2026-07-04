@@ -13,6 +13,7 @@ This review records the current implementation state after focused bug, security
 - Malformed base64 and malformed CBOR-LD return `.failed`.
 - Oversized CBOR byte/text length and array/map count declarations are rejected before allocating collection storage.
 - Unsupported CBOR indefinite-length, simple-value, float, break-code, negative-overflow, and trailing-byte encodings fail closed.
+- Deterministic generated fuzz regression seeds cover malformed AAMVA scanner payloads, CBOR byte streams, VCB decoder inputs, and public malformed-result mapping without committing real barcode data.
 - Status-required official UAT verification returns `.unavailable`, not `.verified`, because the live UAT status endpoint is not currently usable.
 - Synthetic JS-reference Bitstring Status List credentials verify with `ecdsa-rdfc-2019`; verified set bits map to `.revoked`, and verified clear bits map to `.verified`.
 - Credential expiration data is enforced after signature verification and after any required revocation check succeeds as not revoked.

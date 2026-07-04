@@ -170,6 +170,22 @@
       "expectedPublicResult": "varies",
       "expectedFirstFailureStage": "varies",
       "categories": ["unknown-ignorable-cborld-values"]
+    },
+    {
+      "id": "deterministic-fuzz-regression-seeds",
+      "class": "synthetic",
+      "storageLevel": "generated",
+      "source": "Tests/CADMVVerifierTests/FuzzRegressionTests.swift",
+      "jsParityRequired": false,
+      "nativeSwiftParityRequired": true,
+      "expectedPublicResult": "failed",
+      "expectedFirstFailureStage": "varies",
+      "categories": [
+        "aamva-parser-fuzz-seeds",
+        "cbor-byte-stream-fuzz-seeds",
+        "vcb-decoder-fuzz-seeds",
+        "privacy-safe-malformed-result-fuzz-seeds"
+      ]
     }
   ]
 }

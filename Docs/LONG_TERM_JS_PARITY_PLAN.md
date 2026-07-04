@@ -653,6 +653,7 @@ Progress:
 
 - `Tools/final-release-audit.sh` runs the release-level gate sequence: debug build, release build, Swift tests, fixture self-test, parity status, reference oracle smoke, replacement readiness, conformance report freshness, and security-exception inventory.
 - `node Tools/generate-conformance-report.mjs --check` verifies the committed conformance report content is current without rewriting report timestamps.
+- `FuzzRegressionTests` adds deterministic, privacy-safe crash/regression seeds for AAMVA scanner payload parsing, CBOR byte-stream decoding, VCB decoder fail-closed handling, and public malformed-result mapping. These seeds run under the normal SwiftPM test gate and are listed in the fixture manifest as generated coverage.
 
 Exit criteria:
 
