@@ -208,38 +208,34 @@ const acceptanceCases = [
   {
     id: 'engine-official-valid-uat-vcb-document',
     profile: 'vcbDocument',
-    supportedProfileComparison: false,
     jsCanonicalNQuads: async () =>
       (await officialOracleParts('validUatExample')).js.vcbDocumentCanonicalNQuads,
-    swiftCanonicalNQuads: async () =>
-      (await officialOracleParts('validUatExample')).swift.vcbDocumentCanonicalNQuads
+    swiftCanonicalNQuads: async options =>
+      (await officialOracleParts('validUatExample', options.engine)).swift.vcbDocumentCanonicalNQuads
   },
   {
     id: 'engine-official-valid-uat-proof',
     profile: 'dataIntegrityProof',
-    supportedProfileComparison: false,
     jsCanonicalNQuads: async () =>
       (await officialOracleParts('validUatExample')).js.vcbProofCanonicalNQuads,
-    swiftCanonicalNQuads: async () =>
-      (await officialOracleParts('validUatExample')).swift.vcbProofCanonicalNQuads
+    swiftCanonicalNQuads: async options =>
+      (await officialOracleParts('validUatExample', options.engine)).swift.vcbProofCanonicalNQuads
   },
   {
     id: 'engine-official-invalid-uat-vcb-document',
     profile: 'vcbDocument',
-    supportedProfileComparison: false,
     jsCanonicalNQuads: async () =>
       (await officialOracleParts('invalidUatExample')).js.vcbDocumentCanonicalNQuads,
-    swiftCanonicalNQuads: async () =>
-      (await officialOracleParts('invalidUatExample')).swift.vcbDocumentCanonicalNQuads
+    swiftCanonicalNQuads: async options =>
+      (await officialOracleParts('invalidUatExample', options.engine)).swift.vcbDocumentCanonicalNQuads
   },
   {
     id: 'engine-official-invalid-uat-proof',
     profile: 'dataIntegrityProof',
-    supportedProfileComparison: false,
     jsCanonicalNQuads: async () =>
       (await officialOracleParts('invalidUatExample')).js.vcbProofCanonicalNQuads,
-    swiftCanonicalNQuads: async () =>
-      (await officialOracleParts('invalidUatExample')).swift.vcbProofCanonicalNQuads
+    swiftCanonicalNQuads: async options =>
+      (await officialOracleParts('invalidUatExample', options.engine)).swift.vcbProofCanonicalNQuads
   }
 ];
 
@@ -340,9 +336,10 @@ async function jsVcbCanonicalNQuads(document) {
   });
 }
 
-async function officialOracleParts(sourceName) {
-  if(officialOracleCache.has(sourceName)) {
-    return officialOracleCache.get(sourceName);
+async function officialOracleParts(sourceName, engine = 'production') {
+  const cacheKey = `${sourceName}:${engine}`;
+  if(officialOracleCache.has(cacheKey)) {
+    return officialOracleCache.get(cacheKey);
   }
   const promise = (async () => {
     const payload = extractStringLiteral(sourceName, officialFixtureSource);
@@ -355,7 +352,8 @@ async function officialOracleParts(sourceName) {
       swift: runJSON('swift', [
         'run',
         'CADMVVerifierOracle',
-        '--mode=uat'
+        '--mode=uat',
+        `--engine=${engine}`
       ], payload).result
     };
     for(const [implementation, result] of Object.entries(parts)) {
@@ -365,7 +363,7 @@ async function officialOracleParts(sourceName) {
     }
     return parts;
   })();
-  officialOracleCache.set(sourceName, promise);
+  officialOracleCache.set(cacheKey, promise);
   return promise;
 }
 

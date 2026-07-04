@@ -57,7 +57,10 @@ enum CADMVVerifierOracle {
                 mode: mode
             )
         )
-        let inspection = try? CADMVVerifier.inspectForSelfTest(rawPDF417: payload)
+        let inspection = try? CADMVVerifier.inspectForSelfTest(
+            rawPDF417: payload,
+            useSupportedProfileEngine: useSupportedProfileEngine
+        )
 
         let output: [String: Any?] = [
             "implementation": "swift",

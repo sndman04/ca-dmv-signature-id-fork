@@ -277,6 +277,5 @@ function renderReport({sdkPackage, generatedAt, gitRevision, gates}) {
   lines.push('- This report covers the selected official SDK baseline fixtures, generated non-PII fixtures, supported status-list parity fixtures, generic extension parity fixtures, JSON-LD behavior characterization cases, and the current W3C RDFC subset tests.');
   lines.push('- It is not yet a final proof that handwritten canonical N-Quads have been removed from public verification.');
   lines.push('- Final completion still requires the standards-grade or native-library-backed canonicalization engine described in `Docs/LONG_TERM_JS_PARITY_PLAN.md`.');
-  lines.push('');
   return `${lines.join('\n')}\n`;
 }
