@@ -170,7 +170,7 @@
       "expectedPublicResult": "varies",
       "expectedFirstFailureStage": "varies",
       "categories": ["unknown-ignorable-cborld-values"],
-      "gapReason": "JS characterization is recorded in Tools/cborld-unknown-field-characterization.mjs. Final Swift replacement must preserve and canonicalize JS-accepted text-encoded unknown signed fields before this can move out of documented-gap status."
+      "gapReason": "JS characterization is recorded in Tools/cborld-unknown-field-characterization.mjs. Swift preserves JS-accepted text-encoded unknown signed fields internally, but the final replacement must canonicalize those fields before this can move out of documented-gap status."
     }
   ]
 }

@@ -36,6 +36,12 @@ enum StatusListJSONLDRDFExpander {
                 "statusPurpose": .string(credential.credentialSubject.statusPurpose)
             ])
         ]
+        for (key, value) in credential.credentialSubject.additionalProperties {
+            if case .object(var subject) = document["credentialSubject"] {
+                subject[key] = value
+                document["credentialSubject"] = .object(subject)
+            }
+        }
 
         if let description = credential.description {
             document["description"] = .string(description)
@@ -48,6 +54,9 @@ enum StatusListJSONLDRDFExpander {
         }
         if let validUntil = credential.validUntil {
             document["validUntil"] = .string(validUntil)
+        }
+        for (key, value) in credential.additionalProperties {
+            document[key] = value
         }
         return document
     }

@@ -66,7 +66,7 @@ California DL/ID scan, including older documents.
 
 `checkStatus = true` performs online revocation checking. If the DMV status endpoint is unavailable, redirects outside the allowed fetch policy, returns an unsupported credential shape, or the status-list credential proof cannot be verified, the result is `.unavailable`. Application integrations should treat only `.verified` as verified.
 
-Unsupported status-list credential shapes fail closed. This includes newly added signed fields that the native Swift canonicalizer does not yet know how to include in the signature verification input. Development-only SPI diagnostics can identify unknown status-list key names for maintainers, but public results intentionally remain privacy-minimized.
+Unsupported status-list credential shapes fail closed. Newly added signed fields are preserved internally for canonicalization work, but the current default verifier returns status unavailable until the canonicalization engine can include those fields in the signature verification input. Development-only SPI diagnostics can identify unknown status-list key names for maintainers, but public results intentionally remain privacy-minimized.
 
 When a verified credential includes `validUntil` or proof `expires` data, the verifier returns `.expired` after the signature verifies and after any required revocation check completes as not revoked. If status checking is required but unavailable, `.unavailable` takes precedence over `.expired`; if the status list marks the credential revoked, `.revoked` takes precedence.
 

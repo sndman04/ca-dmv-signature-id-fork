@@ -31,7 +31,8 @@ enum EcdsaRdfc2019Verifier {
             expires: nil,
             cryptosuite: credential.proof.cryptosuite,
             proofPurpose: credential.proof.proofPurpose,
-            verificationMethod: credential.proof.verificationMethod
+            verificationMethod: credential.proof.verificationMethod,
+            additionalProperties: credential.proof.additionalProperties
         ).utf8)))
         let documentHash = Data(SHA256.hash(data: Data(try documentCanonicalNQuads(credential).utf8)))
 

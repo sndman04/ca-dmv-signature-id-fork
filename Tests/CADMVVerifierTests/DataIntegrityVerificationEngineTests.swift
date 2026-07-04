@@ -154,6 +154,66 @@ final class DataIntegrityVerificationEngineTests: XCTestCase {
         }
     }
 
+    func testStatusListParserPreservesUnknownSignedFieldsButSupportedProfileRejectsThem() throws {
+        let json = """
+        {
+          "@context": ["https://www.w3.org/ns/credentials/v2"],
+          "id": "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0",
+          "type": ["VerifiableCredential", "BitstringStatusListCredential"],
+          "credentialSchema": {"id": "https://example.invalid/schema", "type": "JsonSchema"},
+          "credentialSubject": {
+            "id": "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0#list",
+            "type": "BitstringStatusList",
+            "encodedList": "uAA",
+            "statusPurpose": "revocation",
+            "ttl": 86400
+          },
+          "issuer": "did:web:uat-credentials.dmv.ca.gov",
+          "validFrom": "2026-01-01T00:00:00Z",
+          "proof": {
+            "type": "DataIntegrityProof",
+            "created": "2026-01-01T00:00:00Z",
+            "verificationMethod": "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+            "cryptosuite": "ecdsa-rdfc-2019",
+            "proofPurpose": "assertionMethod",
+            "proofValue": "zLdp",
+            "domain": "example.invalid"
+          }
+        }
+        """
+        let data = Data(json.utf8)
+        let credential = try DMVStatusListCredentialParser.parse(data)
+        let document = StatusListJSONLDRDFExpander.jsonLDDocument(from: credential)
+        let proofDocument = DataIntegrityProofCanonicalizer.jsonLDDocument(
+            contexts: ["https://www.w3.org/ns/credentials/v2"],
+            type: credential.proof.type,
+            created: credential.proof.created,
+            expires: nil,
+            cryptosuite: credential.proof.cryptosuite,
+            proofPurpose: credential.proof.proofPurpose,
+            verificationMethod: credential.proof.verificationMethod,
+            additionalProperties: credential.proof.additionalProperties
+        )
+
+        XCTAssertEqual(
+            credential.additionalProperties["credentialSchema"],
+            .object([
+                "id": .string("https://example.invalid/schema"),
+                "type": .string("JsonSchema")
+            ])
+        )
+        XCTAssertEqual(credential.credentialSubject.additionalProperties["ttl"], .unsigned(86400))
+        XCTAssertEqual(credential.proof.additionalProperties["domain"], .string("example.invalid"))
+        XCTAssertEqual(document["credentialSchema"], credential.additionalProperties["credentialSchema"])
+        XCTAssertEqual(proofDocument["domain"], .string("example.invalid"))
+        XCTAssertThrowsError(try StatusListJSONLDRDFExpander.canonicalNQuads(credential)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .statusListDecodeFailed)
+        }
+        XCTAssertThrowsError(try SupportedProofJSONLDRDFConverter.quads(from: proofDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     private func mismatchedKey() -> DIDDocumentKey {
         DIDDocumentKey(
             id: "did:web:uat-credentials.dmv.ca.gov#different",

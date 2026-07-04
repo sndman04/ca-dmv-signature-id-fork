@@ -23,7 +23,7 @@ It is not a general JSON-LD, RDF canonicalization, or Data Integrity verifier. T
 
 When status checking is required but DMV status infrastructure is unavailable or returns unsupported data, the verifier returns `.unavailable` rather than `.verified`.
 
-If DMV adds new signed fields to a status-list credential, do not ignore those fields. They affect the signature verification input. The verifier should keep returning `.unavailable` until support is added with a reference vector from the JavaScript implementation. SPI-only profile diagnostics can report unknown status-list key names for development triage without exposing raw barcode data or public debug output.
+If DMV adds new signed fields to a status-list credential, do not ignore those fields. They affect the signature verification input. The verifier preserves unknown status-list fields internally for canonicalization work, but should keep returning `.unavailable` until support is added with a reference vector from the JavaScript implementation. SPI-only profile diagnostics can report unknown status-list key names for development triage without exposing raw barcode data or public debug output.
 
 When DMV DID Web key lookup cannot complete because the device is offline, DNS fails, the request times out, the response is not a direct 2xx HTTP response, or the DID document is malformed, the verifier fails closed with `failureReason == .didResolutionFailed`. Applications should not downgrade this to `.verified`; they may route it to retry, manual review, or another app-specific unavailable/authentication state.
 

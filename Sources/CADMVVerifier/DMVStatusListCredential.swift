@@ -10,12 +10,52 @@ struct DMVStatusListCredential: Equatable, Sendable {
     let description: String?
     let credentialSubject: CredentialSubject
     let proof: Proof
+    let additionalProperties: [String: SupportedJSONLDValue]
+
+    init(
+        id: String,
+        type: [String],
+        issuer: String,
+        validFrom: String?,
+        validUntil: String?,
+        name: String?,
+        description: String?,
+        credentialSubject: CredentialSubject,
+        proof: Proof,
+        additionalProperties: [String: SupportedJSONLDValue] = [:]
+    ) {
+        self.id = id
+        self.type = type
+        self.issuer = issuer
+        self.validFrom = validFrom
+        self.validUntil = validUntil
+        self.name = name
+        self.description = description
+        self.credentialSubject = credentialSubject
+        self.proof = proof
+        self.additionalProperties = additionalProperties
+    }
 
     struct CredentialSubject: Equatable, Sendable {
         let id: String
         let type: String
         let encodedList: String
         let statusPurpose: String
+        let additionalProperties: [String: SupportedJSONLDValue]
+
+        init(
+            id: String,
+            type: String,
+            encodedList: String,
+            statusPurpose: String,
+            additionalProperties: [String: SupportedJSONLDValue] = [:]
+        ) {
+            self.id = id
+            self.type = type
+            self.encodedList = encodedList
+            self.statusPurpose = statusPurpose
+            self.additionalProperties = additionalProperties
+        }
     }
 
     struct Proof: Equatable, Sendable {
@@ -25,6 +65,25 @@ struct DMVStatusListCredential: Equatable, Sendable {
         let cryptosuite: String
         let proofPurpose: String
         let proofValue: String
+        let additionalProperties: [String: SupportedJSONLDValue]
+
+        init(
+            type: String,
+            created: String?,
+            verificationMethod: String,
+            cryptosuite: String,
+            proofPurpose: String,
+            proofValue: String,
+            additionalProperties: [String: SupportedJSONLDValue] = [:]
+        ) {
+            self.type = type
+            self.created = created
+            self.verificationMethod = verificationMethod
+            self.cryptosuite = cryptosuite
+            self.proofPurpose = proofPurpose
+            self.proofValue = proofValue
+            self.additionalProperties = additionalProperties
+        }
     }
 }
 
@@ -45,7 +104,6 @@ enum DMVStatusListCredentialParser {
         guard let root = json as? [String: Any] else {
             throw CADMVInternalError.statusListDecodeFailed
         }
-        try rejectUnknownKeys(root, allowed: rootKeys)
 
         guard let context = root["@context"] as? [String],
               context == ["https://www.w3.org/ns/credentials/v2"],
@@ -56,9 +114,6 @@ enum DMVStatusListCredentialParser {
               let proofObject = root["proof"] as? [String: Any] else {
             throw CADMVInternalError.statusListDecodeFailed
         }
-
-        try rejectUnknownKeys(subjectObject, allowed: subjectKeys)
-        try rejectUnknownKeys(proofObject, allowed: proofKeys)
 
         guard Set(type) == ["VerifiableCredential", "BitstringStatusListCredential"],
               type.count == 2,
@@ -104,7 +159,11 @@ enum DMVStatusListCredentialParser {
                 id: subjectID,
                 type: subjectType,
                 encodedList: encodedList,
-                statusPurpose: statusPurpose
+                statusPurpose: statusPurpose,
+                additionalProperties: try additionalProperties(
+                    subjectObject,
+                    excluding: subjectKeys
+                )
             ),
             proof: DMVStatusListCredential.Proof(
                 type: proofType,
@@ -112,7 +171,15 @@ enum DMVStatusListCredentialParser {
                 verificationMethod: verificationMethod,
                 cryptosuite: cryptosuite,
                 proofPurpose: proofPurpose,
-                proofValue: proofValue
+                proofValue: proofValue,
+                additionalProperties: try additionalProperties(
+                    proofObject,
+                    excluding: proofKeys
+                )
+            ),
+            additionalProperties: try additionalProperties(
+                root,
+                excluding: rootKeys
             )
         )
     }
@@ -135,21 +202,51 @@ enum DMVStatusListCredentialParser {
         let unknownProofKeys = unknownKeys(in: proofObject, allowed: proofKeys)
 
         return CADMVStatusListProfileDiagnostic(
-            supported: (try? parse(data)) != nil,
+            supported: (try? parse(data)) != nil &&
+                unknownRootKeys.isEmpty &&
+                unknownCredentialSubjectKeys.isEmpty &&
+                unknownProofKeys.isEmpty,
             unknownRootKeys: unknownRootKeys,
             unknownCredentialSubjectKeys: unknownCredentialSubjectKeys,
             unknownProofKeys: unknownProofKeys
         )
     }
 
-    private static func rejectUnknownKeys(
+    private static func additionalProperties(
         _ object: [String: Any],
-        allowed: Set<String>
-    ) throws {
-        for key in object.keys {
-            guard allowed.contains(key) else {
-                throw CADMVInternalError.statusListDecodeFailed
+        excluding allowed: Set<String>
+    ) throws -> [String: SupportedJSONLDValue] {
+        var properties: [String: SupportedJSONLDValue] = [:]
+        for (key, value) in object where !allowed.contains(key) {
+            properties[key] = try supportedJSONLDValue(from: value)
+        }
+        return properties
+    }
+
+    private static func supportedJSONLDValue(from value: Any) throws -> SupportedJSONLDValue {
+        switch value {
+        case let text as String:
+            return .string(text)
+        case let bool as Bool:
+            return .bool(bool)
+        case let number as NSNumber:
+            if CFGetTypeID(number) == CFBooleanGetTypeID() {
+                return .bool(number.boolValue)
             }
+            if number.doubleValue.rounded() == number.doubleValue,
+               number.doubleValue >= 0,
+               let unsigned = UInt64(exactly: number) {
+                return .unsigned(unsigned)
+            }
+            return .number(number.stringValue)
+        case let array as [Any]:
+            return .array(try array.map(supportedJSONLDValue(from:)))
+        case let object as [String: Any]:
+            return .object(try object.mapValues(supportedJSONLDValue(from:)))
+        case _ as NSNull:
+            return .null
+        default:
+            throw CADMVInternalError.statusListDecodeFailed
         }
     }
 
