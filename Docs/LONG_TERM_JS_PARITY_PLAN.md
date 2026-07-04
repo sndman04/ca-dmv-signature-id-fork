@@ -425,6 +425,7 @@ Progress:
 - The JS oracle smoke gate now compares Swift and reference JS canonical VCB document N-Quads for that generic extension subset, including `@id`, node-object `@type`, node-object `@reverse`, node-object `@graph`, node-object `@included`, node-object `@nest`, string `@index`, directed `@value`, `@json` value objects, `@set`, and `@list` values.
 - The JS oracle smoke gate now also compares Swift and reference JS canonical Data Integrity proof N-Quads for that generic extension subset, including proof-local `@id`, node-object `@type`, node-object `@reverse`, node-object `@graph`, node-object `@included`, node-object `@nest`, string `@index`, directed `@value`, `@json` value objects, `@set`, and `@list` values.
 - The status-list parity gate now compares Swift and reference JS status-list document/proof canonical N-Quads directly, reporting SHA-256 fingerprints alongside final verify-data hex so document-hash and proof-hash regressions can be localized without exposing raw fixture content in summary output.
+- `Tools/generate-conformance-report.mjs` now regenerates `Docs/CONFORMANCE_REPORT.md` from the committed privacy-safe parity gates, including official UAT fixtures, generated signature cases, status-list parity, generic extension parity, and W3C RDFC subset coverage.
 - VCB credential validation now permits only extension fields accepted by that generic absolute-IRI canonicalization path, so public verification can reach the standards-valid extension support without weakening fail-closed behavior for unsupported terms.
 - The native RDFC core now has W3C RDFC-1.0 subset coverage for empty datasets, blank nodes, graph names, shared graph names, language/datatype literals, Unicode and control-character escaping, duplicate input quads, and the negative clique graph; RDF datasets are de-duplicated before canonical labeling/rendering.
 - The native RDFC core exposes an internal issued-identifier map and validates it against a W3C map-test subset, so canonical blank-node labels are checked directly as well as through rendered N-Quads.
@@ -655,25 +656,18 @@ The long-term project is complete only when all of these are true:
 
 ## Immediate Next Build Tasks
 
-1. Generate a committed conformance report from the existing privacy-safe gates:
-   - official UAT fixture parity
-   - generated signature parity
-   - status-list verify-data parity
-   - generic VCB document extension canonical N-Quads parity
-   - generic proof extension canonical N-Quads parity
-   - W3C RDFC subset results
-2. Characterize remaining JSON-LD 1.1 behavior against the selected JS SDK baseline and classify each case as:
+1. Characterize remaining JSON-LD 1.1 behavior against the selected JS SDK baseline and classify each case as:
    - implemented in the native replacement
    - intentionally fail-closed because it cannot appear in the supported DMV profile
    - blocked pending the final standards-grade/native-library engine
    - approved security exception
-3. Prototype the selected final canonicalization engine behind `JSONLDCanonicalizationEngine` without changing the public default verifier until it passes the current parity corpus.
-4. Add an engine differential gate that runs supported-profile canonicalization and the candidate final engine side by side on all committed/generated non-PII fixtures.
-5. Replace `SupportedProfileJSONLDCanonicalizationEngine` as the default only after the candidate engine produces reference-equivalent canonical N-Quads or verify-data for every covered fixture.
-6. Move the supported-profile graph builder behind test-only regression SPI once the final engine is default, then remove it after one release cycle if no parity regressions appear.
-7. Generate and review the dependency/license/threat-model documents required by `Docs/CANONICALIZATION_ENGINE_DECISION.md` if the final engine uses any external native library or bridge.
-8. Publish the final conformance report with the selected official SDK baseline version, supported cases, skipped cases, local-only private test policy, and any approved security exceptions.
-9. Remove release-blocking caveats from public docs only after handwritten canonical N-Quads are no longer reachable from public verification.
+2. Prototype the selected final canonicalization engine behind `JSONLDCanonicalizationEngine` without changing the public default verifier until it passes the current parity corpus.
+3. Add an engine differential gate that runs supported-profile canonicalization and the candidate final engine side by side on all committed/generated non-PII fixtures.
+4. Replace `SupportedProfileJSONLDCanonicalizationEngine` as the default only after the candidate engine produces reference-equivalent canonical N-Quads or verify-data for every covered fixture.
+5. Move the supported-profile graph builder behind test-only regression SPI once the final engine is default, then remove it after one release cycle if no parity regressions appear.
+6. Generate and review the dependency/license/threat-model documents required by `Docs/CANONICALIZATION_ENGINE_DECISION.md` if the final engine uses any external native library or bridge.
+7. Publish the final conformance report with the selected official SDK baseline version, supported cases, skipped cases, local-only private test policy, and any approved security exceptions.
+8. Remove release-blocking caveats from public docs only after handwritten canonical N-Quads are no longer reachable from public verification.
 
 ## Open Questions
 
