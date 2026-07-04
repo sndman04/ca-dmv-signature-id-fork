@@ -621,6 +621,28 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssertEqual(location.statusListIndex, 41_319_687)
     }
 
+    func testStatusBitReaderCoversByteBoundariesAndOutOfRange() {
+        let bytes = Data([
+            0b1000_0001,
+            0b1000_0000,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0b0000_0001,
+            0b1000_0001
+        ])
+
+        XCTAssertEqual(CADMVVerifier.statusBitForSelfTest(uncompressedBytes: bytes, index: 0), true)
+        XCTAssertEqual(CADMVVerifier.statusBitForSelfTest(uncompressedBytes: bytes, index: 7), true)
+        XCTAssertEqual(CADMVVerifier.statusBitForSelfTest(uncompressedBytes: bytes, index: 8), true)
+        XCTAssertEqual(CADMVVerifier.statusBitForSelfTest(uncompressedBytes: bytes, index: 63), true)
+        XCTAssertEqual(CADMVVerifier.statusBitForSelfTest(uncompressedBytes: bytes, index: 64), true)
+        XCTAssertEqual(CADMVVerifier.statusBitForSelfTest(uncompressedBytes: bytes, index: 71), true)
+        XCTAssertEqual(CADMVVerifier.statusBitForSelfTest(uncompressedBytes: bytes, index: 72), nil)
+    }
+
     func testDecoderAcceptsCredentialWithoutStatusBlock() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential(includeStatus: false))
 

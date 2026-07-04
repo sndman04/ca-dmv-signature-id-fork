@@ -10,6 +10,7 @@ swift run CADMVVerifierSelfTest
 Tools/parity-status.sh
 Tools/reference-oracle-smoke.sh
 Tools/status-list-parity.mjs
+Tools/status-bit-parity.mjs
 node Tools/status-list-extension-matrix-parity.mjs
 node Tools/canonicalization-engine-differential.mjs
 node Tools/jsonld-extension-matrix-parity.mjs
@@ -61,6 +62,9 @@ node Tools/parity-compare.mjs
 
 # Swift/JS status-list verify-data parity for synthetic status-list fixtures.
 node Tools/status-list-parity.mjs
+
+# Swift/JS status-list bit boundary parity.
+node Tools/status-bit-parity.mjs
 
 # Shape-by-shape status-list extension canonical N-Quads and verify-data parity.
 node Tools/status-list-extension-matrix-parity.mjs
@@ -117,6 +121,7 @@ The stdin mode emits JSON with the selected SDK baseline, mode, high-level outco
 - Status-required official UAT verification returns `.unavailable` on fixture-backed HTTP status failure.
 - Status-list checking returns `.unavailable` for status transport failures, redirect/404/500 responses, malformed status-list credential JSON, malformed DID documents, and unsupported DID keys during status-list proof-key resolution.
 - Synthetic JS-reference Bitstring Status List `ecdsa-rdfc-2019` verification.
+- JS-reference status-list bit boundary parity for indexes 0, 7, 8, 63, 64, the last bit in a short list, clear bits, and out-of-range handling.
 - Verified revoked status-list bit maps to `.revoked`.
 - Verified clear status-list bit maps to `.verified`.
 - Tampered status-list `encodedList` fails proof verification.

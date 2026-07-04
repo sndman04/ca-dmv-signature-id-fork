@@ -37,6 +37,10 @@ enum CADMVVerifierOracle {
             )
             return
         }
+        if boolOption("--status-bit", in: arguments) {
+            try runStatusBitOracle()
+            return
+        }
 
         let mode = optionValue("--mode", in: arguments) == "uat"
             ? CADMVVerificationMode.uat
@@ -228,6 +232,53 @@ enum CADMVVerifierOracle {
         )
         FileHandle.standardOutput.write(data)
         FileHandle.standardOutput.write(Data("\n".utf8))
+    }
+
+    private static func runStatusBitOracle() throws {
+        let payload = FileHandle.standardInput.readDataToEndOfFile()
+        let json = try JSONSerialization.jsonObject(with: payload)
+        guard let input = json as? [String: Any],
+              let encodedList = input["encodedList"] as? String else {
+            throw oracleInputError("status-bit input must include encodedList")
+        }
+        let index: UInt64
+        switch input["index"] {
+        case let value as NSNumber:
+            index = value.uint64Value
+        case let value as String:
+            guard let parsed = UInt64(value) else {
+                throw oracleInputError("status-bit index must be UInt64")
+            }
+            index = parsed
+        default:
+            throw oracleInputError("status-bit input must include index")
+        }
+        let status = try CADMVVerifier.statusBitForSelfTest(
+            encodedList: encodedList,
+            index: index
+        )
+        let output: [String: Any?] = [
+            "implementation": "swift",
+            "input": "stdin",
+            "result": [
+                "status": status,
+                "available": status != nil
+            ] as [String: Any?]
+        ]
+        let data = try JSONSerialization.data(
+            withJSONObject: normalize(output),
+            options: [.prettyPrinted, .sortedKeys]
+        )
+        FileHandle.standardOutput.write(data)
+        FileHandle.standardOutput.write(Data("\n".utf8))
+    }
+
+    private static func oracleInputError(_ message: String) -> NSError {
+        NSError(
+            domain: "CADMVVerifierOracle",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: message]
+        )
     }
 
     private static func optionValue(

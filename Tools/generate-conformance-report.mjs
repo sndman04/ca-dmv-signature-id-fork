@@ -35,6 +35,12 @@ const jsonGates = [
     args: ['Tools/status-list-parity.mjs']
   },
   {
+    id: 'status-bit',
+    label: 'Status Bit Boundary Parity',
+    command: process.execPath,
+    args: ['Tools/status-bit-parity.mjs']
+  },
+  {
     id: 'status-list-extension-matrix',
     label: 'Status-List Extension Matrix Verify-Data And N-Quads Parity',
     command: process.execPath,
