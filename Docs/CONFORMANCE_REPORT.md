@@ -1,7 +1,7 @@
 # Conformance Report
 
-Generated: 2026-07-04T02:27:23.088Z
-Repository revision: `d23d6cd`
+Generated: 2026-07-04T02:31:49.990Z
+Repository revision: `f2436f4`
 Reference SDK: `cadmv-dlid-verifier-sdk@0.0.1-0`
 
 This report is generated from committed non-PII fixtures and synthetic cases. It does not include raw PDF417 payloads, decoded identity fields, or real private scan data.
@@ -28,7 +28,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 2
-- Duration: 1762 ms
+- Duration: 1860 ms
 - Case IDs:
   - `official-valid-uat`
   - `official-invalid-uat`
@@ -37,7 +37,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 8
-- Duration: 6206 ms
+- Duration: 16422 ms
 - Case IDs:
   - `generated-valid-z-signature`
   - `generated-valid-u-signature`
@@ -52,7 +52,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 5117 ms
+- Duration: 4901 ms
 - Case IDs:
   - `synthetic-status-list-base`
   - `synthetic-status-list-optional-fields`
@@ -60,13 +60,13 @@ Overall result: PASS
 - Notes:
   - synthetic-status-list-base: document N-Quads SHA-256 32f9e3eb0ef441494d9f35b40deed3703c7730e491db83245714e0a1475100c1; proof N-Quads SHA-256 93fa093cba64513885ce626317a174530e4d19527212094b1571d4b8e665a221
   - synthetic-status-list-optional-fields: document N-Quads SHA-256 754ba90533e8d44df66599957c68a3f9f2cccac0f1380c538f17926967783567; proof N-Quads SHA-256 93fa093cba64513885ce626317a174530e4d19527212094b1571d4b8e665a221
-  - synthetic-status-list-absolute-iri-extensions: document N-Quads SHA-256 5145fc63727d9664674b26da904f2f9bfc26b9a3447093daca3d68075cb0dba0; proof N-Quads SHA-256 25531b3b22dbaac7f78a3da77fdabc29e78bd37ac6ff84ff3c263f42aaf50abc
+  - synthetic-status-list-absolute-iri-extensions: document N-Quads SHA-256 1d15024c7b48d02e11025b4a029596abc10e2a7b2b07b25f4f17c9ade58d0944; proof N-Quads SHA-256 ec9fbce00e29e40b866166154710d56d30addd0b536573065f2a8552ce80a6ed
 
 ### Generic VCB JSON-LD Extension N-Quads Parity
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 551 ms
+- Duration: 523 ms
 - Case IDs:
   - `generic-jsonld-extension-values`
 
@@ -74,7 +74,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 542 ms
+- Duration: 521 ms
 - Case IDs:
   - `generic-proof-extension-values`
 
@@ -82,7 +82,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 12
-- Duration: 6200 ms
+- Duration: 5984 ms
 - Case IDs:
   - `implemented-absolute-id-node`
   - `implemented-nested-graph`
@@ -101,7 +101,7 @@ Overall result: PASS
   - implemented-nested-graph: implemented; JS accepted=true; Swift accepted=true
   - implemented-json-literal: implemented; JS accepted=true; Swift accepted=true
   - fail-closed-relative-id-node: bothReject; JS accepted=false; Swift accepted=false
-  - fail-closed-blank-node-id: swiftFailClosed; JS accepted=true; Swift accepted=false
+  - fail-closed-blank-node-id: implemented; JS accepted=true; Swift accepted=true
   - fail-closed-nested-context: bothReject; JS accepted=false; Swift accepted=false
   - fail-closed-compact-property: bothReject; JS accepted=false; Swift accepted=false
   - fail-closed-reverse-literal: bothReject; JS accepted=false; Swift accepted=false
@@ -114,7 +114,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 4452 ms
+- Duration: 3120 ms
 - Case IDs:
   - `w3c-rdfc-subset`
 
@@ -122,7 +122,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 518 ms
+- Duration: 520 ms
 - Case IDs:
   - `w3c-rdfc-issued-map-subset`
 
@@ -130,7 +130,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 760 ms
+- Duration: 757 ms
 - Case IDs:
   - `w3c-rdfc-negative-clique`
 

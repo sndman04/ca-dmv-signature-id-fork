@@ -57,6 +57,10 @@ const proofConfig = {
     '@type': 'https://example.invalid/types/ProofBlankNode',
     'https://example.invalid/proof/blankNodeName': 'Typed proof blank node'
   },
+  'https://example.invalid/proof/explicitBlankNode': {
+    '@id': '_:proofExplicit',
+    'https://example.invalid/proof/explicitBlankName': 'Proof explicit blank'
+  },
   'https://example.invalid/proof/typedValue': {
     '@value': 'proof typed',
     '@index': 'proof-typed-value-index',

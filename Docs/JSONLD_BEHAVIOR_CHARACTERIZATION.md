@@ -15,8 +15,8 @@ The gate is intentionally classification-based:
 | `implemented-absolute-id-node` | `implemented` | Safe absolute `@id` node references are part of the supported extension subset. |
 | `implemented-nested-graph` | `implemented` | Generic named graph handling is covered by existing parity fixtures. |
 | `implemented-json-literal` | `implemented` | `@type: "@json"` value objects are covered by existing parity fixtures. |
+| `fail-closed-blank-node-id` | `implemented` | Explicit blank-node identifiers with validated local labels are supported by the generic extension path and canonicalized through RDFC labels. |
 | `fail-closed-relative-id-node` | `bothReject` | Relative `@id` values are rejected by JS safe mode and Swift. |
-| `fail-closed-blank-node-id` | `swiftFailClosed` | JS accepts explicit blank-node identifiers, but Swift rejects them because the DMV profile does not need explicit blank-node labels and the current supported-profile path is not a full JSON-LD node identifier processor. |
 | `fail-closed-nested-context` | `bothReject` | This nested context shape is rejected by JS safe mode and Swift. |
 | `fail-closed-compact-property` | `bothReject` | Compact unknown properties do not expand through the pinned context set and are rejected. |
 | `fail-closed-reverse-literal` | `bothReject` | Reverse properties with literal values are invalid for the characterized shape. |
@@ -27,6 +27,6 @@ The gate is intentionally classification-based:
 
 ## Policy
 
-The single current `swiftFailClosed` case is not a parity gap for the supported DMV verifier profile. It is a deliberately unsupported JSON-LD feature that remains blocked on the final standards-grade/native-library-backed engine decision. Swift must keep rejecting it rather than accepting and mishandling it.
+There are no current `swiftFailClosed` cases in this characterization matrix. New JS-accepted/Swift-rejected cases must either be implemented with byte-identical parity, documented as an approved security exception, or kept fail-closed with an explicit reason tied to the supported DMV profile.
 
-If a future DMV credential profile requires explicit blank-node identifiers or broader nested context processing, that profile must be implemented through the final canonicalization engine rather than by adding one-off N-Quads generation.
+If a future DMV credential profile requires broader nested context processing, that profile must be implemented through the final canonicalization engine rather than by adding one-off N-Quads generation.

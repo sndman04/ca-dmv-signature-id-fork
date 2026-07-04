@@ -52,8 +52,8 @@ const cases = [
   },
   {
     id: 'fail-closed-blank-node-id',
-    classification: 'swiftFailClosed',
-    reason: 'Explicit blank-node identifiers are not needed by the DMV profile and would require broader JSON-LD node identifier semantics.',
+    classification: 'implemented',
+    reason: 'Explicit blank-node identifiers are supported by the generic extension path with validated local labels.',
     extension: {
       '@id': '_:explicit',
       'https://example.invalid/terms/name': 'Explicit blank'

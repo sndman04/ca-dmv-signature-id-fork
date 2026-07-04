@@ -2,6 +2,7 @@ import Foundation
 
 enum SupportedJSONLDRDFTerms {
     private static let genericBlankNodePrefix = "jsonldGeneric"
+    private static let explicitBlankNodePrefix = "jsonldExplicit:"
 
     static func iriQuad(
         subject: RDFTerm,
@@ -434,12 +435,11 @@ enum SupportedJSONLDRDFTerms {
         blankNodeCounter: inout Int
     ) throws -> [RDFQuad] {
         guard object["@value"] == nil,
-              case .string(let idValue) = id,
-              try isSafeIRI(idValue, error: error) else {
+              case .string(let idValue) = id else {
             throw error
         }
 
-        let nestedSubject = RDFTerm.iri(idValue)
+        let nestedSubject = try genericNodeIdentifierTerm(idValue, error: error)
         var quads = [RDFQuad(
             subject: subject,
             predicate: predicate,
@@ -685,12 +685,11 @@ enum SupportedJSONLDRDFTerms {
         blankNodeCounter: inout Int
     ) throws -> (term: RDFTerm, quads: [RDFQuad]) {
         guard object["@value"] == nil,
-              case .string(let idValue) = id,
-              try isSafeIRI(idValue, error: error) else {
+              case .string(let idValue) = id else {
             throw error
         }
 
-        let nestedSubject = RDFTerm.iri(idValue)
+        let nestedSubject = try genericNodeIdentifierTerm(idValue, error: error)
         var quads: [RDFQuad] = []
         for key in object.keys.sorted() where key != "@id" {
             if key == "@index" {
@@ -1098,11 +1097,10 @@ enum SupportedJSONLDRDFTerms {
             }
             let subject: RDFTerm
             if let id = object["@id"] {
-                guard case .string(let idValue) = id,
-                      try isSafeIRI(idValue, error: error) else {
+                guard case .string(let idValue) = id else {
                     throw error
                 }
-                subject = .iri(idValue)
+                subject = try genericNodeIdentifierTerm(idValue, error: error)
             } else {
                 subject = .blank("\(genericBlankNodePrefix)\(blankNodeCounter)")
                 blankNodeCounter += 1
@@ -1333,6 +1331,35 @@ enum SupportedJSONLDRDFTerms {
                 predicate: PinnedJSONLDTermRegistry.rdfType,
                 object: .iri(iri)
             )
+        }
+    }
+
+    private static func genericNodeIdentifierTerm(
+        _ value: String,
+        error: CADMVInternalError
+    ) throws -> RDFTerm {
+        if value.hasPrefix("_:") {
+            let label = String(value.dropFirst(2))
+            guard isSafeBlankNodeLabel(label) else {
+                throw error
+            }
+            return .blank("\(explicitBlankNodePrefix)\(label)")
+        }
+        guard try isSafeIRI(value, error: error) else {
+            throw error
+        }
+        return .iri(value)
+    }
+
+    private static func isSafeBlankNodeLabel(_ value: String) -> Bool {
+        guard let first = value.utf8.first,
+              isASCIIAlpha(first) || first == UInt8(ascii: "_") else {
+            return false
+        }
+        return value.utf8.allSatisfy {
+            isASCIIAlphaNumeric($0) ||
+                $0 == UInt8(ascii: "_") ||
+                $0 == UInt8(ascii: "-")
         }
     }
 

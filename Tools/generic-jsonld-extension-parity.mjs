@@ -62,6 +62,10 @@ const extensionDocument = {
     '@type': 'https://example.invalid/types/BlankNode',
     'https://example.invalid/terms/blankNodeName': 'Typed blank node'
   },
+  'https://example.invalid/terms/explicitBlankNode': {
+    '@id': '_:explicit',
+    'https://example.invalid/terms/explicitBlankName': 'Explicit blank node'
+  },
   'https://example.invalid/terms/typedValue': {
     '@value': 'typed',
     '@index': 'typed-value-index',

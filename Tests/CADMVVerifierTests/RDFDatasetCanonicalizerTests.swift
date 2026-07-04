@@ -229,6 +229,10 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@index": .string("reference-index"),
                     "https://example.invalid/terms/referenceName": .string("Reference")
                 ]),
+                "https://example.invalid/terms/explicitBlankNode": .object([
+                    "@id": .string("_:explicit"),
+                    "https://example.invalid/terms/explicitBlankName": .string("Explicit blank node")
+                ]),
                 "https://example.invalid/terms/typedValue": .object([
                     "@value": .string("typed"),
                     "@index": .string("typed-value-index"),
@@ -301,6 +305,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<did:web:issuer.example#resource> <https://example.invalid/terms/referenceName> \"Reference\""
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/explicitBlankName> \"Explicit blank node\""
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/typedValue> \"typed\"^^<https://example.invalid/types/Custom>"
@@ -783,6 +790,10 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     ]),
                     "@type": .string("@json")
                 ]),
+                "https://example.invalid/terms/statusExplicitBlankNode": .object([
+                    "@id": .string("_:statusExplicit"),
+                    "https://example.invalid/terms/statusExplicitBlankName": .string("Status explicit blank")
+                ]),
                 "https://example.invalid/terms/subjectNode": .object([
                     "@id": .string("https://example.invalid/resources/status-subject-node"),
                     "@index": .string("status-subject-index"),
@@ -819,6 +830,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/statusJSONValue> \"[2,1]\"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/statusExplicitBlankName> \"Status explicit blank\""
         ))
         XCTAssert(nquads.contains(
             "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/StatusRootNode>"
@@ -943,6 +957,10 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@value": .string("Proof JSON string"),
                     "@type": .string("@json")
                 ]),
+                "https://example.invalid/terms/proofExplicitBlankNode": .object([
+                    "@id": .string("_:proofExplicit"),
+                    "https://example.invalid/terms/proofExplicitBlankName": .string("Proof explicit blank")
+                ]),
                 "https://example.invalid/terms/proofNode": .object([
                     "@id": .string("https://example.invalid/resources/proof-node"),
                     "@index": .string("proof-node-index"),
@@ -978,6 +996,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/proofJSONValue> \"\\\"Proof JSON string\\\"\"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/proofExplicitBlankName> \"Proof explicit blank\""
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/resources/proof-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/ProofNode>"

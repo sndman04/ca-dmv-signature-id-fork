@@ -87,6 +87,10 @@ const extensionFixture = {
       '@value': [2, 1],
       '@type': '@json'
     },
+    'https://example.test/status/statusExplicitBlankNode': {
+      '@id': '_:statusExplicit',
+      'https://example.test/status/statusExplicitBlankName': 'Status explicit blank'
+    },
     'https://example.test/status/subjectNode': {
       '@id': 'https://example.test/status/subject-node',
       '@index': 'subject-node-index',
@@ -154,6 +158,10 @@ const extensionFixture = {
     'https://example.test/status/proofJSONValue': {
       '@value': {b: 2, a: 1},
       '@type': '@json'
+    },
+    'https://example.test/status/proofExplicitBlankNode': {
+      '@id': '_:proofExplicit',
+      'https://example.test/status/proofExplicitBlankName': 'Proof explicit blank'
     }
   }
 };
