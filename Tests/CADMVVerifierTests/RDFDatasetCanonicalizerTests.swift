@@ -247,6 +247,20 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                         ]),
                         .null
                     ])
+                ]),
+                "https://example.invalid/terms/listValue": .object([
+                    "@list": .array([
+                        .string("list-a"),
+                        .object([
+                            "@id": .string("https://example.invalid/resources/list-b")
+                        ]),
+                        .object([
+                            "https://example.invalid/terms/listNested": .string("nested")
+                        ])
+                    ])
+                ]),
+                "https://example.invalid/terms/emptyList": .object([
+                    "@list": .array([])
                 ])
             ]
         )
@@ -275,6 +289,24 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             "<https://example.invalid/terms/setValue> <https://example.invalid/resources/set-b>"
         ))
         XCTAssertFalse(nquads.contains("setValue> null"))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/listValue> _:c14n"
+        ))
+        XCTAssert(nquads.contains(
+            "<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> \"list-a\""
+        ))
+        XCTAssert(nquads.contains(
+            "<http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://example.invalid/resources/list-b>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/listNested> \"nested\""
+        ))
+        XCTAssert(nquads.contains(
+            "<http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/emptyList> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil>"
+        ))
         XCTAssertNoThrow(try DMVCredentialValidator.validate(credential, mode: .uat))
     }
 
@@ -366,6 +398,18 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ])
 
         XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: invalidSetDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        var invalidListDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
+            credentialStatus: nil
+        ))
+        invalidListDocument["https://example.invalid/terms/list"] = .object([
+            "@list": .array([.string("a")]),
+            "https://example.invalid/terms/extra": .string("unsupported")
+        ])
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: invalidListDocument)) { error in
             XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
         }
     }

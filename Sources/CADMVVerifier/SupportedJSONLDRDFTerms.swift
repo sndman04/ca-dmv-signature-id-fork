@@ -183,6 +183,16 @@ enum SupportedJSONLDRDFTerms {
             }
             return quads
         case .object(let object):
+            if let list = object["@list"] {
+                return try genericListObjectQuads(
+                    predicate: predicate,
+                    object: object,
+                    list: list,
+                    subject: subject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                )
+            }
             if let set = object["@set"] {
                 return try genericSetObjectQuads(
                     predicate: predicate,
@@ -236,6 +246,81 @@ enum SupportedJSONLDRDFTerms {
             }
             return quads
         }
+    }
+
+    private static func genericListObjectQuads(
+        predicate: String,
+        object: [String: SupportedJSONLDValue],
+        list: SupportedJSONLDValue,
+        subject: RDFTerm,
+        error: CADMVInternalError,
+        blankNodeCounter: inout Int
+    ) throws -> [RDFQuad] {
+        guard object.keys.allSatisfy({ $0 == "@list" }) else {
+            throw error
+        }
+        let values: [SupportedJSONLDValue]
+        switch list {
+        case .array(let array):
+            values = array
+        default:
+            values = [list]
+        }
+        let listTerm = try genericListTerm(
+            values,
+            error: error,
+            blankNodeCounter: &blankNodeCounter
+        )
+        return [
+            RDFQuad(
+                subject: subject,
+                predicate: predicate,
+                object: listTerm.term
+            )
+        ] + listTerm.quads
+    }
+
+    private static func genericListTerm(
+        _ values: [SupportedJSONLDValue],
+        error: CADMVInternalError,
+        blankNodeCounter: inout Int
+    ) throws -> (term: RDFTerm, quads: [RDFQuad]) {
+        var itemTerms: [(term: RDFTerm, quads: [RDFQuad])] = []
+        for value in values {
+            if let item = try genericObjectTerm(
+                value,
+                error: error,
+                blankNodeCounter: &blankNodeCounter
+            ) {
+                itemTerms.append(item)
+            }
+        }
+        guard !itemTerms.isEmpty else {
+            return (.iri(PinnedJSONLDTermRegistry.rdfNil), [])
+        }
+
+        let listNodes = itemTerms.map { _ -> RDFTerm in
+            let node = RDFTerm.blank("\(genericBlankNodePrefix)\(blankNodeCounter)")
+            blankNodeCounter += 1
+            return node
+        }
+        var quads: [RDFQuad] = []
+        for index in itemTerms.indices {
+            quads.append(contentsOf: itemTerms[index].quads)
+            quads.append(RDFQuad(
+                subject: listNodes[index],
+                predicate: PinnedJSONLDTermRegistry.rdfFirst,
+                object: itemTerms[index].term
+            ))
+            quads.append(RDFQuad(
+                subject: listNodes[index],
+                predicate: PinnedJSONLDTermRegistry.rdfRest,
+                object: index == itemTerms.index(before: itemTerms.endIndex)
+                    ? .iri(PinnedJSONLDTermRegistry.rdfNil)
+                    : listNodes[itemTerms.index(after: index)]
+            ))
+        }
+        return (listNodes[0], quads)
     }
 
     private static func genericSetObjectQuads(
@@ -309,6 +394,120 @@ enum SupportedJSONLDRDFTerms {
         return quads
     }
 
+    private static func genericObjectTerm(
+        _ value: SupportedJSONLDValue,
+        error: CADMVInternalError,
+        blankNodeCounter: inout Int
+    ) throws -> (term: RDFTerm, quads: [RDFQuad])? {
+        switch value {
+        case .string(let text):
+            return (.literal(value: text, datatype: nil), [])
+        case .unsigned(let number):
+            return (
+                .literal(value: String(number), datatype: PinnedJSONLDTermRegistry.xsdInteger),
+                []
+            )
+        case .number(let number):
+            let literal = try jsonNumberLiteral(number, error: error)
+            return (.literal(value: literal.value, datatype: literal.datatype), [])
+        case .bool(let value):
+            return (
+                .literal(
+                    value: value ? "true" : "false",
+                    datatype: PinnedJSONLDTermRegistry.xsdBoolean
+                ),
+                []
+            )
+        case .null:
+            return nil
+        case .array:
+            throw error
+        case .object(let object):
+            if let list = object["@list"] {
+                guard object.keys.allSatisfy({ $0 == "@list" }) else {
+                    throw error
+                }
+                let values: [SupportedJSONLDValue]
+                switch list {
+                case .array(let array):
+                    values = array
+                default:
+                    values = [list]
+                }
+                return try genericListTerm(
+                    values,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                )
+            }
+            if let id = object["@id"] {
+                return try genericNodeObjectTerm(
+                    object,
+                    id: id,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                )
+            }
+            if let value = object["@value"] {
+                guard let term = try genericValueObjectTerm(
+                    object,
+                    value: value,
+                    error: error
+                ) else {
+                    return nil
+                }
+                return (term, [])
+            }
+            let nestedSubject = RDFTerm.blank("\(genericBlankNodePrefix)\(blankNodeCounter)")
+            blankNodeCounter += 1
+            var quads: [RDFQuad] = []
+            for key in object.keys.sorted() {
+                guard let value = object[key],
+                      let nestedQuads = try genericAbsoluteIRIQuads(
+                        key: key,
+                        value: value,
+                        subject: nestedSubject,
+                        error: error,
+                        blankNodeCounter: &blankNodeCounter
+                      ) else {
+                    throw error
+                }
+                quads.append(contentsOf: nestedQuads)
+            }
+            return (nestedSubject, quads)
+        }
+    }
+
+    private static func genericNodeObjectTerm(
+        _ object: [String: SupportedJSONLDValue],
+        id: SupportedJSONLDValue,
+        error: CADMVInternalError,
+        blankNodeCounter: inout Int
+    ) throws -> (term: RDFTerm, quads: [RDFQuad]) {
+        guard object["@value"] == nil,
+              case .string(let idValue) = id,
+              try isSafeIRI(idValue, error: error) else {
+            throw error
+        }
+
+        let nestedSubject = RDFTerm.iri(idValue)
+        var quads: [RDFQuad] = []
+        for key in object.keys.sorted() where key != "@id" {
+            guard let value = object[key],
+                  let nestedQuads = try genericAbsoluteIRIQuads(
+                    key: key,
+                    value: value,
+                    subject: nestedSubject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                  ) else {
+                throw error
+            }
+            quads.append(contentsOf: nestedQuads)
+        }
+        return (nestedSubject, quads)
+    }
+
     private static func genericValueObjectQuads(
         predicate: String,
         object: [String: SupportedJSONLDValue],
@@ -316,12 +515,25 @@ enum SupportedJSONLDRDFTerms {
         subject: RDFTerm,
         error: CADMVInternalError
     ) throws -> [RDFQuad] {
+        guard let term = try genericValueObjectTerm(object, value: value, error: error) else {
+            return []
+        }
+        return [
+            RDFQuad(subject: subject, predicate: predicate, object: term)
+        ]
+    }
+
+    private static func genericValueObjectTerm(
+        _ object: [String: SupportedJSONLDValue],
+        value: SupportedJSONLDValue,
+        error: CADMVInternalError
+    ) throws -> RDFTerm? {
         guard object["@id"] == nil,
               object.keys.allSatisfy({ $0 == "@value" || $0 == "@type" || $0 == "@language" }) else {
             throw error
         }
         if case .null = value {
-            return []
+            return nil
         }
         guard !(object["@type"] != nil && object["@language"] != nil) else {
             throw error
@@ -333,14 +545,7 @@ enum SupportedJSONLDRDFTerms {
                   isSafeLanguageTag(languageValue) else {
                 throw error
             }
-            return [
-                languageLiteralQuad(
-                    subject: subject,
-                    predicate: predicate,
-                    value: text,
-                    language: languageValue.lowercased()
-                )
-            ]
+            return .languageLiteral(value: text, language: languageValue.lowercased())
         }
 
         let literal = try genericLiteral(value, error: error)
@@ -349,23 +554,9 @@ enum SupportedJSONLDRDFTerms {
                   try isSafeIRI(datatype, error: error) else {
                 throw error
             }
-            return [
-                literalQuad(
-                    subject: subject,
-                    predicate: predicate,
-                    value: literal.value,
-                    datatype: datatype
-                )
-            ]
+            return .literal(value: literal.value, datatype: datatype)
         }
-        return [
-            literalQuad(
-                subject: subject,
-                predicate: predicate,
-                value: literal.value,
-                datatype: literal.datatype
-            )
-        ]
+        return .literal(value: literal.value, datatype: literal.datatype)
     }
 
     private static func genericLiteral(

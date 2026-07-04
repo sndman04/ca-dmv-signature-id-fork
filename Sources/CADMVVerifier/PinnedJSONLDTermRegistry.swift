@@ -3,6 +3,9 @@ enum PinnedJSONLDTermRegistry {
     static let vcBarcodesV1Context = "https://w3id.org/vc-barcodes/v1"
 
     static let rdfType = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
+    static let rdfFirst = "http://www.w3.org/1999/02/22-rdf-syntax-ns#first"
+    static let rdfRest = "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest"
+    static let rdfNil = "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"
     static let xsdDateTime = "http://www.w3.org/2001/XMLSchema#dateTime"
     static let xsdInteger = "http://www.w3.org/2001/XMLSchema#integer"
     static let xsdBoolean = "http://www.w3.org/2001/XMLSchema#boolean"
