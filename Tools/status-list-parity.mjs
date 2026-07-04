@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {DataIntegrityProof}
   from '../References/cadmv-dlid-verifier-sdk/node_modules/@digitalbazaar/data-integrity/lib/index.js';
@@ -168,21 +169,49 @@ let failed = false;
 
 for(const fixture of fixtures) {
   const payload = JSON.stringify(fixture.credential);
-  const jsVerifyDataHex = await jsStatusListVerifyDataHex(fixture.credential);
-  const swift = runJSON('swift', [
+  const jsParts = await jsStatusListCanonicalParts(fixture.credential);
+  const swiftVerifyData = runJSON('swift', [
     'run',
     'CADMVVerifierOracle',
     '--status-list-verify-data'
   ], payload);
-  const swiftVerifyDataHex = swift.result.verifyDataHex;
-  const passed = jsVerifyDataHex === swiftVerifyDataHex;
+  const swiftDocument = runJSON('swift', [
+    'run',
+    'CADMVVerifierOracle',
+    '--status-list-document-nquads'
+  ], payload);
+  const swiftProof = runJSON('swift', [
+    'run',
+    'CADMVVerifierOracle',
+    '--status-list-proof-nquads'
+  ], payload);
+  const swiftParts = {
+    verifyDataHex: swiftVerifyData.result.verifyDataHex,
+    documentCanonicalNQuads: swiftDocument.result.canonicalNQuads,
+    proofCanonicalNQuads: swiftProof.result.canonicalNQuads
+  };
+  const failures = [];
+  if(jsParts.verifyDataHex !== swiftParts.verifyDataHex) {
+    failures.push('status-list verify-data mismatch');
+  }
+  if(jsParts.documentCanonicalNQuads !== swiftParts.documentCanonicalNQuads) {
+    failures.push('status-list document canonical N-Quads mismatch');
+  }
+  if(jsParts.proofCanonicalNQuads !== swiftParts.proofCanonicalNQuads) {
+    failures.push('status-list proof canonical N-Quads mismatch');
+  }
+  const passed = failures.length === 0;
   failed = failed || !passed;
   results.push({
     id: fixture.id,
-    jsVerifyDataHex,
-    swiftVerifyDataHex,
+    jsVerifyDataHex: jsParts.verifyDataHex,
+    swiftVerifyDataHex: swiftParts.verifyDataHex,
+    jsDocumentCanonicalNQuadsSHA256: sha256Hex(jsParts.documentCanonicalNQuads),
+    swiftDocumentCanonicalNQuadsSHA256: sha256Hex(swiftParts.documentCanonicalNQuads),
+    jsProofCanonicalNQuadsSHA256: sha256Hex(jsParts.proofCanonicalNQuads),
+    swiftProofCanonicalNQuadsSHA256: sha256Hex(swiftParts.proofCanonicalNQuads),
     passed,
-    failures: passed ? [] : ['status-list verify-data mismatch']
+    failures
   });
 }
 
@@ -196,7 +225,7 @@ if(failed) {
   process.exit(1);
 }
 
-async function jsStatusListVerifyDataHex(credential) {
+async function jsStatusListCanonicalParts(credential) {
   const proof = credential.proof;
   const document = structuredClone(credential);
   delete document.proof;
@@ -206,15 +235,45 @@ async function jsStatusListVerifyDataHex(credential) {
   const dataIntegrityProof = new DataIntegrityProof({
     cryptosuite: ecdsaRdfc2019Cryptosuite
   });
-  const verifyData = await ecdsaRdfc2019Cryptosuite.createVerifyData({
-    cryptosuite: ecdsaRdfc2019Cryptosuite,
-    document,
-    proof,
-    documentLoader: jld.build(),
-    dataIntegrityProof,
-    verificationMethod
+  const documentLoader = jld.build();
+  const c14nOptions = {
+    documentLoader,
+    safe: true,
+    base: null,
+    skipExpansion: false,
+    messageDigestAlgorithm: 'SHA-256'
+  };
+  const proofDocument = {
+    '@context': document['@context'],
+    ...proof
+  };
+  dataIntegrityProof.ensureSuiteContext({
+    document: proofDocument,
+    addSuiteContext: true
   });
-  return Buffer.from(verifyData).toString('hex');
+  delete proofDocument.proofValue;
+  const [verifyData, documentCanonicalNQuads, proofCanonicalNQuads] =
+    await Promise.all([
+      ecdsaRdfc2019Cryptosuite.createVerifyData({
+        cryptosuite: ecdsaRdfc2019Cryptosuite,
+        document,
+        proof,
+        documentLoader,
+        dataIntegrityProof,
+        verificationMethod
+      }),
+      ecdsaRdfc2019Cryptosuite.canonize(document, c14nOptions),
+      ecdsaRdfc2019Cryptosuite.canonize(proofDocument, c14nOptions)
+    ]);
+  return {
+    verifyDataHex: Buffer.from(verifyData).toString('hex'),
+    documentCanonicalNQuads,
+    proofCanonicalNQuads
+  };
+}
+
+function sha256Hex(value) {
+  return createHash('sha256').update(value, 'utf8').digest('hex');
 }
 
 function runJSON(command, args, input) {
