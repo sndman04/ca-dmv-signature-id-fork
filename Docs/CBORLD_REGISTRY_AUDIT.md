@@ -112,4 +112,4 @@ Current parity checks:
 
 Current known gap:
 
-- `unknown-ignorable-cborld-values` is decoded into preserved JSON-LD state for JS-accepted text-key fields. Safe absolute-IRI extensions are canonicalized generically, but compact unknown terms and non-integer JSON numbers still require standards-grade JSON-LD/RDF canonicalization before Swift can safely match JS acceptance of those signed fields.
+- `unknown-ignorable-cborld-values` is decoded into preserved JSON-LD state for JS-accepted text-key fields. Safe absolute-IRI extensions are canonicalized generically, but compact unknown terms still require standards-grade JSON-LD/RDF canonicalization before Swift can safely match JS acceptance of those signed fields.

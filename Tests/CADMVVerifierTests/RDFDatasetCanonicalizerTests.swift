@@ -199,7 +199,28 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         """)
     }
 
-    func testVCBJSONLDConverterRejectsCompactUnsafeAndDecimalExtensionTerms() throws {
+    func testVCBJSONLDConverterCanonicalizesJSONNumberExtensionTerms() throws {
+        let nquads = try VCBJSONLDRDFExpander.canonicalNQuads(vcbCredential(
+            credentialStatus: nil,
+            additionalProperties: [
+                "https://example.invalid/terms/decimal": .number("7.5"),
+                "https://example.invalid/terms/exponent": .number("1.2e-7"),
+                "https://example.invalid/terms/negativeInteger": .number("-1")
+            ]
+        ))
+
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/decimal> \"7.5E0\"^^<http://www.w3.org/2001/XMLSchema#double>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/exponent> \"1.2E-7\"^^<http://www.w3.org/2001/XMLSchema#double>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/negativeInteger> \"-1\"^^<http://www.w3.org/2001/XMLSchema#integer>"
+        ))
+    }
+
+    func testVCBJSONLDConverterRejectsCompactAndUnsafeExtensionTerms() throws {
         var compactTermDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
             credentialStatus: nil
         ))
@@ -218,12 +239,12 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
         }
 
-        var numberDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
+        var malformedNumberDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
             credentialStatus: nil
         ))
-        numberDocument["https://example.invalid/terms/decimal"] = .number("7.5")
+        malformedNumberDocument["https://example.invalid/terms/number"] = .number("not-a-number")
 
-        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: numberDocument)) { error in
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: malformedNumberDocument)) { error in
             XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
         }
     }

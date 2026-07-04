@@ -117,8 +117,16 @@ enum SupportedJSONLDRDFTerms {
                     datatype: PinnedJSONLDTermRegistry.xsdInteger
                 )
             ]
-        case .number:
-            throw error
+        case .number(let number):
+            let literal = try jsonNumberLiteral(number, error: error)
+            return [
+                literalQuad(
+                    subject: subject,
+                    predicate: predicate,
+                    value: literal.value,
+                    datatype: literal.datatype
+                )
+            ]
         case .bool(let value):
             return [
                 literalQuad(
@@ -183,5 +191,101 @@ enum SupportedJSONLDRDFTerms {
             }
         }
         return true
+    }
+
+    private static func jsonNumberLiteral(
+        _ value: String,
+        error: CADMVInternalError
+    ) throws -> (value: String, datatype: String) {
+        let parsed = try parseJSONNumber(value, error: error)
+        if parsed.fractionalDigits == 0 {
+            let sign = parsed.isNegative ? "-" : ""
+            return ("\(sign)\(parsed.digits)", PinnedJSONLDTermRegistry.xsdInteger)
+        }
+        let exponent = parsed.digits.count - 1 - parsed.fractionalDigits
+        var mantissaDigits = parsed.digits
+        while mantissaDigits.count > 1 && mantissaDigits.last == "0" {
+            mantissaDigits.removeLast()
+        }
+        let mantissa: String
+        if mantissaDigits.count == 1 {
+            mantissa = "\(mantissaDigits).0"
+        } else {
+            let index = mantissaDigits.index(after: mantissaDigits.startIndex)
+            mantissa = "\(mantissaDigits[..<index]).\(mantissaDigits[index...])"
+        }
+        let sign = parsed.isNegative ? "-" : ""
+        return (
+            "\(sign)\(mantissa)E\(exponent)",
+            PinnedJSONLDTermRegistry.xsdDouble
+        )
+    }
+
+    private static func parseJSONNumber(
+        _ value: String,
+        error: CADMVInternalError
+    ) throws -> (isNegative: Bool, digits: String, fractionalDigits: Int) {
+        guard !value.isEmpty else {
+            throw error
+        }
+
+        let parts = value.split(
+            omittingEmptySubsequences: false,
+            whereSeparator: { $0 == "e" || $0 == "E" }
+        )
+        guard parts.count <= 2 else {
+            throw error
+        }
+
+        let exponent = try parts.count == 2 ? parseSignedInteger(String(parts[1]), error: error) : 0
+        var coefficient = String(parts[0])
+        let isNegative = coefficient.first == "-"
+        if isNegative || coefficient.first == "+" {
+            coefficient.removeFirst()
+        }
+        guard !coefficient.isEmpty else {
+            throw error
+        }
+
+        let coefficientParts = coefficient.split(separator: ".", omittingEmptySubsequences: false)
+        guard coefficientParts.count <= 2 else {
+            throw error
+        }
+        let integerPart = String(coefficientParts[0])
+        let fractionPart = coefficientParts.count == 2 ? String(coefficientParts[1]) : ""
+        guard !integerPart.isEmpty || !fractionPart.isEmpty,
+              integerPart.allSatisfy({ $0.isNumber }),
+              fractionPart.allSatisfy({ $0.isNumber }) else {
+            throw error
+        }
+
+        var digits = integerPart + fractionPart
+        while digits.first == "0" && digits.count > 1 {
+            digits.removeFirst()
+        }
+        if digits.allSatisfy({ $0 == "0" }) {
+            return (false, "0", 0)
+        }
+
+        var fractionalDigits = fractionPart.count - exponent
+        while fractionalDigits > 0 && digits.last == "0" {
+            digits.removeLast()
+            fractionalDigits -= 1
+        }
+        if fractionalDigits < 0 {
+            digits += String(repeating: "0", count: 0 - fractionalDigits)
+            fractionalDigits = 0
+        }
+        return (isNegative, digits, fractionalDigits)
+    }
+
+    private static func parseSignedInteger(
+        _ value: String,
+        error: CADMVInternalError
+    ) throws -> Int {
+        guard !value.isEmpty, let parsed = Int(value) else {
+            throw error
+        }
+        return parsed
     }
 }

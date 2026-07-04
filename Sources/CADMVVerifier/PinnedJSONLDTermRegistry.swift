@@ -6,6 +6,7 @@ enum PinnedJSONLDTermRegistry {
     static let xsdDateTime = "http://www.w3.org/2001/XMLSchema#dateTime"
     static let xsdInteger = "http://www.w3.org/2001/XMLSchema#integer"
     static let xsdBoolean = "http://www.w3.org/2001/XMLSchema#boolean"
+    static let xsdDouble = "http://www.w3.org/2001/XMLSchema#double"
     static let dctermsCreated = "http://purl.org/dc/terms/created"
 
     private static let vc = "https://www.w3.org/2018/credentials#"

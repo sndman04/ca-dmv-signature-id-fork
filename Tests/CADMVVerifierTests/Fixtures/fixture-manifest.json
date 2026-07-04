@@ -170,7 +170,7 @@
       "expectedPublicResult": "varies",
       "expectedFirstFailureStage": "varies",
       "categories": ["unknown-ignorable-cborld-values"],
-      "gapReason": "JS characterization is recorded in Tools/cborld-unknown-field-characterization.mjs. Swift preserves JS-accepted text-encoded unknown signed fields internally and now canonicalizes safe absolute-IRI extensions, but compact unknown terms and non-integer JSON numbers still need final standards-grade coverage before this can move out of documented-gap status."
+      "gapReason": "JS characterization is recorded in Tools/cborld-unknown-field-characterization.mjs. Swift preserves JS-accepted text-encoded unknown signed fields internally and now canonicalizes safe absolute-IRI extensions, but compact unknown terms still need final standards-grade coverage before this can move out of documented-gap status."
     }
   ]
 }
