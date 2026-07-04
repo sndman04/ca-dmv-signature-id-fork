@@ -70,6 +70,10 @@ const proofConfig = {
     '@value': 'Proof direction',
     '@direction': 'rtl'
   },
+  'https://example.invalid/proof/jsonValue': {
+    '@value': 'Proof JSON string',
+    '@type': '@json'
+  },
   'https://example.invalid/proof/setValue': {
     '@index': 'proof-set-index',
     '@set': [

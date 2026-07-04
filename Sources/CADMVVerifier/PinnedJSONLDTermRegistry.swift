@@ -6,6 +6,7 @@ enum PinnedJSONLDTermRegistry {
     static let rdfFirst = "http://www.w3.org/1999/02/22-rdf-syntax-ns#first"
     static let rdfRest = "http://www.w3.org/1999/02/22-rdf-syntax-ns#rest"
     static let rdfNil = "http://www.w3.org/1999/02/22-rdf-syntax-ns#nil"
+    static let rdfJSON = "http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON"
     static let xsdDateTime = "http://www.w3.org/2001/XMLSchema#dateTime"
     static let xsdInteger = "http://www.w3.org/2001/XMLSchema#integer"
     static let xsdBoolean = "http://www.w3.org/2001/XMLSchema#boolean"

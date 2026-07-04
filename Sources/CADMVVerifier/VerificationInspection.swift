@@ -231,6 +231,30 @@ extension CADMVVerifier {
         ).cadmvHexString
     }
 
+    public static func statusListDocumentCanonicalNQuadsForSelfTest(
+        jsonData: Data
+    ) throws -> String {
+        try StatusListJSONLDRDFExpander.canonicalNQuads(
+            DMVStatusListCredentialParser.parse(jsonData)
+        )
+    }
+
+    public static func statusListProofCanonicalNQuadsForSelfTest(
+        jsonData: Data
+    ) throws -> String {
+        let credential = try DMVStatusListCredentialParser.parse(jsonData)
+        return try DataIntegrityProofCanonicalizer.canonicalNQuads(
+            contexts: ["https://www.w3.org/ns/credentials/v2"],
+            type: credential.proof.type,
+            created: credential.proof.created,
+            expires: nil,
+            cryptosuite: credential.proof.cryptosuite,
+            proofPurpose: credential.proof.proofPurpose,
+            verificationMethod: credential.proof.verificationMethod,
+            additionalProperties: credential.proof.additionalProperties
+        )
+    }
+
     public static func vcbDocumentCanonicalNQuadsForSelfTest(jsonData: Data) throws -> String {
         let json = try JSONSerialization.jsonObject(with: jsonData)
         guard let document = json as? [String: Any] else {
@@ -311,8 +335,6 @@ extension CADMVVerifier {
         switch value {
         case let text as String:
             return .string(text)
-        case let bool as Bool:
-            return .bool(bool)
         case let number as NSNumber:
             if CFGetTypeID(number) == CFBooleanGetTypeID() {
                 return .bool(number.boolValue)
@@ -323,6 +345,8 @@ extension CADMVVerifier {
                 return .unsigned(unsigned)
             }
             return .number(number.stringValue)
+        case let bool as Bool:
+            return .bool(bool)
         case let array as [Any]:
             return .array(try array.map(supportedJSONLDValue(from:)))
         case let object as [String: Any]:

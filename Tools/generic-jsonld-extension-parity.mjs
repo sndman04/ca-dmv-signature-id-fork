@@ -67,6 +67,14 @@ const extensionDocument = {
     '@index': 'typed-value-index',
     '@type': 'https://example.invalid/types/Custom'
   },
+  'https://example.invalid/terms/jsonValue': {
+    '@value': {
+      b: 2,
+      a: [true, null, 'x']
+    },
+    '@index': 'json-value-index',
+    '@type': '@json'
+  },
   'https://example.invalid/terms/languageValue': {
     '@value': 'Hello',
     '@language': 'en-US'

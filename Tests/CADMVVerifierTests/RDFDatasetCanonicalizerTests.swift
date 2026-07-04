@@ -234,6 +234,18 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@index": .string("typed-value-index"),
                     "@type": .string("https://example.invalid/types/Custom")
                 ]),
+                "https://example.invalid/terms/jsonValue": .object([
+                    "@value": .object([
+                        "b": .unsigned(2),
+                        "a": .array([
+                            .bool(true),
+                            .null,
+                            .string("x")
+                        ])
+                    ]),
+                    "@index": .string("json-value-index"),
+                    "@type": .string("@json")
+                ]),
                 "https://example.invalid/terms/languageValue": .object([
                     "@value": .string("Hello"),
                     "@language": .string("EN-US")
@@ -292,6 +304,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/typedValue> \"typed\"^^<https://example.invalid/types/Custom>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/jsonValue> \"{\\\"a\\\":[true,null,\\\"x\\\"],\\\"b\\\":2}\"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON>"
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/languageValue> \"Hello\"@en-us"
@@ -527,6 +542,19 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ), mode: .uat)) { error in
             XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
         }
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(vcbCredential(
+            additionalProperties: [
+                "https://example.invalid/terms/jsonValue": .object([
+                    "@value": .object([
+                        "a": .unsigned(1)
+                    ]),
+                    "@type": .string("http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON")
+                ])
+            ]
+        ), mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
     }
 
     func testVCBJSONLDConverterRejectsCompactAndUnsafeExtensionTerms() throws {
@@ -697,6 +725,43 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssert(nquads.contains("\"2030-01-01T00:00:00Z\"^^<http://www.w3.org/2001/XMLSchema#dateTime>"))
     }
 
+    func testStatusListJSONParserPreservesNumericOneInExtensionJSONValues() throws {
+        let json = """
+        {
+          "@context": ["https://www.w3.org/ns/credentials/v2"],
+          "id": "https://example.com/status/1",
+          "type": ["VerifiableCredential", "BitstringStatusListCredential"],
+          "issuer": "did:web:credentials.dmv.ca.gov",
+          "validFrom": "2026-01-01T00:00:00Z",
+          "credentialSubject": {
+            "id": "https://example.com/status/1#list",
+            "type": "BitstringStatusList",
+            "encodedList": "uH4sIAAAAAAAAA2NhAAD717UlAgAAAA",
+            "statusPurpose": "revocation",
+            "https://example.invalid/terms/jsonValue": {
+              "@value": [2, 1],
+              "@type": "@json"
+            }
+          },
+          "proof": {
+            "type": "DataIntegrityProof",
+            "created": "2026-01-01T00:00:00Z",
+            "verificationMethod": "did:web:credentials.dmv.ca.gov#vm-status-1",
+            "cryptosuite": "ecdsa-rdfc-2019",
+            "proofPurpose": "assertionMethod",
+            "proofValue": "zLdp"
+          }
+        }
+        """
+        let credential = try DMVStatusListCredentialParser.parse(Data(json.utf8))
+        let nquads = try StatusListJSONLDRDFExpander.canonicalNQuads(credential)
+
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/jsonValue> \"[2,1]\"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON>"
+        ))
+        XCTAssertFalse(nquads.contains("[2,true]"))
+    }
+
     func testStatusListJSONLDConverterIncludesAbsoluteIRIExtensionTerms() throws {
         let credential = statusListCredential(
             additionalProperties: [
@@ -710,6 +775,13 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 "https://example.invalid/terms/statusDirectedValue": .object([
                     "@value": .string("Status direction"),
                     "@direction": .string("ltr")
+                ]),
+                "https://example.invalid/terms/statusJSONValue": .object([
+                    "@value": .array([
+                        .unsigned(2),
+                        .unsigned(1)
+                    ]),
+                    "@type": .string("@json")
                 ]),
                 "https://example.invalid/terms/subjectNode": .object([
                     "@id": .string("https://example.invalid/resources/status-subject-node"),
@@ -744,6 +816,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/statusDirectedValue> \"Status direction\"^^<https://www.w3.org/ns/i18n#_ltr>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/statusJSONValue> \"[2,1]\"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON>"
         ))
         XCTAssert(nquads.contains(
             "<http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/StatusRootNode>"
@@ -864,6 +939,10 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@value": .string("Proof direction"),
                     "@direction": .string("rtl")
                 ]),
+                "https://example.invalid/terms/proofJSONValue": .object([
+                    "@value": .string("Proof JSON string"),
+                    "@type": .string("@json")
+                ]),
                 "https://example.invalid/terms/proofNode": .object([
                     "@id": .string("https://example.invalid/resources/proof-node"),
                     "@index": .string("proof-node-index"),
@@ -896,6 +975,9 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/proofDirectedValue> \"Proof direction\"^^<https://www.w3.org/ns/i18n#_rtl>"
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/proofJSONValue> \"\\\"Proof JSON string\\\"\"^^<http://www.w3.org/1999/02/22-rdf-syntax-ns#JSON>"
         ))
         XCTAssert(nquads.contains(
             "<https://example.invalid/resources/proof-node> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <https://example.invalid/types/ProofNode>"

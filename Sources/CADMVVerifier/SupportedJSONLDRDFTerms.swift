@@ -1,3 +1,5 @@
+import Foundation
+
 enum SupportedJSONLDRDFTerms {
     private static let genericBlankNodePrefix = "jsonldGeneric"
 
@@ -832,14 +834,23 @@ enum SupportedJSONLDRDFTerms {
             )
         }
 
-        let literal = try genericLiteral(value, error: error)
         if let type = object["@type"] {
-            guard case .string(let datatype) = type,
-                  try isSafeIRI(datatype, error: error) else {
+            guard case .string(let datatype) = type else {
                 throw error
             }
+            if datatype == "@json" {
+                return .literal(
+                    value: try canonicalJSONString(value, error: error),
+                    datatype: PinnedJSONLDTermRegistry.rdfJSON
+                )
+            }
+            guard try isSafeIRI(datatype, error: error) else {
+                throw error
+            }
+            let literal = try genericLiteral(value, error: error)
             return .literal(value: literal.value, datatype: datatype)
         }
+        let literal = try genericLiteral(value, error: error)
         return .literal(value: literal.value, datatype: literal.datatype)
     }
 
@@ -874,6 +885,65 @@ enum SupportedJSONLDRDFTerms {
         default:
             throw error
         }
+    }
+
+    private static func canonicalJSONString(
+        _ value: SupportedJSONLDValue,
+        error: CADMVInternalError
+    ) throws -> String {
+        switch value {
+        case .string(let text):
+            return "\"\(jsonEscapedString(text))\""
+        case .unsigned(let number):
+            return String(number)
+        case .number(let number):
+            _ = try parseJSONNumber(number, error: error)
+            return number
+        case .bool(let value):
+            return value ? "true" : "false"
+        case .null:
+            return "null"
+        case .array(let values):
+            let encoded = try values.map { value in
+                try canonicalJSONString(value, error: error)
+            }
+            return "[\(encoded.joined(separator: ","))]"
+        case .object(let object):
+            let entries = try object.keys.sorted().map { key in
+                guard let value = object[key] else {
+                    throw error
+                }
+                return "\"\(jsonEscapedString(key))\":\(try canonicalJSONString(value, error: error))"
+            }
+            return "{\(entries.joined(separator: ","))}"
+        }
+    }
+
+    private static func jsonEscapedString(_ value: String) -> String {
+        var escaped = ""
+        for scalar in value.unicodeScalars {
+            switch scalar.value {
+            case 0x08:
+                escaped += "\\b"
+            case 0x09:
+                escaped += "\\t"
+            case 0x0a:
+                escaped += "\\n"
+            case 0x0c:
+                escaped += "\\f"
+            case 0x0d:
+                escaped += "\\r"
+            case 0x22:
+                escaped += "\\\""
+            case 0x5c:
+                escaped += "\\\\"
+            case 0x00..<0x20:
+                escaped += String(format: "\\u%04x", scalar.value)
+            default:
+                escaped.unicodeScalars.append(scalar)
+            }
+        }
+        return escaped
     }
 
     private static func genericReverseQuads(

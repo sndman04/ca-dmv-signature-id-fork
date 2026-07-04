@@ -242,8 +242,6 @@ enum DMVStatusListCredentialParser {
         switch value {
         case let text as String:
             return .string(text)
-        case let bool as Bool:
-            return .bool(bool)
         case let number as NSNumber:
             if CFGetTypeID(number) == CFBooleanGetTypeID() {
                 return .bool(number.boolValue)
@@ -254,6 +252,8 @@ enum DMVStatusListCredentialParser {
                 return .unsigned(unsigned)
             }
             return .number(number.stringValue)
+        case let bool as Bool:
+            return .bool(bool)
         case let array as [Any]:
             return .array(try array.map(supportedJSONLDValue(from:)))
         case let object as [String: Any]:

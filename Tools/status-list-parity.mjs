@@ -82,6 +82,10 @@ const extensionFixture = {
       '@value': 'Status direction',
       '@direction': 'ltr'
     },
+    'https://example.test/status/statusJSONValue': {
+      '@value': [2, 1],
+      '@type': '@json'
+    },
     'https://example.test/status/subjectNode': {
       '@id': 'https://example.test/status/subject-node',
       '@index': 'subject-node-index',
@@ -145,6 +149,10 @@ const extensionFixture = {
     'https://example.test/status/proofDirectedValue': {
       '@value': 'Proof direction',
       '@direction': 'rtl'
+    },
+    'https://example.test/status/proofJSONValue': {
+      '@value': {b: 2, a: 1},
+      '@type': '@json'
     }
   }
 };
