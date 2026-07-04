@@ -654,26 +654,31 @@ The long-term project is complete only when all of these are true:
 
 ## Immediate Next Build Tasks
 
-1. Add an internal `DataIntegrityVerificationEngine` boundary.
-2. Add a JS reference runner that accepts stdin payloads and emits privacy-minimized JSON.
-3. Add parity test scaffolding that can run Swift and JS side by side.
-4. Add a redacted regression record for the current production parity mismatch.
-5. Research canonicalization implementation options and document license/platform tradeoffs.
-6. Audit CBOR-LD registry/model parity against the official SDK.
-7. Choose the temporary bridge strategy for development and CI only:
-   - reference JS engine for correctness oracle now, or
-   - continue defaulting to Swift with a documented known parity risk.
-8. Begin replacing handcrafted VCB canonicalization before expanding feature coverage.
-9. Define release gates that require no JS runtime dependency in the final default verifier.
-10. Add a security-exception record format for any intentional deviation from JS-covered behavior.
+1. Generate a committed conformance report from the existing privacy-safe gates:
+   - official UAT fixture parity
+   - generated signature parity
+   - status-list verify-data parity
+   - generic VCB document extension canonical N-Quads parity
+   - generic proof extension canonical N-Quads parity
+   - W3C RDFC subset results
+2. Extend status-list parity diagnostics to compare document and proof canonical N-Quads directly, not only final verify-data hashes, using the existing `CADMVVerifierOracle` status-list N-Quads commands.
+3. Characterize remaining JSON-LD 1.1 behavior against the selected JS SDK baseline and classify each case as:
+   - implemented in the native replacement
+   - intentionally fail-closed because it cannot appear in the supported DMV profile
+   - blocked pending the final standards-grade/native-library engine
+   - approved security exception
+4. Prototype the selected final canonicalization engine behind `JSONLDCanonicalizationEngine` without changing the public default verifier until it passes the current parity corpus.
+5. Add an engine differential gate that runs supported-profile canonicalization and the candidate final engine side by side on all committed/generated non-PII fixtures.
+6. Replace `SupportedProfileJSONLDCanonicalizationEngine` as the default only after the candidate engine produces reference-equivalent canonical N-Quads or verify-data for every covered fixture.
+7. Move the supported-profile graph builder behind test-only regression SPI once the final engine is default, then remove it after one release cycle if no parity regressions appear.
+8. Generate and review the dependency/license/threat-model documents required by `Docs/CANONICALIZATION_ENGINE_DECISION.md` if the final engine uses any external native library or bridge.
+9. Publish the final conformance report with the selected official SDK baseline version, supported cases, skipped cases, local-only private test policy, and any approved security exceptions.
+10. Remove release-blocking caveats from public docs only after handwritten canonical N-Quads are no longer reachable from public verification.
 
 ## Open Questions
 
-- Which platforms must support the fully native canonicalization engine at launch?
-- Is a JavaScript bridge acceptable as a temporary production verifier during migration, or only as a CI oracle?
-- Should the package expose a verifier-engine selection option, or keep that internal?
+- Which package platforms must support the fully native canonicalization engine at launch if an external native dependency is selected beyond the current Swift-only target matrix?
 - What is the policy for local opt-in testing with real scans that cannot be committed?
 - Which canonicalization implementation path has the best license, maintenance, and platform profile?
-- Should unknown standards-valid signed fields be preserved generically through canonicalization, or should the verifier continue to fail closed unless each field is explicitly policy-approved?
 - What exact upstream SDK version becomes the first long-term parity baseline?
 - Who approves security exceptions when Swift behavior intentionally differs from the JS SDK?
