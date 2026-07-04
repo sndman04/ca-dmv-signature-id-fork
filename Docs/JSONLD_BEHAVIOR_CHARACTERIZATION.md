@@ -19,6 +19,8 @@ The gate is intentionally classification-based:
 | `implemented-scalar-set` | `implemented` | Scalar `@set` values are canonicalized as single values in parity with JS. |
 | `implemented-reverse-blank-node-subject` | `implemented` | Reverse properties can target generated blank-node subjects when their nested data is otherwise supported. |
 | `implemented-included-blank-node` | `implemented` | `@included` nodes without explicit `@id` are canonicalized through RDFC blank-node labeling. |
+| `implemented-nest-object` | `implemented` | `@nest` object blocks are flattened into the containing node in parity with JS. |
+| `implemented-empty-list` | `implemented` | Empty `@list` values canonicalize to `rdf:nil` in parity with JS. |
 | `fail-closed-blank-node-id` | `implemented` | Explicit blank-node identifiers with validated local labels are supported by the generic extension path and canonicalized through RDFC labels. |
 | `fail-closed-relative-id-node` | `bothReject` | Relative `@id` values are rejected by JS safe mode and Swift. |
 | `fail-closed-invalid-blank-node-id` | `bothReject` | Invalid explicit blank-node labels are rejected by JS safe mode and Swift. |

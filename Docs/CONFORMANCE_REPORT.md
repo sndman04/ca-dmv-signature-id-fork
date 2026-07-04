@@ -1,7 +1,7 @@
 # Conformance Report
 
-Generated: 2026-07-04T03:56:31.408Z
-Repository revision: `2fc80b3`
+Generated: 2026-07-04T04:02:19.190Z
+Repository revision: `5b54890`
 Reference SDK: `cadmv-dlid-verifier-sdk@0.0.1-0`
 
 This report is generated from committed non-PII fixtures and synthetic cases. It does not include raw PDF417 payloads, decoded identity fields, or real private scan data.
@@ -20,7 +20,7 @@ Overall result: PASS
 | Generic VCB JSON-LD Extension N-Quads Parity | `node Tools/generic-jsonld-extension-parity.mjs` | 1 | PASS |
 | Generic Proof JSON-LD Extension N-Quads Parity | `node Tools/generic-proof-extension-parity.mjs` | 1 | PASS |
 | JSON-LD Extension Matrix N-Quads Parity | `node Tools/jsonld-extension-matrix-parity.mjs` | 48 | PASS |
-| JSON-LD 1.1 Behavior Characterization | `node Tools/jsonld-behavior-characterization.mjs` | 17 | PASS |
+| JSON-LD 1.1 Behavior Characterization | `node Tools/jsonld-behavior-characterization.mjs` | 19 | PASS |
 | Canonicalization Engine Differential | `node Tools/canonicalization-engine-differential.mjs` | 9 | PASS |
 | W3C RDFC-1.0 Conformance Subset | `Tools/swift-test.sh --filter RDFDatasetCanonicalizerTests/testW3CRDFC10ConformanceSubset` | 1 | PASS |
 | W3C RDFC-1.0 Issued-Identifier Map Subset | `Tools/swift-test.sh --filter RDFDatasetCanonicalizerTests/testW3CRDFC10IssuedIdentifierMapSubset` | 1 | PASS |
@@ -32,7 +32,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 2
-- Duration: 1783 ms
+- Duration: 1661 ms
 - Case IDs:
   - `official-valid-uat`
   - `official-invalid-uat`
@@ -41,7 +41,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 8
-- Duration: 5808 ms
+- Duration: 5810 ms
 - Case IDs:
   - `generated-valid-z-signature`
   - `generated-valid-u-signature`
@@ -56,7 +56,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 2477 ms
+- Duration: 2518 ms
 - Case IDs:
   - `mutation-invalid-vcb-base64`
   - `mutation-truncated-vcb-cbor`
@@ -66,7 +66,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 4503 ms
+- Duration: 4194 ms
 - Case IDs:
   - `synthetic-status-list-base`
   - `synthetic-status-list-optional-fields`
@@ -80,7 +80,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 24
-- Duration: 35357 ms
+- Duration: 34272 ms
 - Case IDs:
   - `status-list-string-literal`
   - `status-list-integer-literal`
@@ -136,7 +136,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 541 ms
+- Duration: 524 ms
 - Case IDs:
   - `generic-jsonld-extension-values`
 
@@ -144,7 +144,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 540 ms
+- Duration: 529 ms
 - Case IDs:
   - `generic-proof-extension-values`
 
@@ -152,7 +152,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 48
-- Duration: 23437 ms
+- Duration: 22637 ms
 - Case IDs:
   - `vcb-document-string-literal`
   - `proof-string-literal`
@@ -255,8 +255,8 @@ Overall result: PASS
 ### JSON-LD 1.1 Behavior Characterization
 
 - Result: PASS
-- Compared cases: 17
-- Duration: 8446 ms
+- Compared cases: 19
+- Duration: 9179 ms
 - Case IDs:
   - `implemented-absolute-id-node`
   - `implemented-nested-graph`
@@ -265,6 +265,8 @@ Overall result: PASS
   - `implemented-scalar-set`
   - `implemented-reverse-blank-node-subject`
   - `implemented-included-blank-node`
+  - `implemented-nest-object`
+  - `implemented-empty-list`
   - `fail-closed-relative-id-node`
   - `fail-closed-blank-node-id`
   - `fail-closed-invalid-blank-node-id`
@@ -283,6 +285,8 @@ Overall result: PASS
   - implemented-scalar-set: implemented; JS accepted=true; Swift accepted=true
   - implemented-reverse-blank-node-subject: implemented; JS accepted=true; Swift accepted=true
   - implemented-included-blank-node: implemented; JS accepted=true; Swift accepted=true
+  - implemented-nest-object: implemented; JS accepted=true; Swift accepted=true
+  - implemented-empty-list: implemented; JS accepted=true; Swift accepted=true
   - fail-closed-relative-id-node: bothReject; JS accepted=false; Swift accepted=false
   - fail-closed-blank-node-id: implemented; JS accepted=true; Swift accepted=true
   - fail-closed-invalid-blank-node-id: bothReject; JS accepted=false; Swift accepted=false
@@ -298,7 +302,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 9
-- Duration: 8077 ms
+- Duration: 7965 ms
 - Case IDs:
   - `engine-vcb-document`
   - `engine-data-integrity-proof`
@@ -324,7 +328,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 3810 ms
+- Duration: 3832 ms
 - Case IDs:
   - `w3c-rdfc-subset`
 
@@ -332,7 +336,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 514 ms
+- Duration: 522 ms
 - Case IDs:
   - `w3c-rdfc-issued-map-subset`
 
@@ -340,7 +344,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 753 ms
+- Duration: 749 ms
 - Case IDs:
   - `w3c-rdfc-negative-clique`
 

@@ -83,6 +83,28 @@ const cases = [
     }
   },
   {
+    id: 'implemented-nest-object',
+    classification: 'implemented',
+    reason: '@nest object blocks are flattened into the containing node in parity with JS.',
+    extension: {
+      '@id': 'https://example.invalid/resources/nested-owner',
+      '@nest': {
+        'https://example.invalid/terms/nestedName': 'Nested value',
+        'https://example.invalid/terms/nestedNode': {
+          '@id': 'https://example.invalid/resources/nested-node'
+        }
+      }
+    }
+  },
+  {
+    id: 'implemented-empty-list',
+    classification: 'implemented',
+    reason: 'Empty @list values canonicalize to rdf:nil like the JS reference.',
+    extension: {
+      '@list': []
+    }
+  },
+  {
     id: 'fail-closed-relative-id-node',
     classification: 'bothReject',
     reason: 'The JS SDK safe-mode canonicalizer and Swift both reject relative @id values for this profile.',
