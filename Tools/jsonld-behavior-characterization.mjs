@@ -42,6 +42,47 @@ const cases = [
     }
   },
   {
+    id: 'implemented-scalar-list',
+    classification: 'implemented',
+    reason: 'Scalar @list values are normalized as one-item RDF lists like the JS reference.',
+    extension: {
+      '@list': 'single-list-item'
+    }
+  },
+  {
+    id: 'implemented-scalar-set',
+    classification: 'implemented',
+    reason: 'Scalar @set values are normalized as a single value like the JS reference.',
+    extension: {
+      '@set': 'single-set-item'
+    }
+  },
+  {
+    id: 'implemented-reverse-blank-node-subject',
+    classification: 'implemented',
+    reason: 'Reverse properties can target generated blank-node subjects when their nested data is otherwise supported.',
+    extension: {
+      '@reverse': {
+        'https://example.invalid/terms/reverse': {
+          'https://example.invalid/terms/name': 'Reverse blank subject'
+        }
+      }
+    }
+  },
+  {
+    id: 'implemented-included-blank-node',
+    classification: 'implemented',
+    reason: '@included nodes without explicit @id are canonicalized through the RDFC blank-node labeling path.',
+    extension: {
+      '@included': [
+        {
+          '@type': 'https://example.invalid/types/IncludedBlank',
+          'https://example.invalid/terms/name': 'Included blank'
+        }
+      ]
+    }
+  },
+  {
     id: 'fail-closed-relative-id-node',
     classification: 'bothReject',
     reason: 'The JS SDK safe-mode canonicalizer and Swift both reject relative @id values for this profile.',
@@ -57,6 +98,15 @@ const cases = [
     extension: {
       '@id': '_:explicit',
       'https://example.invalid/terms/name': 'Explicit blank'
+    }
+  },
+  {
+    id: 'fail-closed-invalid-blank-node-id',
+    classification: 'bothReject',
+    reason: 'Invalid explicit blank-node labels are rejected rather than being accepted as a signed identifier.',
+    extension: {
+      '@id': '_:invalid label',
+      'https://example.invalid/terms/name': 'Invalid blank'
     }
   },
   {
