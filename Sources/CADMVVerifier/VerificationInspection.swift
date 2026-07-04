@@ -242,6 +242,17 @@ extension CADMVVerifier {
         )
     }
 
+    public static func proofCanonicalNQuadsForSelfTest(jsonData: Data) throws -> String {
+        let json = try JSONSerialization.jsonObject(with: jsonData)
+        guard let document = json as? [String: Any] else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return try SupportedProfileJSONLDCanonicalizationEngine.shared.canonicalNQuads(
+            document: document.mapValues(supportedJSONLDValue(from:)),
+            profile: .dataIntegrityProof
+        )
+    }
+
     public static func statusListProfileDiagnosticForSelfTest(
         jsonData: Data
     ) -> CADMVStatusListProfileDiagnostic {
