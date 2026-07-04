@@ -95,7 +95,7 @@ The stdin mode emits JSON with the selected SDK baseline, mode, high-level outco
 - Tampered protected AAMVA field rejection.
 - UAT fixture rejection in production mode.
 - Status-required official UAT verification returns `.unavailable` on fixture-backed HTTP status failure.
-- Status-list checking returns `.unavailable` for status transport failures, redirect/non-2xx responses, malformed status-list credential JSON, and malformed DID documents during status-list proof-key resolution.
+- Status-list checking returns `.unavailable` for status transport failures, redirect/404/500 responses, malformed status-list credential JSON, malformed DID documents, and unsupported DID keys during status-list proof-key resolution.
 - Synthetic JS-reference Bitstring Status List `ecdsa-rdfc-2019` verification.
 - Verified revoked status-list bit maps to `.revoked`.
 - Verified clear status-list bit maps to `.verified`.

@@ -779,24 +779,29 @@ final class CADMVVerifierTests: XCTestCase {
     func testStatusListCheckerMapsStatusHTTPFailureToUnavailable() async throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential())
 
-        try await withTestNetworkHandler({ request in
-            let url = try XCTUnwrap(request.url)
-            XCTAssertEqual(url.host, "api.uat-credentials.dmv.ca.gov")
-            let response = try XCTUnwrap(HTTPURLResponse(
-                url: url,
-                statusCode: 302,
-                httpVersion: "HTTP/1.1",
-                headerFields: ["Location": "https://status.uat-credentials.dmv.ca.gov/list"]
-            ))
-            return (Data(), response)
-        }) {
-            let result = await StatusListChecker.check(
-                credential: credential,
-                mode: .uat,
-                timeoutSeconds: 0.1
-            )
+        for statusCode in [302, 404, 500] {
+            try await withTestNetworkHandler({ request in
+                let url = try XCTUnwrap(request.url)
+                XCTAssertEqual(url.host, "api.uat-credentials.dmv.ca.gov")
+                let headers = statusCode == 302
+                    ? ["Location": "https://status.uat-credentials.dmv.ca.gov/list"]
+                    : nil
+                let response = try XCTUnwrap(HTTPURLResponse(
+                    url: url,
+                    statusCode: statusCode,
+                    httpVersion: "HTTP/1.1",
+                    headerFields: headers
+                ))
+                return (Data(), response)
+            }) {
+                let result = await StatusListChecker.check(
+                    credential: credential,
+                    mode: .uat,
+                    timeoutSeconds: 0.1
+                )
 
-            XCTAssertEqual(result, .unavailable)
+                XCTAssertEqual(result, .unavailable)
+            }
         }
     }
 
@@ -841,6 +846,34 @@ final class CADMVVerifierTests: XCTestCase {
             }
             XCTAssertEqual(url.host, "uat-credentials.dmv.ca.gov")
             return (Data("{".utf8), response)
+        }) {
+            let result = await StatusListChecker.check(
+                credential: credential,
+                mode: .uat,
+                timeoutSeconds: 0.1
+            )
+
+            XCTAssertEqual(result, .unavailable)
+        }
+    }
+
+    func testStatusListCheckerMapsUnsupportedDIDKeyToUnavailable() async throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential())
+
+        try await withTestNetworkHandler({ request in
+            let url = try XCTUnwrap(request.url)
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: url,
+                statusCode: 200,
+                httpVersion: "HTTP/1.1",
+                headerFields: nil
+            ))
+
+            if url.host == "api.uat-credentials.dmv.ca.gov" {
+                return (Self.syntheticStatusListCredentialJSON, response)
+            }
+            XCTAssertEqual(url.host, "uat-credentials.dmv.ca.gov")
+            return (Self.syntheticUnsupportedKeyDIDDocumentJSON, response)
         }) {
             let result = await StatusListChecker.check(
                 credential: credential,
@@ -909,6 +942,20 @@ final class CADMVVerifierTests: XCTestCase {
         "proofPurpose": "assertionMethod",
         "proofValue": "z3KqtjbQJZNSkeufgNj2oVRg9k9fZVoP5SroahjSNghZbU9osz8sL2J4beC9gWoNTkjDn6W9FBJRirMnNt4HuXvcw"
       }
+    }
+    """.utf8)
+
+    private static let syntheticUnsupportedKeyDIDDocumentJSON = Data("""
+    {
+      "id": "did:web:uat-credentials.dmv.ca.gov",
+      "assertionMethod": [
+        {
+          "id": "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+          "controller": "did:web:uat-credentials.dmv.ca.gov",
+          "type": "JsonWebKey2020",
+          "publicKeyMultibase": "zDnaeVp3tjD8ipWSt42tBZJLCsDA9SrtYXGvLg5dL3qXtXDKP"
+        }
+      ]
     }
     """.utf8)
 }
