@@ -86,6 +86,45 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         }
     }
 
+    func testGenericJSONLDNumberNormalizationIsBounded() throws {
+        var blankNodeCounter = 0
+        let normalized = try SupportedJSONLDRDFTerms.genericAbsoluteIRIQuads(
+            key: "https://example.invalid/terms/number",
+            value: .number("1.2300e2"),
+            subject: .blank("root"),
+            error: .unsupportedVCB,
+            blankNodeCounter: &blankNodeCounter
+        )
+
+        XCTAssertEqual(normalized, [
+            RDFQuad(
+                subject: .blank("root"),
+                predicate: "https://example.invalid/terms/number",
+                object: .literal(
+                    value: "123",
+                    datatype: PinnedJSONLDTermRegistry.xsdInteger
+                )
+            )
+        ])
+
+        for number in [
+            "1e4097",
+            "1e-4097",
+            String(repeating: "1", count: 4_097)
+        ] {
+            var counter = 0
+            XCTAssertThrowsError(try SupportedJSONLDRDFTerms.genericAbsoluteIRIQuads(
+                key: "https://example.invalid/terms/number",
+                value: .number(number),
+                subject: .blank("root"),
+                error: .unsupportedVCB,
+                blankNodeCounter: &counter
+            )) { error in
+                XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+            }
+        }
+    }
+
     func testPinnedJSONLDTermRegistryMapsSupportedTerms() throws {
         XCTAssertEqual(
             try PinnedJSONLDTermRegistry.vcbTypeIRI("OpticalBarcodeCredential"),

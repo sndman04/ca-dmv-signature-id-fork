@@ -104,6 +104,7 @@ The stdin mode emits JSON with the selected SDK baseline, mode, high-level outco
 - Base64/Base64URL malformed length, alphabet, and padding rejection.
 - Base58 malformed alphabet rejection.
 - Data Integrity proofValue `z` base58btc and `u` base64url acceptance, text proofValue preservation before signature extraction, malformed/unsupported raw-signature rejection, and P-256 high-S counterpart behavior against the JS reference.
+- Generic JSON-LD extension number normalization is bounded so oversized coefficients and exponents fail closed before large allocation.
 - Generated end-to-end VCB signatures covering valid `z`, valid `u`, status-bearing credentials, validity dates, expired valid signatures, tampered proof signature, and tampered protected AAMVA field parity against the JS reference.
 - Status-list gzip output limit enforcement.
 - Malformed status-list multibase/gzip corpus rejection.

@@ -161,6 +161,7 @@ Completed Phase 4 work:
 - Expanded JS/Swift JSON-LD behavior characterization to cover scalar `@set`/`@list` values, generated blank-node reverse subjects, generated blank-node `@included` nodes, and invalid explicit blank-node label rejection.
 - Added status-list network failure coverage for status transport errors, redirect/404/500 responses, malformed status-list credential JSON, malformed DID documents, and unsupported DID keys during status-list proof-key resolution, all mapping to `.unavailable`.
 - Added Swift CBOR parser hardening coverage for oversized byte/text lengths, oversized array/map counts, unsupported indefinite-length/simple/float encodings, negative integer overflow, and trailing top-level bytes.
+- Added bounded generic JSON-LD number normalization coverage so oversized coefficients and exponents fail closed before large allocation.
 
 Completed Phase 5 work:
 

@@ -3,6 +3,7 @@ import Foundation
 enum SupportedJSONLDRDFTerms {
     private static let genericBlankNodePrefix = "jsonldGeneric"
     private static let explicitBlankNodePrefix = "jsonldExplicit:"
+    private static let maxJSONNumberMagnitude = 4_096
 
     static func iriQuad(
         subject: RDFTerm,
@@ -1477,6 +1478,10 @@ enum SupportedJSONLDRDFTerms {
         }
 
         let exponent = try parts.count == 2 ? parseSignedInteger(String(parts[1]), error: error) : 0
+        guard exponent >= -maxJSONNumberMagnitude,
+              exponent <= maxJSONNumberMagnitude else {
+            throw error
+        }
         var coefficient = String(parts[0])
         let isNegative = coefficient.first == "-"
         if isNegative || coefficient.first == "+" {
@@ -1498,6 +1503,10 @@ enum SupportedJSONLDRDFTerms {
             throw error
         }
 
+        guard integerPart.count + fractionPart.count <= maxJSONNumberMagnitude else {
+            throw error
+        }
+
         var digits = integerPart + fractionPart
         while digits.first == "0" && digits.count > 1 {
             digits.removeFirst()
@@ -1507,6 +1516,10 @@ enum SupportedJSONLDRDFTerms {
         }
 
         var fractionalDigits = fractionPart.count - exponent
+        guard fractionalDigits >= -maxJSONNumberMagnitude,
+              fractionalDigits <= maxJSONNumberMagnitude else {
+            throw error
+        }
         while fractionalDigits > 0 && digits.last == "0" {
             digits.removeLast()
             fractionalDigits -= 1
