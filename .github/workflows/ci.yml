@@ -16,6 +16,20 @@ jobs:
       - name: Show Swift version
         run: swift --version
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install reference SDK dependencies
+        working-directory: References/cadmv-dlid-verifier-sdk
+        run: pnpm install --frozen-lockfile
+
       - name: Build debug
         run: swift build
 
