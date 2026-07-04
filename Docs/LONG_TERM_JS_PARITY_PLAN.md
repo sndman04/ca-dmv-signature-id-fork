@@ -92,11 +92,11 @@ CADMVVerifier public API
 
 The Data Integrity engine should be swappable behind an internal protocol so the package can run:
 
-- `referenceJS`: official SDK-backed oracle for development, CI parity, and optional temporary production bridge if approved.
-- `nativeSwift`: standards-grade native implementation.
-- `legacyHandbuilt`: current implementation retained only for regression comparison until removed.
+- `referenceJS`: official SDK-backed oracle for development and CI parity; not a runtime dependency for package consumers.
+- `nativeSwift`: standards-grade native implementation and the default production path.
+- `supportedProfileRegressionBaseline`: internal regression comparison path used by self-test and differential tooling; not part of the public runtime dependency surface.
 
-The default engine in the completed product must be `nativeSwift` or a native-library-backed equivalent. `referenceJS` must not be required for normal package consumers.
+The default engine in the completed product is `nativeSwift` or a native-library-backed equivalent. `referenceJS` is retained only as an oracle and must not be required for normal package consumers.
 
 ## Parity Surface
 
@@ -156,12 +156,12 @@ Where the Swift public API cannot expose the JS SDK's exact error object shape, 
 
 ## Phase 0: Freeze And Characterize Current Behavior
 
-Goal: preserve current behavior as a baseline without pretending it is complete.
+Goal: preserve the original behavior as a baseline without pretending it was complete.
 
 Tasks:
 
 - Add an internal verification-engine boundary around the current `ecdsa-xi-2023` and status-list proof paths.
-- Rename or annotate the current handwritten canonicalization implementation as a legacy profile implementation.
+- Rename or annotate the original handwritten canonicalization implementation as a legacy profile implementation while the replacement is built.
 - Add a known-limitation note to docs: handwritten N-Quads are not the long-term canonicalization path.
 - Add privacy-safe regression records for the observed production mismatch:
   - No raw PDF417.
@@ -179,10 +179,10 @@ Tasks:
 
 Exit criteria:
 
-- [x] Current verifier behavior is unchanged by design; the existing implementation is now routed through a legacy engine boundary.
+- [x] Original verifier behavior was captured behind an internal engine boundary before replacement work changed the public default.
 - [x] The mismatch is tracked as a known parity failure in `Docs/PARITY_STATUS.md`.
 - [x] CI can report parity failures separately from unit-test failures via `Tools/parity-status.sh`.
-- [x] The legacy path is clearly labeled as incomplete and is not expanded except for instrumentation needed to replace it.
+- [x] The original incomplete path was labeled as such and was not expanded except for instrumentation needed to replace it.
 
 ## Phase 1: Build The JavaScript Reference Oracle Harness
 
@@ -658,7 +658,7 @@ Progress:
 Exit criteria:
 
 - Default verifier passes all parity gates.
-- Legacy handbuilt canonicalization is not reachable from public verification.
+- Handwritten canonical N-Quads are not reachable from public verification.
 - Documentation describes the new engine and its security boundary accurately.
 - JS SDK is retained only as a test oracle and upstream behavior reference.
 - Package consumers can verify supported DMV DL/ID VCBs without installing JavaScript tooling.

@@ -46,8 +46,6 @@ struct NativeSwiftJSONLDCanonicalizationEngine: JSONLDCanonicalizationEngine {
 }
 
 struct SupportedProfileJSONLDCanonicalizationEngine: JSONLDCanonicalizationEngine {
-    static let shared = SupportedProfileJSONLDCanonicalizationEngine()
-
     func canonicalNQuads(
         document: [String: SupportedJSONLDValue],
         profile: SupportedJSONLDCanonicalizationProfile
