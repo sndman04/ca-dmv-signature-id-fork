@@ -11,6 +11,7 @@ Tools/parity-status.sh
 Tools/reference-oracle-smoke.sh
 Tools/status-list-parity.mjs
 node Tools/canonicalization-engine-differential.mjs
+node Tools/jsonld-extension-matrix-parity.mjs
 Tools/signature-policy-characterization.mjs
 Tools/generated-signature-parity.mjs
 node Tools/mutation-parity.mjs
@@ -63,6 +64,9 @@ node Tools/generated-signature-parity.mjs
 
 # Deterministic malformed VCB mutation parity fixtures.
 node Tools/mutation-parity.mjs
+
+# Shape-by-shape generic JSON-LD extension canonical N-Quads parity.
+node Tools/jsonld-extension-matrix-parity.mjs
 
 # JSON-LD edge behavior classification against JS safe-mode canonicalization.
 node Tools/jsonld-behavior-characterization.mjs

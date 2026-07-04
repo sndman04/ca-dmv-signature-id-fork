@@ -47,6 +47,12 @@ const jsonGates = [
     args: ['Tools/generic-proof-extension-parity.mjs']
   },
   {
+    id: 'jsonld-extension-matrix',
+    label: 'JSON-LD Extension Matrix N-Quads Parity',
+    command: process.execPath,
+    args: ['Tools/jsonld-extension-matrix-parity.mjs']
+  },
+  {
     id: 'jsonld-behavior-characterization',
     label: 'JSON-LD 1.1 Behavior Characterization',
     command: process.execPath,
@@ -159,6 +165,13 @@ function collectFailures(results) {
 }
 
 function notesForGate(id, json) {
+  if(id === 'jsonld-extension-matrix') {
+    return (json.results ?? []).map(result =>
+      `${result.id}: ${result.profile}; ${shortPair(
+        result.jsCanonicalNQuadsSHA256,
+        result.swiftCanonicalNQuadsSHA256
+      )}`);
+  }
   if(id === 'jsonld-behavior-characterization') {
     return (json.results ?? []).map(result =>
       `${result.id}: ${result.classification}; JS accepted=${result.jsAccepted}; Swift accepted=${result.swiftAccepted}`);
