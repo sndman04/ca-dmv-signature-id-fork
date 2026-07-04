@@ -411,6 +411,14 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssert(credential.proof.verificationMethod == "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1")
     }
 
+    func testDecoderRejectsMalformedUUIDURNNodeID() throws {
+        XCTAssertThrowsError(try DMVVCBDecoder.decode(
+            CBORFixture.uncompressedCredential(id: "urn:uuid:not-a-uuid")
+        )) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+    }
+
     func testDecoderAndValidatorAcceptBase64URLProofValueFromReferenceDataIntegrity() throws {
         let credential = try DMVVCBDecoder.decode(CBORFixture.credential(
             textEncoded: true,
@@ -1234,6 +1242,7 @@ private enum CBORFixture {
 
     static func uncompressedCredential(
         tag: UInt64 = 51_997,
+        id: String? = nil,
         validFrom: String? = nil,
         validUntil: String? = nil,
         proofCreated: String? = nil,
@@ -1274,6 +1283,9 @@ private enum CBORFixture {
             ])),
             (text("proof"), map(proofPairs))
         ]
+        if let id {
+            credentialPairs.append((text("id"), text(id)))
+        }
         if let validFrom {
             credentialPairs.append((text("validFrom"), text(validFrom)))
         }

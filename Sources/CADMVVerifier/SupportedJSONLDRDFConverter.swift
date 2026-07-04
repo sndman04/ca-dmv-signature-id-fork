@@ -48,9 +48,13 @@ enum SupportedJSONLDRDFConverter {
         from document: [String: SupportedJSONLDValue]
     ) throws -> [RDFQuad] {
         try PinnedJSONLDTermRegistry.requireVCBDocumentContexts(document["@context"])
+        let subject = try nodeSubject(
+            from: document["id"],
+            fallback: .blank("root")
+        )
         return try nodeQuads(
             document,
-            subject: .blank("root"),
+            subject: subject,
             nodeKind: .credentialRoot
         )
     }
@@ -80,7 +84,7 @@ enum SupportedJSONLDRDFConverter {
         quads: inout [RDFQuad]
     ) throws {
         for key in object.keys.sorted() {
-            guard key != "@context" else {
+            guard key != "@context", key != "id" else {
                 continue
             }
             let value = object[key]
@@ -99,7 +103,10 @@ enum SupportedJSONLDRDFConverter {
                     iri: issuer
                 ))
             case (.credentialRoot, "credentialSubject", .some(.object(let nested))):
-                let nestedSubject = RDFTerm.blank("credentialSubject")
+                let nestedSubject = try nodeSubject(
+                    from: nested["id"],
+                    fallback: .blank("credentialSubject")
+                )
                 quads.append(RDFQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
@@ -113,7 +120,10 @@ enum SupportedJSONLDRDFConverter {
                     quads: &quads
                 )
             case (.credentialRoot, "credentialStatus", .some(.object(let nested))):
-                let nestedSubject = RDFTerm.blank("credentialStatus")
+                let nestedSubject = try nodeSubject(
+                    from: nested["id"],
+                    fallback: .blank("credentialStatus")
+                )
                 quads.append(RDFQuad(
                     subject: subject,
                     predicate: try PinnedJSONLDTermRegistry.vcbPredicate(key),
@@ -175,6 +185,22 @@ enum SupportedJSONLDRDFConverter {
                 throw CADMVInternalError.unsupportedVCB
             }
         }
+    }
+
+    private static func nodeSubject(
+        from value: SupportedJSONLDValue?,
+        fallback: RDFTerm
+    ) throws -> RDFTerm {
+        guard let value else {
+            return fallback
+        }
+        guard case .string(let id) = value else {
+            throw CADMVInternalError.unsupportedVCB
+        }
+        return try SupportedJSONLDRDFTerms.nodeIdentifierTerm(
+            id,
+            error: .unsupportedVCB
+        )
     }
 
 }

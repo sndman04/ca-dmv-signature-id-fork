@@ -34,12 +34,24 @@ enum VCBJSONLDRDFExpander {
             ])
         ]
 
+        if let id = credential.id {
+            document["id"] = .string(id)
+        }
+        if let subjectID = credential.credentialSubject.id,
+           case .object(var subject) = document["credentialSubject"] {
+            subject["id"] = .string(subjectID)
+            document["credentialSubject"] = .object(subject)
+        }
         if let status = credential.credentialStatus {
-            document["credentialStatus"] = .object([
+            var statusObject: [String: SupportedJSONLDValue] = [
                 "type": .string(status.type),
                 "terseStatusListBaseUrl": .string(status.terseStatusListBaseURL),
                 "terseStatusListIndex": .unsigned(status.terseStatusListIndex)
-            ])
+            ]
+            if let statusID = status.id {
+                statusObject["id"] = .string(statusID)
+            }
+            document["credentialStatus"] = .object(statusObject)
         }
         if let validFrom = credential.validFrom {
             document["validFrom"] = .string(validFrom)

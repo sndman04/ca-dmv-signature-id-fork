@@ -154,6 +154,21 @@ const signedCredentialWithStatusAndValidityDates = await issueCredential(
     validUntil: '2030-01-01T00:00:00Z'
   })
 );
+const signedCredentialWithNodeIDs = await issueCredential(baseCredential({
+  id: 'urn:uuid:11111111-1111-4111-8111-111111111111',
+  credentialSubject: {
+    id: 'urn:uuid:22222222-2222-4222-8222-222222222222',
+    type: 'AamvaDriversLicenseScannableInformation',
+    protectedComponentIndex
+  },
+  credentialStatus: {
+    id: 'urn:uuid:33333333-3333-4333-8333-333333333333',
+    type: 'TerseBitstringStatusListEntry',
+    terseStatusListBaseUrl:
+      'https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists',
+    terseStatusListIndex: 65536
+  }
+}));
 const signedCredentialWithProofExpires = await issueCredential(baseCredential(), {
   expires: '2030-01-01T00:00:00Z'
 });
@@ -228,6 +243,13 @@ const fixtures = [
     id: 'generated-valid-with-status-and-validity-dates-signature',
     payload: makeAAMVABarcode({
       encodedVCB: await encodeVCB(signedCredentialWithStatusAndValidityDates)
+    }),
+    expectVerified: true
+  },
+  {
+    id: 'generated-valid-with-node-ids-signature',
+    payload: makeAAMVABarcode({
+      encodedVCB: await encodeVCB(signedCredentialWithNodeIDs)
     }),
     expectVerified: true
   },

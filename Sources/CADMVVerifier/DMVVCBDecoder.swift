@@ -8,17 +8,17 @@ enum DMVVCBDecoder {
     private static let legacySingletonCompressedTag: UInt64 = 1281
     private static let supportedCBORLDVersion: UInt64 = 31_000_000
     private static let compressedCredentialKeys: Set<CBORValue> = [
-        .unsigned(1), .unsigned(157), .unsigned(174), .unsigned(176),
+        .unsigned(1), .unsigned(140), .unsigned(157), .unsigned(174), .unsigned(176),
         .unsigned(180), .unsigned(182), .unsigned(192), .unsigned(194)
     ]
     private static let expandedCredentialKeys: Set<CBORValue> = [
-        .textString("@context"), .textString("type"), .textString("issuer"),
+        .textString("@context"), .textString("id"), .textString("type"), .textString("issuer"),
         .textString("validFrom"), .textString("validUntil"),
         .textString("credentialSubject"), .textString("credentialStatus"),
         .textString("proof")
     ]
     private static let compressedCredentialReservedTextKeys: Set<String> = [
-        "@context", "type", "issuer", "validFrom", "validUntil",
+        "@context", "id", "type", "issuer", "validFrom", "validUntil",
         "credentialSubject", "credentialStatus", "proof"
     ]
     private static let compressedProofKeys: Set<CBORValue> = [
@@ -114,6 +114,7 @@ enum DMVVCBDecoder {
         try rejectUnknownNonTextKeys(map, allowed: compressedCredentialKeys)
         return DMVVerifiableCredential(
             context: try context(from: requiredArray(map, key: 1)),
+            id: try optionalURL(map, key: 140),
             type: try credentialTypes(from: requiredArray(map, key: 157)),
             issuer: try url(from: requiredValue(map, key: 180)),
             validFrom: try optionalDateTimeText(map, key: 192),
@@ -156,6 +157,7 @@ enum DMVVCBDecoder {
         try rejectUnknownNonTextKeys(map, allowed: expandedCredentialKeys)
         return DMVVerifiableCredential(
             context: try textArrayOrString(requiredValue(map, key: "@context")),
+            id: try optionalURL(map, key: "id"),
             type: try textArrayOrString(requiredValue(map, key: "type")),
             issuer: try url(from: requiredValue(map, key: "issuer")),
             validFrom: try optionalDateTimeText(map, key: "validFrom"),
@@ -174,6 +176,7 @@ enum DMVVCBDecoder {
         from map: [CBORValue: CBORValue]
     ) throws -> DMVVerifiableCredential.CredentialSubject {
         DMVVerifiableCredential.CredentialSubject(
+            id: try optionalURL(map, key: "id"),
             type: try requiredText(map, key: "type"),
             protectedComponentIndex: try protectedComponentIndex(from: requiredValue(map, key: "protectedComponentIndex"))
         )
@@ -183,6 +186,7 @@ enum DMVVCBDecoder {
         from map: [CBORValue: CBORValue]
     ) throws -> DMVVerifiableCredential.CredentialStatus {
         DMVVerifiableCredential.CredentialStatus(
+            id: try optionalURL(map, key: "id"),
             type: try requiredText(map, key: "type"),
             terseStatusListBaseURL: try url(from: requiredValue(map, key: "terseStatusListBaseUrl")),
             terseStatusListIndex: try unsigned(requiredValue(map, key: "terseStatusListIndex"))
@@ -239,6 +243,7 @@ enum DMVVCBDecoder {
         }
 
         return DMVVerifiableCredential.CredentialSubject(
+            id: try optionalURL(map, key: 140),
             type: type,
             protectedComponentIndex: try protectedComponentIndex(from: requiredValue(map, key: 168))
         )
@@ -251,6 +256,7 @@ enum DMVVCBDecoder {
         }
 
         return DMVVerifiableCredential.CredentialStatus(
+            id: try optionalURL(map, key: 140),
             type: type,
             terseStatusListBaseURL: try url(from: requiredValue(map, key: 196)),
             terseStatusListIndex: try requiredUnsigned(map, key: 198)
@@ -360,24 +366,44 @@ enum DMVVCBDecoder {
 
     private static func compressedURL(from values: [CBORValue]) throws -> String {
         guard values.count == 2,
-              case let .unsigned(schemeID) = values[0],
-              case let .textString(suffix) = values[1] else {
+              case let .unsigned(schemeID) = values[0] else {
             throw CADMVInternalError.unsupportedVCB
         }
 
-        let prefix: String
         switch schemeID {
         case 2:
-            prefix = "https://"
+            guard case let .textString(suffix) = values[1] else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            let text = "https://" + suffix
+            guard isSafeURLText(text) else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return text
+        case 3:
+            guard case let .byteString(uuidBytes) = values[1] else {
+                throw CADMVInternalError.unsupportedVCB
+            }
+            return try uuidURN(from: uuidBytes)
         default:
             throw CADMVInternalError.unsupportedVCB
         }
 
-        let text = prefix + suffix
-        guard isSafeURLText(text) else {
+    }
+
+    private static func uuidURN(from data: Data) throws -> String {
+        guard data.count == 16 else {
             throw CADMVInternalError.unsupportedVCB
         }
-        return text
+        let bytes = Array(data)
+        return String(
+            format: "urn:uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+            bytes[0], bytes[1], bytes[2], bytes[3],
+            bytes[4], bytes[5],
+            bytes[6], bytes[7],
+            bytes[8], bytes[9],
+            bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]
+        )
     }
 
     private static func compactURL(from data: Data) throws -> String {
@@ -563,6 +589,20 @@ enum DMVVCBDecoder {
         return values
     }
 
+    private static func optionalURL(_ map: [CBORValue: CBORValue], key: UInt64) throws -> String? {
+        guard let value = map[.unsigned(key)] else {
+            return nil
+        }
+        return try url(from: value)
+    }
+
+    private static func optionalURL(_ map: [CBORValue: CBORValue], key: String) throws -> String? {
+        guard let value = map[.textString(key)] else {
+            return nil
+        }
+        return try url(from: value)
+    }
+
     private static func rejectUnknownNonTextKeys(
         _ map: [CBORValue: CBORValue],
         allowed: Set<CBORValue>
@@ -737,8 +777,36 @@ enum DMVVCBDecoder {
         }
         return text.hasPrefix("did:web:credentials.dmv.ca.gov") ||
             text.hasPrefix("did:web:uat-credentials.dmv.ca.gov") ||
+            isUUIDURNText(text) ||
             text.hasPrefix("https://api.credentials.dmv.ca.gov/status/dlid/") ||
             text.hasPrefix("https://api.uat-credentials.dmv.ca.gov/status/dlid/")
+    }
+
+    private static func isUUIDURNText(_ text: String) -> Bool {
+        let prefix = "urn:uuid:"
+        guard text.hasPrefix(prefix) else {
+            return false
+        }
+
+        let uuidText = text.dropFirst(prefix.count)
+        guard uuidText.count == 36 else {
+            return false
+        }
+
+        for (index, character) in uuidText.enumerated() {
+            switch index {
+            case 8, 13, 18, 23:
+                guard character == "-" else {
+                    return false
+                }
+            default:
+                guard character.isHexDigit else {
+                    return false
+                }
+            }
+        }
+
+        return true
     }
 
     static func isSafeDateTimeTextForRDF(_ text: String) -> Bool {

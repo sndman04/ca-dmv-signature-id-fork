@@ -1,7 +1,7 @@
 # Conformance Report
 
-Generated: 2026-07-04T04:47:19.028Z
-Repository revision: `596da64`
+Generated: 2026-07-04T04:59:56.052Z
+Repository revision: `732fd1e`
 Reference SDK: `cadmv-dlid-verifier-sdk@0.0.1-0`
 
 This report is generated from committed non-PII fixtures and synthetic cases. It does not include raw PDF417 payloads, decoded identity fields, or real private scan data.
@@ -13,7 +13,7 @@ Overall result: PASS
 | Gate | Command | Cases | Result |
 | --- | --- | ---: | --- |
 | Official UAT Fixture Parity | `node Tools/parity-compare.mjs` | 2 | PASS |
-| Generated Signature Parity | `node Tools/generated-signature-parity.mjs` | 13 | PASS |
+| Generated Signature Parity | `node Tools/generated-signature-parity.mjs` | 14 | PASS |
 | Deterministic Mutation Parity | `node Tools/mutation-parity.mjs` | 3 | PASS |
 | Status-List Verify-Data And N-Quads Parity | `node Tools/status-list-parity.mjs` | 3 | PASS |
 | Status Bit Boundary Parity | `node Tools/status-bit-parity.mjs` | 11 | PASS |
@@ -33,7 +33,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 2
-- Duration: 2362 ms
+- Duration: 1693 ms
 - Case IDs:
   - `official-valid-uat`
   - `official-invalid-uat`
@@ -41,14 +41,15 @@ Overall result: PASS
 ### Generated Signature Parity
 
 - Result: PASS
-- Compared cases: 13
-- Duration: 7933 ms
+- Compared cases: 14
+- Duration: 8617 ms
 - Case IDs:
   - `generated-valid-z-signature`
   - `generated-valid-u-signature`
   - `generated-valid-with-status-signature`
   - `generated-valid-with-validity-dates-signature`
   - `generated-valid-with-status-and-validity-dates-signature`
+  - `generated-valid-with-node-ids-signature`
   - `generated-valid-with-proof-expires-signature`
   - `generated-expired-valid-signature`
   - `generated-valid-with-expired-proof-expires-signature`
@@ -62,7 +63,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 2450 ms
+- Duration: 2517 ms
 - Case IDs:
   - `mutation-invalid-vcb-base64`
   - `mutation-truncated-vcb-cbor`
@@ -72,7 +73,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 4142 ms
+- Duration: 4188 ms
 - Case IDs:
   - `synthetic-status-list-base`
   - `synthetic-status-list-optional-fields`
@@ -86,7 +87,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 11
-- Duration: 5008 ms
+- Duration: 5047 ms
 - Case IDs:
   - `status-bit-0-revoked`
   - `status-bit-7-revoked`
@@ -104,7 +105,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 25
-- Duration: 34490 ms
+- Duration: 34184 ms
 - Case IDs:
   - `status-list-string-literal`
   - `status-list-integer-literal`
@@ -162,7 +163,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 521 ms
+- Duration: 524 ms
 - Case IDs:
   - `generic-jsonld-extension-values`
 
@@ -170,7 +171,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 520 ms
+- Duration: 523 ms
 - Case IDs:
   - `generic-proof-extension-values`
 
@@ -178,7 +179,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 50
-- Duration: 22735 ms
+- Duration: 22845 ms
 - Case IDs:
   - `vcb-document-string-literal`
   - `proof-string-literal`
@@ -286,7 +287,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 19
-- Duration: 9123 ms
+- Duration: 9316 ms
 - Case IDs:
   - `implemented-absolute-id-node`
   - `implemented-nested-graph`
@@ -332,7 +333,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 9
-- Duration: 7855 ms
+- Duration: 8056 ms
 - Case IDs:
   - `engine-vcb-document`
   - `engine-data-integrity-proof`
@@ -344,7 +345,7 @@ Overall result: PASS
   - `engine-official-invalid-uat-proof`
   - `engine-rejects-compact-unknown-vcb-field`
 - Notes:
-  - engine-vcb-document: vcbDocument; N-Quads SHA-256 711f1a0061a7de2fc19fdd3b44020647a4e9c24b88cd3212d9701cd1bb4ffe3d; production/supported-profile compared
+  - engine-vcb-document: vcbDocument; N-Quads SHA-256 f2eaee3bc41e59c29a00795fd79868195e1605a1f05ae0441069ba280368bdbf; production/supported-profile compared
   - engine-data-integrity-proof: dataIntegrityProof; N-Quads SHA-256 317e2786b39b0a763c1a51aefa756edfc4571214e920654a8ad91dbe70392ac8; production/supported-profile compared
   - engine-status-list-document: statusListDocument; N-Quads SHA-256 229f31e2c5b5c0652b46cad3a676ce8e65db9afc4867ff54cf70f464601cf2be; production/supported-profile compared
   - engine-status-list-proof: dataIntegrityProof; N-Quads SHA-256 ea8bbe8b6f2ce2862763ce62cce15d131e6d1fc5c233a370fa51b516d5492e29; production/supported-profile compared
@@ -358,7 +359,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 3859 ms
+- Duration: 3239 ms
 - Case IDs:
   - `w3c-rdfc-subset`
 
@@ -366,7 +367,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 513 ms
+- Duration: 555 ms
 - Case IDs:
   - `w3c-rdfc-issued-map-subset`
 
@@ -374,7 +375,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 747 ms
+- Duration: 740 ms
 - Case IDs:
   - `w3c-rdfc-negative-clique`
 

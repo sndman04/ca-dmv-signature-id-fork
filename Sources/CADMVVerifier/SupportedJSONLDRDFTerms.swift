@@ -17,6 +17,13 @@ enum SupportedJSONLDRDFTerms {
         )
     }
 
+    static func nodeIdentifierTerm(
+        _ value: String,
+        error: CADMVInternalError
+    ) throws -> RDFTerm {
+        try genericNodeIdentifierTerm(value, error: error)
+    }
+
     static func literalQuad(
         subject: RDFTerm,
         predicate: String,

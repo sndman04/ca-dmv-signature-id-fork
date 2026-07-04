@@ -35,12 +35,14 @@ const vcbDocument = {
     'https://www.w3.org/ns/credentials/v2',
     'https://w3id.org/vc-barcodes/v1'
   ],
+  id: 'urn:uuid:11111111-1111-4111-8111-111111111111',
   type: [
     'VerifiableCredential',
     'OpticalBarcodeCredential'
   ],
   issuer: 'did:web:uat-credentials.dmv.ca.gov',
   credentialSubject: {
+    id: 'urn:uuid:22222222-2222-4222-8222-222222222222',
     type: 'AamvaDriversLicenseScannableInformation',
     protectedComponentIndex: 'uAQID'
   },
