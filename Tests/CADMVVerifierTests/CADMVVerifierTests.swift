@@ -759,6 +759,99 @@ final class CADMVVerifierTests: XCTestCase {
         }
     }
 
+    func testStatusListCheckerMapsStatusTransportFailureToUnavailable() async throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential())
+
+        try await withTestNetworkHandler({ request in
+            XCTAssertEqual(request.url?.host, "api.uat-credentials.dmv.ca.gov")
+            throw URLError(.cannotConnectToHost)
+        }) {
+            let result = await StatusListChecker.check(
+                credential: credential,
+                mode: .uat,
+                timeoutSeconds: 0.1
+            )
+
+            XCTAssertEqual(result, .unavailable)
+        }
+    }
+
+    func testStatusListCheckerMapsStatusHTTPFailureToUnavailable() async throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential())
+
+        try await withTestNetworkHandler({ request in
+            let url = try XCTUnwrap(request.url)
+            XCTAssertEqual(url.host, "api.uat-credentials.dmv.ca.gov")
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: url,
+                statusCode: 302,
+                httpVersion: "HTTP/1.1",
+                headerFields: ["Location": "https://status.uat-credentials.dmv.ca.gov/list"]
+            ))
+            return (Data(), response)
+        }) {
+            let result = await StatusListChecker.check(
+                credential: credential,
+                mode: .uat,
+                timeoutSeconds: 0.1
+            )
+
+            XCTAssertEqual(result, .unavailable)
+        }
+    }
+
+    func testStatusListCheckerMapsMalformedStatusCredentialToUnavailable() async throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential())
+
+        try await withTestNetworkHandler({ request in
+            let url = try XCTUnwrap(request.url)
+            XCTAssertEqual(url.host, "api.uat-credentials.dmv.ca.gov")
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: url,
+                statusCode: 200,
+                httpVersion: "HTTP/1.1",
+                headerFields: nil
+            ))
+            return (Data("{".utf8), response)
+        }) {
+            let result = await StatusListChecker.check(
+                credential: credential,
+                mode: .uat,
+                timeoutSeconds: 0.1
+            )
+
+            XCTAssertEqual(result, .unavailable)
+        }
+    }
+
+    func testStatusListCheckerMapsMalformedDIDDocumentToUnavailable() async throws {
+        let credential = try DMVVCBDecoder.decode(CBORFixture.credential())
+
+        try await withTestNetworkHandler({ request in
+            let url = try XCTUnwrap(request.url)
+            let response = try XCTUnwrap(HTTPURLResponse(
+                url: url,
+                statusCode: 200,
+                httpVersion: "HTTP/1.1",
+                headerFields: nil
+            ))
+
+            if url.host == "api.uat-credentials.dmv.ca.gov" {
+                return (Self.syntheticStatusListCredentialJSON, response)
+            }
+            XCTAssertEqual(url.host, "uat-credentials.dmv.ca.gov")
+            return (Data("{".utf8), response)
+        }) {
+            let result = await StatusListChecker.check(
+                credential: credential,
+                mode: .uat,
+                timeoutSeconds: 0.1
+            )
+
+            XCTAssertEqual(result, .unavailable)
+        }
+    }
+
     private func assertDIDResolutionFailure(
         timeoutSeconds: Double = 0.1,
         file: StaticString = #filePath,
@@ -789,6 +882,35 @@ final class CADMVVerifierTests: XCTestCase {
             throw error
         }
     }
+
+    private static let syntheticStatusListCredentialJSON = Data("""
+    {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2"
+      ],
+      "id": "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0",
+      "type": [
+        "VerifiableCredential",
+        "BitstringStatusListCredential"
+      ],
+      "credentialSubject": {
+        "id": "https://api.uat-credentials.dmv.ca.gov/status/dlid/1/status-lists/revocation/0#list",
+        "type": "BitstringStatusList",
+        "encodedList": "uH4sIAAAAAAAAA2NhAAD717UlAgAAAA",
+        "statusPurpose": "revocation"
+      },
+      "issuer": "did:web:uat-credentials.dmv.ca.gov",
+      "validFrom": "2026-01-01T00:00:00Z",
+      "proof": {
+        "type": "DataIntegrityProof",
+        "created": "2026-01-01T00:00:00Z",
+        "verificationMethod": "did:web:uat-credentials.dmv.ca.gov#vm-vcb-1",
+        "cryptosuite": "ecdsa-rdfc-2019",
+        "proofPurpose": "assertionMethod",
+        "proofValue": "z3KqtjbQJZNSkeufgNj2oVRg9k9fZVoP5SroahjSNghZbU9osz8sL2J4beC9gWoNTkjDn6W9FBJRirMnNt4HuXvcw"
+      }
+    }
+    """.utf8)
 }
 
 private enum AAMVATestBarcode {

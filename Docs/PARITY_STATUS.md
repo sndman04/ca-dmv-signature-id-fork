@@ -156,6 +156,7 @@ Completed Phase 4 work:
 - Added decoded `additionalProperties` storage for JS-accepted text-key unknown VCB credential and proof fields, projected those fields into the internal JSON-LD documents, canonicalized safe absolute-IRI extensions, and kept compact unknown terms fail-closed in parity with reference safe-mode canonicalization.
 - Added fail-closed decode coverage for compressed VCB maps that contain text aliases for known signed terms, preventing ambiguous duplicate values from overwriting the numeric compressed value during JSON-LD projection.
 - Added `additionalProperties` storage for unknown status-list root, credentialSubject, and proof fields, projected those fields into status-list document/proof JSON-LD, and allow safe absolute-IRI extensions through the supported canonicalization path while keeping compact unknown fields and unsafe IRIs fail-closed as unavailable.
+- Added status-list network failure coverage for status transport errors, redirect/non-2xx responses, malformed status-list credential JSON, and malformed DID documents during status-list proof-key resolution, all mapping to `.unavailable`.
 
 Completed Phase 5 work:
 
