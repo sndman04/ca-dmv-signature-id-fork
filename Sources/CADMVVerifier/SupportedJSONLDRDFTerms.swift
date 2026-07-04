@@ -183,6 +183,16 @@ enum SupportedJSONLDRDFTerms {
             }
             return quads
         case .object(let object):
+            if let set = object["@set"] {
+                return try genericSetObjectQuads(
+                    predicate: predicate,
+                    object: object,
+                    set: set,
+                    subject: subject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                )
+            }
             if let id = object["@id"] {
                 return try genericNodeObjectQuads(
                     predicate: predicate,
@@ -225,6 +235,41 @@ enum SupportedJSONLDRDFTerms {
                 quads.append(contentsOf: nestedQuads)
             }
             return quads
+        }
+    }
+
+    private static func genericSetObjectQuads(
+        predicate: String,
+        object: [String: SupportedJSONLDValue],
+        set: SupportedJSONLDValue,
+        subject: RDFTerm,
+        error: CADMVInternalError,
+        blankNodeCounter: inout Int
+    ) throws -> [RDFQuad] {
+        guard object.keys.allSatisfy({ $0 == "@set" }) else {
+            throw error
+        }
+        switch set {
+        case .array(let values):
+            var quads: [RDFQuad] = []
+            for value in values {
+                quads.append(contentsOf: try genericValueQuads(
+                    predicate: predicate,
+                    value: value,
+                    subject: subject,
+                    error: error,
+                    blankNodeCounter: &blankNodeCounter
+                ))
+            }
+            return quads
+        default:
+            return try genericValueQuads(
+                predicate: predicate,
+                value: set,
+                subject: subject,
+                error: error,
+                blankNodeCounter: &blankNodeCounter
+            )
         }
     }
 

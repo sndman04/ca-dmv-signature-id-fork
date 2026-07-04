@@ -238,6 +238,15 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 ]),
                 "https://example.invalid/terms/numericValue": .object([
                     "@value": .number("7.5")
+                ]),
+                "https://example.invalid/terms/setValue": .object([
+                    "@set": .array([
+                        .string("set-a"),
+                        .object([
+                            "@id": .string("https://example.invalid/resources/set-b")
+                        ]),
+                        .null
+                    ])
                 ])
             ]
         )
@@ -259,6 +268,13 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         XCTAssert(nquads.contains(
             "<https://example.invalid/terms/numericValue> \"7.5E0\"^^<http://www.w3.org/2001/XMLSchema#double>"
         ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/setValue> \"set-a\""
+        ))
+        XCTAssert(nquads.contains(
+            "<https://example.invalid/terms/setValue> <https://example.invalid/resources/set-b>"
+        ))
+        XCTAssertFalse(nquads.contains("setValue> null"))
         XCTAssertNoThrow(try DMVCredentialValidator.validate(credential, mode: .uat))
     }
 
@@ -338,6 +354,18 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
         ])
 
         XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: unsafeTypedValueDocument)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        var invalidSetDocument = VCBJSONLDRDFExpander.jsonLDDocument(from: vcbCredential(
+            credentialStatus: nil
+        ))
+        invalidSetDocument["https://example.invalid/terms/set"] = .object([
+            "@set": .array([.string("a")]),
+            "https://example.invalid/terms/extra": .string("unsupported")
+        ])
+
+        XCTAssertThrowsError(try SupportedJSONLDRDFConverter.quads(from: invalidSetDocument)) { error in
             XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
         }
     }
