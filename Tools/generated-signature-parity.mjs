@@ -154,10 +154,16 @@ const signedCredentialWithStatusAndValidityDates = await issueCredential(
     validUntil: '2030-01-01T00:00:00Z'
   })
 );
+const signedCredentialWithProofExpires = await issueCredential(baseCredential(), {
+  expires: '2030-01-01T00:00:00Z'
+});
 const signedExpiredCredential = await issueCredential(baseCredential({
   validFrom: '2026-01-01T00:00:00Z',
   validUntil: '2026-01-02T00:00:00Z'
 }));
+const signedCredentialWithExpiredProofExpires = await issueCredential(baseCredential(), {
+  expires: '2026-01-02T00:00:00Z'
+});
 const validZVCB = await encodeVCB(signedCredential);
 const validUCredential = withProofValue(
   signedCredential,
@@ -226,12 +232,26 @@ const fixtures = [
     expectVerified: true
   },
   {
+    id: 'generated-valid-with-proof-expires-signature',
+    payload: makeAAMVABarcode({
+      encodedVCB: await encodeVCB(signedCredentialWithProofExpires)
+    }),
+    expectVerified: true
+  },
+  {
     id: 'generated-expired-valid-signature',
     payload: makeAAMVABarcode({
       encodedVCB: await encodeVCB(signedExpiredCredential)
     }),
     expectVerified: false,
     expectedStage: 'expiration'
+  },
+  {
+    id: 'generated-valid-with-expired-proof-expires-signature',
+    payload: makeAAMVABarcode({
+      encodedVCB: await encodeVCB(signedCredentialWithExpiredProofExpires)
+    }),
+    expectVerified: true
   },
   {
     id: 'generated-tampered-proof-signature',
@@ -303,14 +323,19 @@ if(failed) {
   process.exitCode = 1;
 }
 
-async function issueCredential(credential) {
+async function issueCredential(credential, options = {}) {
+  const {expires} = options;
+  const suite = new DataIntegrityProof({
+    date: proofCreated,
+    signer: keyPair.signer(),
+    cryptosuite: createEcdsaXi2023Cryptosuite({extraInformation: opticalHash})
+  });
+  if(expires !== undefined) {
+    suite.proof = {expires};
+  }
   return vc.issue({
     credential,
-    suite: new DataIntegrityProof({
-      date: proofCreated,
-      signer: keyPair.signer(),
-      cryptosuite: createEcdsaXi2023Cryptosuite({extraInformation: opticalHash})
-    }),
+    suite,
     documentLoader
   });
 }

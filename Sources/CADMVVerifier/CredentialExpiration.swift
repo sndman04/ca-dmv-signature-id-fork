@@ -7,9 +7,6 @@ enum CredentialExpiration {
                 return true
             }
         }
-        if let proofExpires = credential.proof.expires {
-            return try hasExpired(proofExpires, now: now)
-        }
         return false
     }
 

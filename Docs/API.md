@@ -72,7 +72,7 @@ For VCB credentials, status-list credentials, and Data Integrity proofs, standar
 
 Numeric extension values must be finite JSON numbers. Non-finite numeric values are rejected at the JSON-LD value boundary, and finite values are normalized with bounded coefficient and exponent sizes. Values outside those bounds fail closed rather than being expanded into large RDF lexical forms.
 
-When a verified credential includes `validUntil` or proof `expires` data, the verifier returns `.expired` after the signature verifies and after any required revocation check completes as not revoked. If status checking is required but unavailable, `.unavailable` takes precedence over `.expired`; if the status list marks the credential revoked, `.revoked` takes precedence.
+When a verified credential includes credential `validUntil` data, the verifier returns `.expired` after the signature verifies and after any required revocation check completes as not revoked. Proof `expires` is signed proof metadata and is canonicalized and signature-protected, but the JS reference verifier does not use it as a credential-expiration source. If status checking is required but unavailable, `.unavailable` takes precedence over `.expired`; if the status list marks the credential revoked, `.revoked` takes precedence.
 
 DID Web key lookup is required for signature verification regardless of `checkStatus`. If the selected DMV DID host cannot be resolved or reached, the request times out, the response is not a direct 2xx HTTP response, or the DID document is malformed, verification returns `.failed` with `failureReason == .didResolutionFailed`.
 
@@ -136,7 +136,7 @@ Current behavior:
 - `.notPresent`: non-California or pre-requirement-date document without VCB.
 - `.unavailable`: required status checking cannot complete.
 - `.revoked`: a cryptographically verified status-list credential marks the revocation bit as set.
-- `.expired`: signature verification passed and required status checking, if enabled, completed as not revoked, but credential expiration data is at or before the verification time.
+- `.expired`: signature verification passed and required status checking, if enabled, completed as not revoked, but credential `validUntil` is at or before the verification time.
 
 ## `CADMVVerificationFailureReason`
 

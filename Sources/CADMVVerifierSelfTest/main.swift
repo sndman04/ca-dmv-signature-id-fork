@@ -278,9 +278,14 @@ enum CADMVVerifierSelfTest {
         let atExpiration = try CADMVVerifier.isExpiredForSelfTest("2026-06-30T12:00:00Z", now: now)
         let afterExpiration = try CADMVVerifier.isExpiredForSelfTest("2026-06-30T11:59:59Z", now: now)
         let fractionalSecondExpiration = try CADMVVerifier.isExpiredForSelfTest("2026-06-30T12:00:00.001Z", now: now)
-        let proofExpired = try CADMVVerifier.isCredentialExpiredForSelfTest(
+        let proofExpiredOnly = try CADMVVerifier.isCredentialExpiredForSelfTest(
             validUntil: "2026-06-30T12:00:01Z",
             proofExpires: "2026-06-30T11:59:59Z",
+            now: now
+        )
+        let credentialExpired = try CADMVVerifier.isCredentialExpiredForSelfTest(
+            validUntil: "2026-06-30T11:59:59Z",
+            proofExpires: nil,
             now: now
         )
         expect(
@@ -300,8 +305,12 @@ enum CADMVVerifierSelfTest {
             "fractional seconds should be supported"
         )
         expect(
-            proofExpired,
-            "credential should expire if either validUntil or proof expires has passed"
+            !proofExpiredOnly,
+            "proof expires alone should not expire the credential under JS parity"
+        )
+        expect(
+            credentialExpired,
+            "credential should expire when validUntil has passed"
         )
         do {
             _ = try CADMVVerifier.isExpiredForSelfTest("not-a-date", now: now)

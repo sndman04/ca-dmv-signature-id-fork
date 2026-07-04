@@ -501,9 +501,14 @@ final class CADMVVerifierTests: XCTestCase {
         XCTAssertTrue(try CADMVVerifier.isExpiredForSelfTest("2026-06-30T12:00:00Z", now: now))
         XCTAssertTrue(try CADMVVerifier.isExpiredForSelfTest("2026-06-30T11:59:59Z", now: now))
         XCTAssertFalse(try CADMVVerifier.isExpiredForSelfTest("2026-06-30T12:00:00.001Z", now: now))
-        XCTAssertTrue(try CADMVVerifier.isCredentialExpiredForSelfTest(
+        XCTAssertFalse(try CADMVVerifier.isCredentialExpiredForSelfTest(
             validUntil: "2026-06-30T12:00:01Z",
             proofExpires: "2026-06-30T11:59:59Z",
+            now: now
+        ))
+        XCTAssertTrue(try CADMVVerifier.isCredentialExpiredForSelfTest(
+            validUntil: "2026-06-30T11:59:59Z",
+            proofExpires: nil,
             now: now
         ))
         XCTAssertThrowsError(try CADMVVerifier.isExpiredForSelfTest("not-a-date", now: now))

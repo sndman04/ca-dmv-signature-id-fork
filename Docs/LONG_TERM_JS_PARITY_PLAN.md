@@ -145,7 +145,7 @@ Parity is not limited to final boolean validity. The Swift implementation must m
   - revoked/not-revoked/unavailable mapping
 - Expiration:
   - credential `validUntil`
-  - proof `expires`
+  - proof `expires` as signed proof metadata, not a credential-expiration source
   - malformed date behavior
 - Public result mapping:
   - status
@@ -322,7 +322,8 @@ Required corpus coverage:
   - exactly at expiration
   - after expiration
   - malformed expiration date
-  - proof expiration and credential `validUntil`
+  - signed proof `expires` remains JS-verified even when the proof timestamp is in the past
+  - credential `validUntil`
 
 Exit criteria:
 
@@ -417,7 +418,7 @@ Progress:
 - The RDF dataset model now supports named graphs and blank nodes in graph names, so canonicalization operates on quads rather than only default-graph triples.
 - The JS oracle and parity comparator now compare VCB verify-data for committed official UAT fixtures, including the invalid-signature fixture.
 - The JS oracle smoke gate now also compares synthetic `ecdsa-rdfc-2019` status-list verify-data against Swift for the base status list, optional live-style VC fields, and safe absolute-IRI extension terms on the status-list root, credentialSubject, and proof.
-- The generated VCB signature parity gate now signs and encodes synthetic credentials with status, validity dates, combined status plus validity dates, an expired valid signature, tampered proof signature, tampered proof metadata (`created`, `expires`, and `verificationMethod`), and tampered protected AAMVA data, then compares JS and Swift canonical N-Quads, verify-data, byte length, optical hash, failure stage, and verification result.
+- The generated VCB signature parity gate now signs and encodes synthetic credentials with status, validity dates, combined status plus validity dates, signed proof `expires` metadata including a past proof timestamp that remains JS-verified, an expired `validUntil` signature, tampered proof signature, tampered proof metadata (`created`, `expires`, and `verificationMethod`), and tampered protected AAMVA data, then compares JS and Swift canonical N-Quads, verify-data, byte length, optical hash, failure stage, and verification result.
 - `Tools/mutation-parity.mjs` now compares JS and Swift failure-stage mapping plus privacy-safe pre-signature diagnostics for deterministic malformed VCB mutations: invalid base64, truncated CBOR-LD, and corrupted compressed VCB values. The gate also asserts malformed VCBs do not produce AAMVA hashes, verify-data, or canonical N-Quads.
 - The observed production mismatch class, where two otherwise valid credentials canonicalized with different subject/status blank-node ordering, is covered by synthetic tests and rechecked locally without storing raw payloads or PII.
 - VCB document canonicalization now goes through `SupportedJSONLDRDFConverter`, a supported-context JSON-LD-to-RDF boundary that consumes a JSON-LD projection and fails closed for unsupported contexts or unknown signed terms instead of silently dropping them.
@@ -492,7 +493,7 @@ Progress:
 
 - `Tools/signature-policy-characterization.mjs` records reference Data Integrity behavior for `z` base58btc and `u` base64url proof values, unsupported prefixes, malformed base58btc values, permissive short/malformed `u` handling before the real signature verifier, and P-256 high-S counterpart verification through WebCrypto.
 - Swift proof parsing now preserves reference-supported text `z` and `u` proofValue encodings for the verifier, rejects malformed or non-64-byte raw signatures before Swift Crypto verification, and accepts the high-S/low-S counterpart pair consistently with WebCrypto.
-- `Tools/generated-signature-parity.mjs` now generates runtime synthetic VCB signatures and injected DID documents, then compares JS and Swift end-to-end barcode verification for valid `z`, valid `u`, status-bearing credentials, validity-date credentials, combined status plus validity-date credentials, expired valid-signature credentials, tampered proof signature, tampered proof metadata (`created`, `expires`, and `verificationMethod`), and tampered protected AAMVA field cases.
+- `Tools/generated-signature-parity.mjs` now generates runtime synthetic VCB signatures and injected DID documents, then compares JS and Swift end-to-end barcode verification for valid `z`, valid `u`, status-bearing credentials, validity-date credentials, combined status plus validity-date credentials, signed proof `expires` credentials including a past proof timestamp that remains JS-verified, expired `validUntil` credentials, tampered proof signature, tampered proof metadata (`created`, `expires`, and `verificationMethod`), and tampered protected AAMVA field cases.
 - Swift CBOR-LD decode now accepts the reference-emitted compressed proof key layout for no-status credentials and numeric epoch-second proof date values.
 
 ## Phase 6: Replace Status-List Proof Canonicalization

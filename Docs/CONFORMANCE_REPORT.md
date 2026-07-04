@@ -1,7 +1,7 @@
 # Conformance Report
 
-Generated: 2026-07-04T04:38:06.934Z
-Repository revision: `3a9a85f`
+Generated: 2026-07-04T04:47:19.028Z
+Repository revision: `596da64`
 Reference SDK: `cadmv-dlid-verifier-sdk@0.0.1-0`
 
 This report is generated from committed non-PII fixtures and synthetic cases. It does not include raw PDF417 payloads, decoded identity fields, or real private scan data.
@@ -13,7 +13,7 @@ Overall result: PASS
 | Gate | Command | Cases | Result |
 | --- | --- | ---: | --- |
 | Official UAT Fixture Parity | `node Tools/parity-compare.mjs` | 2 | PASS |
-| Generated Signature Parity | `node Tools/generated-signature-parity.mjs` | 11 | PASS |
+| Generated Signature Parity | `node Tools/generated-signature-parity.mjs` | 13 | PASS |
 | Deterministic Mutation Parity | `node Tools/mutation-parity.mjs` | 3 | PASS |
 | Status-List Verify-Data And N-Quads Parity | `node Tools/status-list-parity.mjs` | 3 | PASS |
 | Status Bit Boundary Parity | `node Tools/status-bit-parity.mjs` | 11 | PASS |
@@ -33,7 +33,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 2
-- Duration: 1621 ms
+- Duration: 2362 ms
 - Case IDs:
   - `official-valid-uat`
   - `official-invalid-uat`
@@ -41,15 +41,17 @@ Overall result: PASS
 ### Generated Signature Parity
 
 - Result: PASS
-- Compared cases: 11
-- Duration: 7139 ms
+- Compared cases: 13
+- Duration: 7933 ms
 - Case IDs:
   - `generated-valid-z-signature`
   - `generated-valid-u-signature`
   - `generated-valid-with-status-signature`
   - `generated-valid-with-validity-dates-signature`
   - `generated-valid-with-status-and-validity-dates-signature`
+  - `generated-valid-with-proof-expires-signature`
   - `generated-expired-valid-signature`
+  - `generated-valid-with-expired-proof-expires-signature`
   - `generated-tampered-proof-signature`
   - `generated-tampered-proof-created`
   - `generated-tampered-proof-expires`
@@ -60,7 +62,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 2453 ms
+- Duration: 2450 ms
 - Case IDs:
   - `mutation-invalid-vcb-base64`
   - `mutation-truncated-vcb-cbor`
@@ -70,7 +72,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 3
-- Duration: 4116 ms
+- Duration: 4142 ms
 - Case IDs:
   - `synthetic-status-list-base`
   - `synthetic-status-list-optional-fields`
@@ -84,7 +86,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 11
-- Duration: 5001 ms
+- Duration: 5008 ms
 - Case IDs:
   - `status-bit-0-revoked`
   - `status-bit-7-revoked`
@@ -102,7 +104,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 25
-- Duration: 34026 ms
+- Duration: 34490 ms
 - Case IDs:
   - `status-list-string-literal`
   - `status-list-integer-literal`
@@ -160,7 +162,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 516 ms
+- Duration: 521 ms
 - Case IDs:
   - `generic-jsonld-extension-values`
 
@@ -176,7 +178,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 50
-- Duration: 22828 ms
+- Duration: 22735 ms
 - Case IDs:
   - `vcb-document-string-literal`
   - `proof-string-literal`
@@ -284,7 +286,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 19
-- Duration: 9182 ms
+- Duration: 9123 ms
 - Case IDs:
   - `implemented-absolute-id-node`
   - `implemented-nested-graph`
@@ -330,7 +332,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 9
-- Duration: 8117 ms
+- Duration: 7855 ms
 - Case IDs:
   - `engine-vcb-document`
   - `engine-data-integrity-proof`
@@ -356,7 +358,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 3887 ms
+- Duration: 3859 ms
 - Case IDs:
   - `w3c-rdfc-subset`
 
@@ -364,7 +366,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 517 ms
+- Duration: 513 ms
 - Case IDs:
   - `w3c-rdfc-issued-map-subset`
 
@@ -372,7 +374,7 @@ Overall result: PASS
 
 - Result: PASS
 - Compared cases: 1
-- Duration: 750 ms
+- Duration: 747 ms
 - Case IDs:
   - `w3c-rdfc-negative-clique`
 
