@@ -233,6 +233,10 @@ enum SupportedJSONLDRDFTerms {
                 guard let value = object[key] else {
                     continue
                 }
+                if key == "@index" {
+                    try validateGenericIndex(value, error: error)
+                    continue
+                }
                 if key == "@type" {
                     quads.append(contentsOf: try genericTypeQuads(
                         value,
@@ -290,7 +294,16 @@ enum SupportedJSONLDRDFTerms {
         error: CADMVInternalError,
         blankNodeCounter: inout Int
     ) throws -> [RDFQuad] {
-        guard object.keys.allSatisfy({ $0 == "@list" }) else {
+        guard try object.keys.allSatisfy({ key in
+            if key == "@list" {
+                return true
+            }
+            if key == "@index" {
+                try validateGenericIndex(object[key], error: error)
+                return true
+            }
+            return false
+        }) else {
             throw error
         }
         let values: [SupportedJSONLDValue]
@@ -365,7 +378,16 @@ enum SupportedJSONLDRDFTerms {
         error: CADMVInternalError,
         blankNodeCounter: inout Int
     ) throws -> [RDFQuad] {
-        guard object.keys.allSatisfy({ $0 == "@set" }) else {
+        guard try object.keys.allSatisfy({ key in
+            if key == "@set" {
+                return true
+            }
+            if key == "@index" {
+                try validateGenericIndex(object[key], error: error)
+                return true
+            }
+            return false
+        }) else {
             throw error
         }
         switch set {
@@ -413,6 +435,10 @@ enum SupportedJSONLDRDFTerms {
             object: nestedSubject
         )]
         for key in object.keys.sorted() where key != "@id" {
+            if key == "@index" {
+                try validateGenericIndex(object[key], error: error)
+                continue
+            }
             if key == "@type" {
                 guard let value = object[key] else {
                     continue
@@ -504,7 +530,16 @@ enum SupportedJSONLDRDFTerms {
             throw error
         case .object(let object):
             if let list = object["@list"] {
-                guard object.keys.allSatisfy({ $0 == "@list" }) else {
+                guard try object.keys.allSatisfy({ key in
+                    if key == "@list" {
+                        return true
+                    }
+                    if key == "@index" {
+                        try validateGenericIndex(object[key], error: error)
+                        return true
+                    }
+                    return false
+                }) else {
                     throw error
                 }
                 let values: [SupportedJSONLDValue]
@@ -542,6 +577,10 @@ enum SupportedJSONLDRDFTerms {
             blankNodeCounter += 1
             var quads: [RDFQuad] = []
             for key in object.keys.sorted() {
+                if key == "@index" {
+                    try validateGenericIndex(object[key], error: error)
+                    continue
+                }
                 if key == "@type" {
                     guard let value = object[key] else {
                         continue
@@ -619,6 +658,10 @@ enum SupportedJSONLDRDFTerms {
         let nestedSubject = RDFTerm.iri(idValue)
         var quads: [RDFQuad] = []
         for key in object.keys.sorted() where key != "@id" {
+            if key == "@index" {
+                try validateGenericIndex(object[key], error: error)
+                continue
+            }
             if key == "@type" {
                 guard let value = object[key] else {
                     continue
@@ -701,7 +744,16 @@ enum SupportedJSONLDRDFTerms {
         error: CADMVInternalError
     ) throws -> RDFTerm? {
         guard object["@id"] == nil,
-              object.keys.allSatisfy({ $0 == "@value" || $0 == "@type" || $0 == "@language" }) else {
+              try object.keys.allSatisfy({ key in
+                if key == "@value" || key == "@type" || key == "@language" {
+                    return true
+                }
+                if key == "@index" {
+                    try validateGenericIndex(object[key], error: error)
+                    return true
+                }
+                return false
+              }) else {
             throw error
         }
         if case .null = value {
@@ -817,6 +869,10 @@ enum SupportedJSONLDRDFTerms {
             guard let value = object[key] else {
                 continue
             }
+            if key == "@index" {
+                try validateGenericIndex(value, error: error)
+                continue
+            }
             if key == "@type" {
                 quads.append(contentsOf: try genericTypeQuads(
                     value,
@@ -903,6 +959,10 @@ enum SupportedJSONLDRDFTerms {
                 guard let value = object[key] else {
                     continue
                 }
+                if key == "@index" {
+                    try validateGenericIndex(value, error: error)
+                    continue
+                }
                 if key == "@type" {
                     quads.append(contentsOf: try withGraph(
                         genericTypeQuads(value, subject: subject, error: error),
@@ -946,6 +1006,15 @@ enum SupportedJSONLDRDFTerms {
             }
         }
         return quads
+    }
+
+    private static func validateGenericIndex(
+        _ value: SupportedJSONLDValue?,
+        error: CADMVInternalError
+    ) throws {
+        guard case .string = value else {
+            throw error
+        }
     }
 
     private static func genericIncludedQuads(

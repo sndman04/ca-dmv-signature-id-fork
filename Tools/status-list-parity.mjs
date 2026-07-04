@@ -56,9 +56,11 @@ const extensionFixture = {
   ...optionalFieldsFixture,
   'https://example.test/status/rootString': 'root extension',
   'https://example.test/status/rootSet': {
+    '@index': 'root-set-index',
     '@set': ['alpha', 'beta']
   },
   'https://example.test/status/rootList': {
+    '@index': 'root-list-index',
     '@list': [
       'first',
       42,
@@ -68,6 +70,7 @@ const extensionFixture = {
     ]
   },
   'https://example.test/status/rootTypedNode': {
+    '@index': 'root-typed-node-index',
     '@type': 'https://example.test/status/RootType',
     'https://example.test/status/rootTypedName': 'typed root'
   },
@@ -77,6 +80,7 @@ const extensionFixture = {
     'https://example.test/status/subjectBoolean': true,
     'https://example.test/status/subjectNode': {
       '@id': 'https://example.test/status/subject-node',
+      '@index': 'subject-node-index',
       '@type': [
         'https://example.test/status/SubjectType',
         'https://example.test/status/SecondSubjectType'
@@ -88,6 +92,7 @@ const extensionFixture = {
       },
       '@graph': {
         '@id': 'https://example.test/status/status-in-graph',
+        '@index': 'subject-graph-index',
         'https://example.test/status/statusGraphName': 'Status graph'
       },
       '@included': {
@@ -105,6 +110,7 @@ const extensionFixture = {
     'https://example.test/status/proofString': 'proof extension',
     'https://example.test/status/proofNode': {
       '@id': 'https://example.test/status/proof-node',
+      '@index': 'proof-node-index',
       '@type': 'https://example.test/status/ProofType',
       '@reverse': {
         'https://example.test/status/proofPointsTo': {
@@ -113,6 +119,7 @@ const extensionFixture = {
       },
       '@graph': {
         '@id': 'https://example.test/status/proof-in-graph',
+        '@index': 'proof-graph-index',
         'https://example.test/status/proofGraphName': 'Proof graph'
       },
       '@included': {
@@ -122,6 +129,7 @@ const extensionFixture = {
     },
     'https://example.test/status/proofTypedValue': {
       '@value': '7',
+      '@index': 'proof-typed-value-index',
       '@type': 'http://www.w3.org/2001/XMLSchema#integer'
     }
   }

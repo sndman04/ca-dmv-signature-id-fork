@@ -23,6 +23,7 @@ const proofConfig = {
   expires: '2026-01-02T00:00:00Z',
   'https://example.invalid/proof/reference': {
     '@id': 'did:web:issuer.example#proof-resource',
+    '@index': 'proof-reference-index',
     '@type': [
       'https://example.invalid/types/ProofReference',
       'https://example.invalid/types/SecondProofReference'
@@ -36,6 +37,7 @@ const proofConfig = {
     },
     '@graph': {
       '@id': 'https://example.invalid/resources/proof-in-graph',
+      '@index': 'proof-graph-index',
       '@type': 'https://example.invalid/types/ProofInGraph',
       'https://example.invalid/proof/graphName': 'Proof graph'
     },
@@ -47,11 +49,13 @@ const proofConfig = {
     'https://example.invalid/proof/referenceName': 'Proof Reference'
   },
   'https://example.invalid/proof/typedBlankNode': {
+    '@index': 'proof-blank-node-index',
     '@type': 'https://example.invalid/types/ProofBlankNode',
     'https://example.invalid/proof/blankNodeName': 'Typed proof blank node'
   },
   'https://example.invalid/proof/typedValue': {
     '@value': 'proof typed',
+    '@index': 'proof-typed-value-index',
     '@type': 'https://example.invalid/types/ProofType'
   },
   'https://example.invalid/proof/languageValue': {
@@ -59,6 +63,7 @@ const proofConfig = {
     '@language': 'en-US'
   },
   'https://example.invalid/proof/setValue': {
+    '@index': 'proof-set-index',
     '@set': [
       'proof-set-a',
       {
@@ -68,6 +73,7 @@ const proofConfig = {
     ]
   },
   'https://example.invalid/proof/listValue': {
+    '@index': 'proof-list-index',
     '@list': [
       'proof-list-a',
       9,

@@ -26,6 +26,7 @@ const extensionDocument = {
   },
   'https://example.invalid/terms/reference': {
     '@id': 'did:web:issuer.example#resource',
+    '@index': 'reference-index',
     '@type': [
       'https://example.invalid/types/Reference',
       'https://example.invalid/types/SecondReference'
@@ -38,6 +39,7 @@ const extensionDocument = {
     '@graph': [
       {
         '@id': 'https://example.invalid/resources/in-graph',
+        '@index': 'graph-index',
         '@type': 'https://example.invalid/types/InGraph',
         'https://example.invalid/terms/graphName': 'In graph'
       }
@@ -52,11 +54,13 @@ const extensionDocument = {
     'https://example.invalid/terms/referenceName': 'Reference'
   },
   'https://example.invalid/terms/typedBlankNode': {
+    '@index': 'blank-node-index',
     '@type': 'https://example.invalid/types/BlankNode',
     'https://example.invalid/terms/blankNodeName': 'Typed blank node'
   },
   'https://example.invalid/terms/typedValue': {
     '@value': 'typed',
+    '@index': 'typed-value-index',
     '@type': 'https://example.invalid/types/Custom'
   },
   'https://example.invalid/terms/languageValue': {
@@ -67,6 +71,7 @@ const extensionDocument = {
     '@value': 7.5
   },
   'https://example.invalid/terms/setValue': {
+    '@index': 'set-index',
     '@set': [
       'set-a',
       {
@@ -76,6 +81,7 @@ const extensionDocument = {
     ]
   },
   'https://example.invalid/terms/listValue': {
+    '@index': 'list-index',
     '@list': [
       'list-a',
       {

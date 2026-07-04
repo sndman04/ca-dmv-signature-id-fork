@@ -226,10 +226,12 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             additionalProperties: [
                 "https://example.invalid/terms/reference": .object([
                     "@id": .string("did:web:issuer.example#resource"),
+                    "@index": .string("reference-index"),
                     "https://example.invalid/terms/referenceName": .string("Reference")
                 ]),
                 "https://example.invalid/terms/typedValue": .object([
                     "@value": .string("typed"),
+                    "@index": .string("typed-value-index"),
                     "@type": .string("https://example.invalid/types/Custom")
                 ]),
                 "https://example.invalid/terms/languageValue": .object([
@@ -240,6 +242,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@value": .number("7.5")
                 ]),
                 "https://example.invalid/terms/setValue": .object([
+                    "@index": .string("set-index"),
                     "@set": .array([
                         .string("set-a"),
                         .object([
@@ -249,6 +252,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     ])
                 ]),
                 "https://example.invalid/terms/listValue": .object([
+                    "@index": .string("list-index"),
                     "@list": .array([
                         .string("list-a"),
                         .object([
@@ -314,6 +318,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
             additionalProperties: [
                 "https://example.invalid/terms/typedNode": .object([
                     "@id": .string("https://example.invalid/resources/typed-node"),
+                    "@index": .string("typed-node-index"),
                     "@type": .array([
                         .string("https://example.invalid/types/TypedNode"),
                         .string("https://example.invalid/types/SecondType")
@@ -326,6 +331,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "@graph": .array([
                         .object([
                             "@id": .string("https://example.invalid/resources/in-graph"),
+                            "@index": .string("graph-index"),
                             "@type": .string("https://example.invalid/types/InGraph"),
                             "https://example.invalid/terms/graphName": .string("In graph")
                         ])
@@ -340,6 +346,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     "https://example.invalid/terms/name": .string("Typed node")
                 ]),
                 "https://example.invalid/terms/typedBlankNode": .object([
+                    "@index": .string("blank-node-index"),
                     "@type": .string("https://example.invalid/types/BlankNode"),
                     "https://example.invalid/terms/name": .string("Typed blank node")
                 ])
@@ -446,6 +453,18 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                         "@id": .string("https://example.invalid/resources/included"),
                         "compactIncludedTerm": .string("unsupported")
                     ])
+                ])
+            ]
+        ), mode: .uat)) { error in
+            XCTAssertEqual(error as? CADMVInternalError, .unsupportedVCB)
+        }
+
+        XCTAssertThrowsError(try DMVCredentialValidator.validate(vcbCredential(
+            additionalProperties: [
+                "https://example.invalid/terms/indexedNode": .object([
+                    "@id": .string("https://example.invalid/resources/indexed"),
+                    "@index": .unsigned(7),
+                    "https://example.invalid/terms/name": .string("Indexed")
                 ])
             ]
         ), mode: .uat)) { error in
@@ -633,6 +652,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 "https://example.invalid/terms/subject": .bool(false),
                 "https://example.invalid/terms/subjectNode": .object([
                     "@id": .string("https://example.invalid/resources/status-subject-node"),
+                    "@index": .string("status-subject-index"),
                     "@type": .string("https://example.invalid/types/StatusSubjectNode"),
                     "@reverse": .object([
                         "https://example.invalid/terms/statusPointsTo": .object([
@@ -641,6 +661,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     ]),
                     "@graph": .object([
                         "@id": .string("https://example.invalid/resources/status-in-graph"),
+                        "@index": .string("status-graph-index"),
                         "https://example.invalid/terms/statusGraphName": .string("Status graph")
                     ]),
                     "@included": .object([
@@ -771,6 +792,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                 "https://example.invalid/terms/proof": .unsigned(42),
                 "https://example.invalid/terms/proofNode": .object([
                     "@id": .string("https://example.invalid/resources/proof-node"),
+                    "@index": .string("proof-node-index"),
                     "@type": .string("https://example.invalid/types/ProofNode"),
                     "@reverse": .object([
                         "https://example.invalid/terms/proofPointsTo": .array([
@@ -781,6 +803,7 @@ final class RDFDatasetCanonicalizerTests: XCTestCase {
                     ]),
                     "@graph": .object([
                         "@id": .string("https://example.invalid/resources/proof-in-graph"),
+                        "@index": .string("proof-graph-index"),
                         "https://example.invalid/terms/proofGraphName": .string("Proof graph")
                     ]),
                     "@included": .object([
