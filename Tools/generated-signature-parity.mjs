@@ -30,6 +30,7 @@ import * as ecdsaMultikey
 
 const issuer = 'did:web:uat-credentials.dmv.ca.gov';
 const verificationMethod = `${issuer}#vm-vcb-1`;
+const alternateVerificationMethod = `${issuer}#vm-vcb-2`;
 const protectedComponentIndex = 'u___8';
 const proofCreated = '2026-01-01T00:00:00Z';
 const mode = 'uat';
@@ -106,8 +107,13 @@ const didDocument = {
     type: 'Multikey',
     controller: issuer,
     publicKeyMultibase: keyPair.publicKeyMultibase
+  }, {
+    id: alternateVerificationMethod,
+    type: 'Multikey',
+    controller: issuer,
+    publicKeyMultibase: keyPair.publicKeyMultibase
   }],
-  assertionMethod: [verificationMethod]
+  assertionMethod: [verificationMethod, alternateVerificationMethod]
 };
 const documentLoader = buildDocumentLoader({didDocument});
 const carrierForHash = makeAAMVABarcode({encodedVCB: 'AQID'});
@@ -172,6 +178,20 @@ const tamperedProofCreatedCredential = {
     created: '2026-01-01T00:00:01Z'
   }
 };
+const tamperedProofExpiresCredential = {
+  ...structuredClone(signedCredential),
+  proof: {
+    ...signedCredential.proof,
+    expires: '2030-01-01T00:00:00Z'
+  }
+};
+const tamperedProofVerificationMethodCredential = {
+  ...structuredClone(signedCredential),
+  proof: {
+    ...signedCredential.proof,
+    verificationMethod: alternateVerificationMethod
+  }
+};
 
 const fixtures = [
   {
@@ -225,6 +245,22 @@ const fixtures = [
     id: 'generated-tampered-proof-created',
     payload: makeAAMVABarcode({
       encodedVCB: await encodeVCB(tamperedProofCreatedCredential)
+    }),
+    expectVerified: false,
+    expectedStage: 'data-integrity-vcb'
+  },
+  {
+    id: 'generated-tampered-proof-expires',
+    payload: makeAAMVABarcode({
+      encodedVCB: await encodeVCB(tamperedProofExpiresCredential)
+    }),
+    expectVerified: false,
+    expectedStage: 'data-integrity-vcb'
+  },
+  {
+    id: 'generated-tampered-proof-verification-method',
+    payload: makeAAMVABarcode({
+      encodedVCB: await encodeVCB(tamperedProofVerificationMethodCredential)
     }),
     expectVerified: false,
     expectedStage: 'data-integrity-vcb'
@@ -408,11 +444,14 @@ function buildDocumentLoader({didDocument}) {
         document: didDocument
       };
     }
-    if(url === verificationMethod) {
+    const verificationMethodDocument = didDocument.verificationMethod.find(
+      method => method.id === url
+    );
+    if(verificationMethodDocument) {
       return {
         contextUrl: null,
         documentUrl: url,
-        document: didDocument.verificationMethod[0]
+        document: verificationMethodDocument
       };
     }
     return baseLoader(url);
